@@ -177,18 +177,18 @@ function renderRounds(data, isLive) {
 
     let html = '';
     let animDelay = 1;
-    let isFirst = true;
 
     for (const [roundName, items] of Object.entries(grouped)) {
         html += `
-        <div class="accordion-item reveal reveal-delay-${(animDelay % 4) + 1} ${isFirst ? 'expanded' : ''}">
+        <div class="accordion-item reveal reveal-delay-${(animDelay % 4) + 1}">
             <div class="accordion-header">
                 <h2 class="accordion-title">${roundName}</h2>
                 <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             <div class="accordion-content">
                 <div class="accordion-inner">
-                    <div class="map-timeline">
+                    <div class="explore-map">
+                        <div class="explore-path"></div>
         `;
         
         items.forEach((r) => {
@@ -220,14 +220,14 @@ function renderRounds(data, isLive) {
             }
 
             html += `
-            <div class="map-node">
-                <div class="map-marker ${isActive ? 'active' : ''}"></div>
-                <div class="map-card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px">
-                        <h3 class="map-title">${r.Title || 'Exhibit'}</h3>
+            <div class="explore-node">
+                <div class="explore-marker ${isActive ? 'active' : ''}"></div>
+                <div class="explore-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
+                        <h3 class="explore-title">${r.Title || 'Exhibit'}</h3>
                         ${badge}
                     </div>
-                    <p class="map-desc">${r.Description || ''}</p>
+                    <p class="explore-desc">${r.Description || ''}</p>
                     <div class="map-footer">
                         <div style="font-size:0.85rem">${timeInfo}</div>
                         <div class="map-actions">${actions}</div>
@@ -243,7 +243,6 @@ function renderRounds(data, isLive) {
         </div>`;
         
         animDelay++;
-        isFirst = false;
     }
 
     container.innerHTML = html;

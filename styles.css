@@ -433,71 +433,105 @@ img { max-width: 100%; height: auto; display: block; }
     overflow: hidden;
 }
 
-/* Central Map Timeline */
-.map-timeline {
+/* ==========================================================================
+   EXPLORATION SCATTER MAP (ROUNDS)
+   ========================================================================== */
+.explore-map {
     position: relative;
-    padding: 60px 0;
-    margin: 0 20px;
+    padding: 60px 20px;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.03) 0%, transparent 60%),
+        linear-gradient(rgba(0, 229, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
+    border-radius: 12px;
 }
-.map-timeline::before {
+
+/* The Singular Path */
+.explore-path {
+    position: absolute;
+    top: 20px; bottom: 20px;
+    left: 40px;
+    width: 4px;
+    background: linear-gradient(180deg, transparent, var(--edge-dim), var(--edge-dim), transparent);
+    border-radius: 4px;
+}
+
+.explore-node {
+    position: relative;
+    margin-bottom: 60px;
+    display: flex;
+    align-items: center;
+    z-index: 2;
+}
+.explore-node:last-child { margin-bottom: 0; }
+
+/* Staggered scatter effect */
+.explore-node:nth-child(4n+1) { padding-left: 80px; }
+.explore-node:nth-child(4n+2) { padding-left: 240px; }
+.explore-node:nth-child(4n+3) { padding-left: 140px; }
+.explore-node:nth-child(4n+4) { padding-left: 300px; }
+
+/* The horizontal laser trace */
+.explore-node::before {
     content: '';
     position: absolute;
-    top: 0; bottom: 0; left: 50%;
-    width: 2px;
-    margin-left: -1px;
-    background: var(--edge-dim);
-}
-.map-node {
-    position: relative;
-    width: 50%;
-    padding: 0 40px;
-    margin-bottom: 60px;
-}
-.map-node:last-child { margin-bottom: 0; }
-
-.map-node:nth-child(odd) {
-    left: 0;
-    text-align: right;
-}
-.map-node:nth-child(even) {
-    left: 50%;
-    text-align: left;
-}
-
-.map-marker {
-    position: absolute;
-    top: 0;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--edge-hover);
-    border: 2px solid var(--bg);
-    z-index: 2;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-.map-node:nth-child(odd) .map-marker { right: -7px; }
-.map-node:nth-child(even) .map-marker { left: -7px; }
-.map-marker.active {
-    background: var(--primary);
-    box-shadow: 0 0 12px var(--primary-glow);
-}
-
-/* Content styling */
-.map-card {
-    display: inline-block;
-    text-align: left;
-    background: var(--bg-glass);
-    border: 1px solid var(--edge-dim);
-    padding: 24px;
-    border-radius: 12px;
-    max-width: 480px;
+    top: 50%; left: 42px;
     width: 100%;
-    transition: border-color 0.3s ease;
+    height: 1px;
+    border-top: 1px dashed rgba(0, 229, 255, 0.3);
+    z-index: 0;
+    pointer-events: none;
 }
-.map-card:hover { border-color: var(--edge-hover); }
 
-.map-title { font-size: 1.15rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px; }
-.map-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px; }
+/* The Map Waypoint */
+.explore-marker {
+    position: absolute;
+    top: 50%; left: 34px;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 3px solid var(--primary-ghost);
+    z-index: 3;
+    transition: all 0.3s ease;
+}
+.explore-marker.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 16px var(--primary-glow);
+    background: var(--primary);
+}
+
+/* The Map Data HUD */
+.explore-card {
+    position: relative;
+    background: rgba(3, 11, 26, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--edge-dim);
+    border-left: 3px solid var(--primary);
+    padding: 24px;
+    border-radius: 4px 12px 12px 4px;
+    min-width: 320px;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+.explore-card:hover {
+    border-color: var(--edge-hover);
+    border-left-color: var(--primary-glow);
+    box-shadow: 0 10px 40px rgba(0, 229, 255, 0.1);
+}
+
+/* Typography inside */
+.explore-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--primary);
+    margin-bottom: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.explore-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
 
 /* Footer elements */
 .map-footer {
@@ -926,9 +960,11 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .gallery-item.large { grid-column:span 1; }
 
     .footer-top { grid-template-columns:1fr; }
-    .map-timeline::before { left: 24px; margin-left: 0; }
-    .map-node { width: 100%; padding: 0 0 0 64px !important; left: 0 !important; text-align: left !important; }
-    .map-marker { left: 17px !important; right: auto !important; }
-    .map-card { max-width: 100%; }
+    .explore-node:nth-child(n) { padding-left: 60px; }
+    .explore-path { left: 20px; }
+    .explore-marker { left: 14px; }
+    .explore-node::before { left: 20px; }
+    .explore-card { min-width: unset; width: 100%; }
+    .explore-map { padding: 40px 10px; }
     .accordion-header { padding: 20px; }
 }
