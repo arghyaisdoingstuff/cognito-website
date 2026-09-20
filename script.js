@@ -352,3 +352,138 @@ document.addEventListener('DOMContentLoaded', () => {
     initScores();
     initScrollReveal();
 });
+
+// ──────────────────────────────────────────────────────────────
+// 6. INTERACTIVE BACKGROUND NODES
+// ──────────────────────────────────────────────────────────────
+function initNodes() {
+    const bgContainer = document.querySelector('.bg-canvas');
+    if (!bgContainer) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'node-canvas';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '0'; // Behind orbs and grain
+    bgContainer.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    
+    // Scale for high-DPI displays
+    const dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const particles = [];
+    // Adjust number of particles based on screen width for performance
+    const numParticles = width > 768 ? 60 : 30;
+    const maxDistance = 140;
+    
+    let mouse = { x: -1000, y: -1000 };
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+    window.addEventListener('mouseout', () => {
+        mouse.x = -1000;
+        mouse.y = -1000;
+    });
+
+    for(let i = 0; i < numParticles; i++) {
+        particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            radius: Math.random() * 1.2 + 0.5
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Optional: Blueprint grid background (faint)
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.02)';
+        ctx.lineWidth = 1;
+        const gridSize = 80;
+        ctx.beginPath();
+        for (let x = (width % gridSize)/2; x < width; x += gridSize) {
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+        }
+        for (let y = (height % gridSize)/2; y < height; y += gridSize) {
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+
+        particles.forEach((p, index) => {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            // Bounce off edges
+            if(p.x < 0 || p.x > width) p.vx *= -1;
+            if(p.y < 0 || p.y > height) p.vy *= -1;
+
+            // Draw node
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+            ctx.fill();
+
+            // Connect nodes
+            for(let j = index + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                const dx = p.x - p2.x;
+                const dy = p.y - p2.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(dist < maxDistance) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.strokeStyle = `rgba(0, 240, 255, ${0.1 * (1 - dist/maxDistance)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+
+            // Connect to mouse (creates interactive data terminal feel)
+            const dxm = p.x - mouse.x;
+            const dym = p.y - mouse.y;
+            const distm = Math.sqrt(dxm*dxm + dym*dym);
+
+            if(distm < maxDistance * 1.5) {
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.strokeStyle = `rgba(0, 240, 255, ${0.3 * (1 - distm/(maxDistance*1.5))})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Parallax/attraction pull to mouse
+                p.x -= dxm * 0.003;
+                p.y -= dym * 0.003;
+            }
+        });
+
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
+
+// Call on load
+initNodes();
