@@ -427,11 +427,15 @@ function initNodes() {
     });
 
     for(let i = 0; i < numParticles; i++) {
+        const vx = (Math.random() - 0.5) * 0.4;
+        const vy = (Math.random() - 0.5) * 0.4;
         particles.push({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.4,
-            vy: (Math.random() - 0.5) * 0.4,
+            vx: vx,
+            vy: vy,
+            baseVx: vx,
+            baseVy: vy,
             radius: Math.random() * 1.2 + 0.5
         });
     }
@@ -498,10 +502,15 @@ function initNodes() {
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 
-                // Parallax/attraction pull to mouse
-                p.x -= dxm * 0.003;
-                p.y -= dym * 0.003;
+                // Gentle pull by modifying velocity instead of snapping position
+                const force = (1 - distm / (maxDistance * 1.5)) * 0.015;
+                p.vx -= (dxm / distm) * force;
+                p.vy -= (dym / distm) * force;
             }
+            
+            // Gracefully return to base drifting velocity over time
+            p.vx += (p.baseVx - p.vx) * 0.02;
+            p.vy += (p.baseVy - p.vy) * 0.02;
         });
 
         requestAnimationFrame(animate);
