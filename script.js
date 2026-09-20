@@ -393,6 +393,9 @@ function initNodes() {
     const maxDistance = 140;
     
     let mouse = { x: -1000, y: -1000 };
+    let touchTimeout;
+
+    // Desktop interaction
     window.addEventListener('mousemove', (e) => {
         mouse.x = e.clientX;
         mouse.y = e.clientY;
@@ -400,6 +403,27 @@ function initNodes() {
     window.addEventListener('mouseout', () => {
         mouse.x = -1000;
         mouse.y = -1000;
+    });
+
+    // Mobile interaction: Touch and Scroll
+    window.addEventListener('touchstart', (e) => {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+        clearTimeout(touchTimeout);
+    }, {passive: true});
+    
+    window.addEventListener('touchmove', (e) => {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+        clearTimeout(touchTimeout);
+    }, {passive: true});
+    
+    window.addEventListener('touchend', () => {
+        // Let the gravity linger for a moment after releasing the scroll/tap
+        touchTimeout = setTimeout(() => {
+            mouse.x = -1000;
+            mouse.y = -1000;
+        }, 1500); 
     });
 
     for(let i = 0; i < numParticles; i++) {
