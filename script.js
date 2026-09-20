@@ -4,9 +4,52 @@
  * Rounds Timer Engine, Bar Chart Leaderboard (Contingent only)
  */
 
-// ──────────────────────────────────────────────────────────────
-// 1. SCROLL REVEAL
-// ──────────────────────────────────────────────────────────────
+// 1. SCROLL REVEAL & TYPEWRITER
+// ==========================================================================
+function initTypewriter() {
+    const el = document.querySelector('.typewriter-target');
+    if (!el) return;
+    
+    // Clear the fallback noscript content
+    el.innerHTML = '';
+    
+    const part1 = "Welcome to ";
+    const part2 = "Reality";
+    
+    // Create cursor
+    const cursor = document.createElement('span');
+    cursor.className = 'type-cursor';
+    el.appendChild(cursor);
+    
+    let i = 0, j = 0;
+    let spanAdded = false;
+    let accentSpan;
+    
+    const type = () => {
+        if (i < part1.length) {
+            cursor.insertAdjacentText('beforebegin', part1.charAt(i));
+            i++;
+            setTimeout(type, 70);
+        } else if (j < part2.length) {
+            if (!spanAdded) {
+                accentSpan = document.createElement('span');
+                accentSpan.className = 'accent';
+                el.insertBefore(accentSpan, cursor);
+                spanAdded = true;
+            }
+            accentSpan.textContent += part2.charAt(j);
+            j++;
+            setTimeout(type, 80);
+        } else {
+            // Typing complete, fade out cursor after 3 seconds
+            setTimeout(() => cursor.style.display = 'none', 3000);
+        }
+    };
+    
+    // Start typing after a short delay
+    setTimeout(type, 300);
+}
+
 function initScrollReveal() {
     const targets = document.querySelectorAll(
         '.reveal, .reveal-scale, .reveal-left, .reveal-right, .reveal-stagger'
@@ -433,6 +476,8 @@ function renderBarChart(isLive) {
 // 6. INIT
 // ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    initTypewriter();
+
     // Mobile nav
     const toggle = document.querySelector('.mobile-toggle');
     const navLinks = document.querySelector('.nav-links');

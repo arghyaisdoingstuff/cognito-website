@@ -339,6 +339,20 @@ img { max-width: 100%; height: auto; display: block; }
     background-clip: text;
 }
 
+.type-cursor {
+    display: inline-block;
+    width: 0.1em;
+    height: 1.1em;
+    background-color: var(--primary);
+    vertical-align: middle;
+    margin-left: 0.05em;
+    animation: blink-cursor 1s step-end infinite;
+}
+@keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
 .hero-tagline {
     font-size: clamp(1rem, 2.5vw, 1.35rem);
     font-weight: 400;
