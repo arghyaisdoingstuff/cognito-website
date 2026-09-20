@@ -166,45 +166,76 @@ function renderRounds(data, isLive) {
     }
 
     const now = new Date();
-    container.innerHTML = filtered.map((r, idx) => {
-        const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
-        const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
-        const valid = !isNaN(release) && !isNaN(deadline);
-        let badge = '', timeInfo = '', actions = '';
+    
+    // Group exhibits by their Round name
+    const grouped = {};
+    filtered.forEach(r => {
+        const roundName = r.Round || 'General';
+        if (!grouped[roundName]) grouped[roundName] = [];
+        grouped[roundName].push(r);
+    });
 
-        if (!valid) {
-            badge = `<span class="status-badge live">Scheduled</span>`;
-            timeInfo = `<div class="round-meta-item"><span><strong>Schedule:</strong> TBA</span></div>`;
-            actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
-        } else if (now < release) {
-            const diff = release - now;
-            const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
-            badge = `<span class="status-badge locked">🔒 Unlocks Soon</span>`;
-            timeInfo = `<div class="round-meta-item"><span><strong>Unlocks:</strong> ${release.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>
-                        <div class="round-meta-item"><span><strong>Countdown:</strong> ${d > 0 ? d + 'd ' : ''}${h}h</span></div>`;
-            actions = `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;width:100%">Locked until Release</button>`;
-        } else if (now <= deadline) {
-            badge = `<span class="status-badge live">🟢 Accepting Submissions</span>`;
-            timeInfo = `<div class="round-meta-item"><span><strong>Deadline:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>`;
-            actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline">Read Case Brief</a><a href="${r.SubmitLink}" target="_blank" class="btn btn-cyan">Submit Solution</a>`;
-        } else {
-            badge = `<span class="status-badge closed">🔴 Closed</span>`;
-            timeInfo = `<div class="round-meta-item"><span><strong>Closed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>`;
-            actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
-        }
+    let html = '';
+    let animDelay = 1;
 
-        return `
-        <div class="card round-card card-accent-top reveal reveal-delay-${(idx % 4) + 1}">
-            <div>
-                <div class="round-header"><div><span class="round-event-tag">${r.Event}</span><h3 class="round-name">${r.Round}</h3></div>${badge}</div>
-                <h4 style="color:var(--text-primary);font-size:1.05rem;margin-bottom:8px">${r.Title||''}</h4>
-                <p style="margin-bottom:16px">${r.Description||''}</p>
-                ${timeInfo}
+    for (const [roundName, items] of Object.entries(grouped)) {
+        html += `
+        <div class="timeline-group reveal reveal-delay-${(animDelay % 4) + 1}">
+            <h2 class="timeline-round-title">${roundName}</h2>
+            <div class="timeline-track">
+        `;
+        
+        items.forEach((r) => {
+            const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
+            const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
+            const valid = !isNaN(release) && !isNaN(deadline);
+            let badge = '', timeInfo = '', actions = '';
+            let isActive = false;
+
+            if (!valid) {
+                badge = `<span class="status-badge live">Scheduled</span>`;
+                timeInfo = `<div class="round-meta-item"><span><strong>Schedule:</strong> TBA</span></div>`;
+                actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
+            } else if (now < release) {
+                const diff = release - now;
+                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
+                badge = `<span class="status-badge locked">🔒 Unlocks Soon</span>`;
+                timeInfo = `<div class="round-meta-item"><span><strong>Unlocks:</strong> ${release.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>
+                            <div class="round-meta-item"><span><strong>Countdown:</strong> ${d > 0 ? d + 'd ' : ''}${h}h</span></div>`;
+                actions = `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;width:100%">Locked until Release</button>`;
+            } else if (now <= deadline) {
+                isActive = true;
+                badge = `<span class="status-badge live">🟢 Accepting Submissions</span>`;
+                timeInfo = `<div class="round-meta-item"><span><strong>Deadline:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>`;
+                actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline">Read Case Brief</a><a href="${r.SubmitLink}" target="_blank" class="btn btn-cyan">Submit Solution</a>`;
+            } else {
+                badge = `<span class="status-badge closed">🔴 Closed</span>`;
+                timeInfo = `<div class="round-meta-item"><span><strong>Closed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>`;
+                actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
+            }
+
+            html += `
+            <div class="timeline-node">
+                <div class="timeline-marker ${isActive ? 'active' : ''}"></div>
+                <div class="timeline-node-card">
+                    <div class="timeline-header">
+                        <h3 class="timeline-title">${r.Title || 'Exhibit'}</h3>
+                        ${badge}
+                    </div>
+                    <p class="timeline-desc">${r.Description || ''}</p>
+                    <div class="timeline-meta">${timeInfo}</div>
+                    <div class="timeline-actions">${actions}</div>
+                </div>
+            </div>`;
+        });
+        
+        html += `
             </div>
-            <div class="round-actions">${actions}</div>
         </div>`;
-    }).join('');
+        animDelay++;
+    }
 
+    container.innerHTML = html;
     initScrollReveal();
 }
 
