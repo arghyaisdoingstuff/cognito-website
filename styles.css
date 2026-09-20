@@ -690,7 +690,6 @@ img { max-width: 100%; height: auto; display: block; }
     display: flex;
     gap: 16px;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     padding: 20px 10px;
     scrollbar-width: none;
@@ -702,7 +701,6 @@ img { max-width: 100%; height: auto; display: block; }
     flex: 0 0 85%;
     max-width: 500px;
     height: 300px;
-    scroll-snap-align: center;
     border-radius: 16px;
     overflow: hidden;
     position: relative;

@@ -13,47 +13,53 @@ function initCarousel() {
 
     if (!carousel || !prevBtn || !nextBtn) return;
 
-    const getItemWidth = () => {
-        const item = carousel.querySelector('.gallery-item');
-        return item ? item.offsetWidth + 16 : 300;
-    };
+    // Clone all items to create a seamless infinite scroll
+    const items = Array.from(carousel.children);
+    items.forEach(item => {
+        const clone = item.cloneNode(true);
+        carousel.appendChild(clone);
+    });
 
-    const scrollNext = () => {
-        if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
-            carousel.scrollTo({ left: 0, behavior: 'smooth' }); // Loop to start
-        } else {
-            carousel.scrollBy({ left: getItemWidth(), behavior: 'smooth' });
+    let speed = 1; // Pixels per frame (baseline speed)
+    let isHovered = false;
+    let rafId;
+
+    const animate = () => {
+        if (!isHovered) {
+            carousel.scrollLeft += speed;
+            // If we've scrolled exactly halfway (past the original set), instantly jump back to 0
+            if (carousel.scrollLeft >= carousel.scrollWidth / 2) {
+                carousel.scrollLeft = 0;
+            } else if (carousel.scrollLeft <= 0) {
+                carousel.scrollLeft = carousel.scrollWidth / 2;
+            }
         }
+        rafId = requestAnimationFrame(animate);
     };
 
-    const scrollPrev = () => {
-        if (carousel.scrollLeft <= 10) {
-            carousel.scrollTo({ left: carousel.scrollWidth, behavior: 'smooth' }); // Loop to end
-        } else {
-            carousel.scrollBy({ left: -getItemWidth(), behavior: 'smooth' });
-        }
-    };
-
-    prevBtn.addEventListener('click', scrollPrev);
-    nextBtn.addEventListener('click', scrollNext);
-
-    // Auto-looping logic
-    let autoPlayInterval = setInterval(scrollNext, 3500);
+    // Start the continuous animation
+    rafId = requestAnimationFrame(animate);
 
     // Pause on hover or touch
     const wrapper = document.querySelector('.gallery-carousel-wrapper');
     if (wrapper) {
-        wrapper.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
-        wrapper.addEventListener('mouseleave', () => {
-            clearInterval(autoPlayInterval);
-            autoPlayInterval = setInterval(scrollNext, 3500);
-        });
-        wrapper.addEventListener('touchstart', () => clearInterval(autoPlayInterval), { passive: true });
+        wrapper.addEventListener('mouseenter', () => isHovered = true);
+        wrapper.addEventListener('mouseleave', () => isHovered = false);
+        wrapper.addEventListener('touchstart', () => isHovered = true, { passive: true });
         wrapper.addEventListener('touchend', () => {
-            clearInterval(autoPlayInterval);
-            autoPlayInterval = setInterval(scrollNext, 3500);
+            setTimeout(() => isHovered = false, 1500); // Resume shortly after touch
         }, { passive: true });
     }
+
+    const getItemWidth = () => items[0].offsetWidth + 16;
+
+    prevBtn.addEventListener('click', () => {
+        carousel.scrollBy({ left: -getItemWidth(), behavior: 'smooth' });
+    });
+
+    nextBtn.addEventListener('click', () => {
+        carousel.scrollBy({ left: getItemWidth(), behavior: 'smooth' });
+    });
 }
 
 function initLightbox() {
@@ -63,15 +69,17 @@ function initLightbox() {
     
     if (!lightbox || !lightboxImg || !closeBtn) return;
 
-    document.querySelectorAll('.gallery-item').forEach(item => {
-        item.addEventListener('click', () => {
+    // Use event delegation so cloned carousel items also trigger the lightbox
+    document.addEventListener('click', (e) => {
+        const item = e.target.closest('.gallery-item');
+        if (item && document.getElementById('gallery-carousel').contains(item)) {
             const img = item.querySelector('img');
             if (img) {
                 lightboxImg.src = img.src;
                 lightbox.classList.add('show');
                 document.body.style.overflow = 'hidden';
             }
-        });
+        }
     });
 
     const closeLightbox = () => {
