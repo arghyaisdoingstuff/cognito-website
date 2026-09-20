@@ -920,5 +920,15 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .gallery-item.large { grid-column:span 1; }
 
     .footer-top { grid-template-columns:1fr; }
+    
+    /* Fix squished timeline on mobile */
+    .timeline-node { padding-left: 30px; margin-bottom: 30px; }
+    .timeline-track::before { left: 10px; }
+    .timeline-marker { left: 3px; top: 16px; width: 14px; height: 14px; border-width: 2px; }
+    .timeline-card { padding: 16px; }
+    .timeline-card > div:first-child { flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .timeline-actions { flex-direction: column; }
+    .timeline-actions .btn { width: 100%; text-align: center; }
+
     .accordion-header { padding: 20px; }
 }

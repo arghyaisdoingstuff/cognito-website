@@ -29,7 +29,7 @@ function initTypewriter() {
         if (i < part1.length) {
             cursor.insertAdjacentText('beforebegin', part1.charAt(i));
             i++;
-            setTimeout(type, 70);
+            setTimeout(type, 20);
         } else if (j < part2.length) {
             if (!spanAdded) {
                 accentSpan = document.createElement('span');
@@ -39,7 +39,7 @@ function initTypewriter() {
             }
             accentSpan.textContent += part2.charAt(j);
             j++;
-            setTimeout(type, 80);
+            setTimeout(type, 25);
         } else {
             // Typing complete, fade out cursor after 3 seconds
             setTimeout(() => cursor.style.display = 'none', 3000);
@@ -68,9 +68,9 @@ function initScrollReveal() {
     targets.forEach(el => observer.observe(el));
 }
 
-// ──────────────────────────────────────────────────────────────
+// ==========================================================================
 // 2. CSV PARSER
-// ──────────────────────────────────────────────────────────────
+// ==========================================================================
 function parseCSV(text) {
     if (!text || !text.trim()) return [];
     const lines = [];
@@ -87,24 +87,27 @@ function parseCSV(text) {
             currentLine.push(token.trim()); token = '';
         } else if ((c === '\r' || c === '\n') && !inQuotes) {
             if (c === '\r' && n === '\n') i++;
-            currentLine.push(token.trim());
-            if (currentLine.some(t => t !== '')) lines.push(currentLine);
-            currentLine = []; token = '';
+            currentLine.push(token.trim()); token = '';
+            lines.push(currentLine); currentLine = [];
         } else {
             token += c;
         }
     }
     if (token || currentLine.length) {
         currentLine.push(token.trim());
-        if (currentLine.some(t => t !== '')) lines.push(currentLine);
+        lines.push(currentLine);
     }
+
     if (lines.length < 2) return [];
-    const headers = lines[0].map(h => h.trim());
-    return lines.slice(1).map(row => {
+    const headers = lines[0];
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i].length === 0 || (lines[i].length === 1 && lines[i][0] === "")) continue;
         const obj = {};
-        headers.forEach((h, idx) => { obj[h] = row[idx] ? row[idx].trim() : ''; });
-        return obj;
-    });
+        headers.forEach((h, j) => { obj[h] = lines[i][j] || ''; });
+        data.push(obj);
+    }
+    return data;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -225,8 +228,8 @@ function renderRounds(data, isLive) {
             let isActive = false;
 
             if (!valid) {
-                badge = `<span class="status-badge live">Scheduled</span>`;
-                timeInfo = `<span><strong>Schedule:</strong> TBA</span>`;
+                badge = ``;
+                timeInfo = ``;
                 actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
             } else if (now < release) {
                 const diff = release - now;
@@ -294,8 +297,8 @@ function renderRounds(data, isLive) {
                 let isActive = false;
 
                 if (!valid) {
-                    badge = `<span class="status-badge live">Scheduled</span>`;
-                    timeInfo = `<span><strong>Schedule:</strong> TBA</span>`;
+                    badge = ``;
+                    timeInfo = ``;
                     actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
                 } else if (now < release) {
                     const diff = release - now;
