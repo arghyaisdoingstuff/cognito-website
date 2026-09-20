@@ -4,8 +4,26 @@
  * Rounds Timer Engine, Bar Chart Leaderboard (Contingent only)
  */
 
-// 1. SCROLL REVEAL & TYPEWRITER & LIGHTBOX
+// 1. SCROLL REVEAL & TYPEWRITER & LIGHTBOX & CAROUSEL
 // ==========================================================================
+function initCarousel() {
+    const carousel = document.getElementById('gallery-carousel');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+
+    if (!carousel || !prevBtn || !nextBtn) return;
+
+    prevBtn.addEventListener('click', () => {
+        const item = carousel.querySelector('.gallery-item');
+        if (item) carousel.scrollBy({ left: -(item.offsetWidth + 16), behavior: 'smooth' });
+    });
+
+    nextBtn.addEventListener('click', () => {
+        const item = carousel.querySelector('.gallery-item');
+        if (item) carousel.scrollBy({ left: item.offsetWidth + 16, behavior: 'smooth' });
+    });
+}
+
 function initLightbox() {
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
@@ -518,6 +536,7 @@ function renderBarChart(isLive) {
 // ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initTypewriter();
+    initCarousel();
     initLightbox();
 
     // Mobile nav
