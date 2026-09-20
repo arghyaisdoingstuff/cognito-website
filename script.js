@@ -187,8 +187,7 @@ function renderRounds(data, isLive) {
             </div>
             <div class="accordion-content">
                 <div class="accordion-inner">
-                    <div class="explore-map">
-                        <div class="explore-path"></div>
+                    <div class="winding-track">
         `;
         
         items.forEach((r) => {
@@ -220,17 +219,17 @@ function renderRounds(data, isLive) {
             }
 
             html += `
-            <div class="explore-node">
-                <div class="explore-marker ${isActive ? 'active' : ''}"></div>
-                <div class="explore-card">
+            <div class="winding-node">
+                <div class="winding-marker ${isActive ? 'active' : ''}"></div>
+                <div class="winding-card">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
-                        <h3 class="explore-title">${r.Title || 'Exhibit'}</h3>
+                        <h3 class="winding-title">${r.Title || 'Exhibit'}</h3>
                         ${badge}
                     </div>
-                    <p class="explore-desc">${r.Description || ''}</p>
-                    <div class="map-footer">
+                    <p class="winding-desc">${r.Description || ''}</p>
+                    <div class="winding-footer">
                         <div style="font-size:0.85rem">${timeInfo}</div>
-                        <div class="map-actions">${actions}</div>
+                        <div class="winding-actions">${actions}</div>
                     </div>
                 </div>
             </div>`;
