@@ -13,15 +13,47 @@ function initCarousel() {
 
     if (!carousel || !prevBtn || !nextBtn) return;
 
-    prevBtn.addEventListener('click', () => {
+    const getItemWidth = () => {
         const item = carousel.querySelector('.gallery-item');
-        if (item) carousel.scrollBy({ left: -(item.offsetWidth + 16), behavior: 'smooth' });
-    });
+        return item ? item.offsetWidth + 16 : 300;
+    };
 
-    nextBtn.addEventListener('click', () => {
-        const item = carousel.querySelector('.gallery-item');
-        if (item) carousel.scrollBy({ left: item.offsetWidth + 16, behavior: 'smooth' });
-    });
+    const scrollNext = () => {
+        if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
+            carousel.scrollTo({ left: 0, behavior: 'smooth' }); // Loop to start
+        } else {
+            carousel.scrollBy({ left: getItemWidth(), behavior: 'smooth' });
+        }
+    };
+
+    const scrollPrev = () => {
+        if (carousel.scrollLeft <= 10) {
+            carousel.scrollTo({ left: carousel.scrollWidth, behavior: 'smooth' }); // Loop to end
+        } else {
+            carousel.scrollBy({ left: -getItemWidth(), behavior: 'smooth' });
+        }
+    };
+
+    prevBtn.addEventListener('click', scrollPrev);
+    nextBtn.addEventListener('click', scrollNext);
+
+    // Auto-looping logic
+    let autoPlayInterval = setInterval(scrollNext, 3500);
+
+    // Pause on hover or touch
+    const wrapper = document.querySelector('.gallery-carousel-wrapper');
+    if (wrapper) {
+        wrapper.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+        wrapper.addEventListener('mouseleave', () => {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(scrollNext, 3500);
+        });
+        wrapper.addEventListener('touchstart', () => clearInterval(autoPlayInterval), { passive: true });
+        wrapper.addEventListener('touchend', () => {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(scrollNext, 3500);
+        }, { passive: true });
+    }
 }
 
 function initLightbox() {
