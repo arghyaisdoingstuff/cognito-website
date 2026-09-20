@@ -487,3 +487,32 @@ function initNodes() {
 
 // Call on load
 initNodes();
+
+// ──────────────────────────────────────────────────────────────
+// 7. MAGNETIC BUTTONS
+// ──────────────────────────────────────────────────────────────
+function initMagneticButtons() {
+    const magneticElements = document.querySelectorAll('.btn, .tab-btn');
+    
+    magneticElements.forEach(btn => {
+        // We only want the magnetic pull on desktop/mouse devices
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const h = rect.width / 2;
+            const v = rect.height / 2;
+            const x = e.clientX - rect.left - h;
+            const y = e.clientY - rect.top - v;
+            
+            // The pull factor (0.3 = 30% towards the cursor)
+            btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            btn.style.transition = 'transform 0.1s ease-out';
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0px, 0px)';
+            btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // snappy bounce back
+        });
+    });
+}
+
+initMagneticButtons();

@@ -75,31 +75,31 @@ body {
 }
 .bg-orb-1 {
     width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(0,100,220,0.22) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0,100,220,0.35) 0%, transparent 70%);
     top: -15%; left: -10%;
     --dur: 22s; --delay: 0s;
 }
 .bg-orb-2 {
     width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(0,229,255,0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0,229,255,0.25) 0%, transparent 70%);
     top: 55%; right: -8%;
     --dur: 26s; --delay: -8s;
 }
 .bg-orb-3 {
     width: 700px; height: 700px;
-    background: radial-gradient(circle, rgba(28,100,242,0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(28,100,242,0.25) 0%, transparent 70%);
     top: 25%; left: 35%;
     --dur: 19s; --delay: -4s;
 }
 .bg-orb-4 {
     width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(0,229,255,0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0,229,255,0.20) 0%, transparent 70%);
     top: -5%; right: 20%;
     --dur: 30s; --delay: -14s;
 }
 .bg-orb-5 {
     width: 450px; height: 450px;
-    background: radial-gradient(circle, rgba(0,60,180,0.18) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(0,60,180,0.30) 0%, transparent 70%);
     bottom: 0; left: 20%;
     --dur: 24s; --delay: -10s;
 }
