@@ -383,112 +383,132 @@ img { max-width: 100%; height: auto; display: block; }
 
 
 /* ==========================================================================
-   CIRCUIT GRID TIMELINE (ROUNDS)
+   MAP TIMELINE & ACCORDIONS (ROUNDS)
    ========================================================================== */
-.timeline-group { margin-bottom: 70px; }
-.timeline-round-title {
+.accordion-item {
+    margin-bottom: 24px;
+    background: rgba(3,11,26,0.5);
+    border: 1px solid var(--edge);
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+.accordion-header {
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: var(--bg-glass);
+    user-select: none;
+    transition: background 0.3s ease;
+}
+.accordion-header:hover {
+    background: rgba(0,229,255,0.03);
+}
+.accordion-title {
     font-family: var(--font-display);
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: var(--primary);
-    margin-bottom: 30px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--edge-dim);
-    letter-spacing: -0.5px;
+    margin: 0;
 }
-.circuit-grid {
+.accordion-icon {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+    color: var(--primary);
+}
+.accordion-item.expanded .accordion-icon {
+    transform: rotate(180deg);
+}
+.accordion-content {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px 40px;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s ease;
 }
-.circuit-node {
+.accordion-item.expanded .accordion-content {
+    grid-template-rows: 1fr;
+}
+.accordion-inner {
+    overflow: hidden;
+}
+
+/* Central Map Timeline */
+.map-timeline {
     position: relative;
-    padding-left: 32px;
+    padding: 60px 0;
+    margin: 0 20px;
 }
-/* Dual vertical tracks */
-.circuit-node::before {
+.map-timeline::before {
     content: '';
     position: absolute;
-    top: 24px; bottom: -56px; /* extends down through the 32px gap */
-    left: 5px;
+    top: 0; bottom: 0; left: 50%;
     width: 2px;
+    margin-left: -1px;
     background: var(--edge-dim);
-    z-index: 0;
 }
-/* Stop the track from overflowing on the last items */
-.circuit-grid .circuit-node:nth-last-child(-n+2)::before {
-    bottom: 24px;
+.map-node {
+    position: relative;
+    width: 50%;
+    padding: 0 40px;
+    margin-bottom: 60px;
 }
-.circuit-marker {
+.map-node:last-child { margin-bottom: 0; }
+
+.map-node:nth-child(odd) {
+    left: 0;
+    text-align: right;
+}
+.map-node:nth-child(even) {
+    left: 50%;
+    text-align: left;
+}
+
+.map-marker {
     position: absolute;
-    top: 24px; left: 0;
-    width: 12px; height: 12px;
+    top: 0;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--edge-hover);
     border: 2px solid var(--bg);
     z-index: 2;
     transition: background 0.3s ease, box-shadow 0.3s ease;
 }
-.circuit-marker.active {
+.map-node:nth-child(odd) .map-marker { right: -7px; }
+.map-node:nth-child(even) .map-marker { left: -7px; }
+.map-marker.active {
     background: var(--primary);
     box-shadow: 0 0 12px var(--primary-glow);
 }
-.circuit-card {
-    background: rgba(3,11,26,0.5);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--edge);
-    border-radius: 12px;
+
+/* Content styling */
+.map-card {
+    display: inline-block;
+    text-align: left;
+    background: var(--bg-glass);
+    border: 1px solid var(--edge-dim);
     padding: 24px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    transition: border-color 0.3s ease;
+}
+.map-card:hover { border-color: var(--edge-hover); }
+
+.map-title { font-size: 1.15rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px; }
+.map-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px; }
+
+/* Footer elements */
+.map-footer {
     display: flex;
     flex-direction: column;
-}
-.circuit-card:hover {
-    border-color: var(--edge-hover);
-    box-shadow: 0 4px 24px rgba(0,229,255,0.06);
-}
-.circuit-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 12px;
-}
-.circuit-title {
-    font-size: 1.15rem;
-    color: var(--text-primary);
-    font-weight: 600;
-    margin: 0;
-}
-.circuit-desc {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    flex-grow: 1; /* pushes footer down */
-}
-.circuit-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
     gap: 16px;
     padding-top: 16px;
     border-top: 1px dashed var(--edge-dim);
 }
-.circuit-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.85rem;
-}
-.circuit-actions {
-    display: flex;
-    gap: 8px;
-}
-.circuit-actions .btn {
-    padding: 6px 14px;
-    font-size: 0.8rem;
-}
+.map-actions { display: flex; gap: 8px; }
+.map-actions .btn { padding: 6px 14px; font-size: 0.8rem; }
 
 /* ==========================================================================
    SECTION HEADERS
@@ -906,9 +926,9 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .gallery-item.large { grid-column:span 1; }
 
     .footer-top { grid-template-columns:1fr; }
-    .circuit-grid { grid-template-columns: 1fr; gap: 24px; }
-    .circuit-grid .circuit-node:nth-last-child(1)::before { bottom: 24px; } /* Only the last 1 stops on 1col */
-    .circuit-footer { flex-direction: column; align-items: flex-start; gap: 16px; }
-    .circuit-actions { width: 100%; }
-    .circuit-actions .btn { flex-grow: 1; text-align: center; }
+    .map-timeline::before { left: 24px; margin-left: 0; }
+    .map-node { width: 100%; padding: 0 0 0 64px !important; left: 0 !important; text-align: left !important; }
+    .map-marker { left: 17px !important; right: auto !important; }
+    .map-card { max-width: 100%; }
+    .accordion-header { padding: 20px; }
 }

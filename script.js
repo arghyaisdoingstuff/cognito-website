@@ -177,12 +177,18 @@ function renderRounds(data, isLive) {
 
     let html = '';
     let animDelay = 1;
+    let isFirst = true;
 
     for (const [roundName, items] of Object.entries(grouped)) {
         html += `
-        <div class="timeline-group reveal reveal-delay-${(animDelay % 4) + 1}">
-            <h2 class="timeline-round-title">${roundName}</h2>
-            <div class="circuit-grid">
+        <div class="accordion-item reveal reveal-delay-${(animDelay % 4) + 1} ${isFirst ? 'expanded' : ''}">
+            <div class="accordion-header">
+                <h2 class="accordion-title">${roundName}</h2>
+                <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="accordion-content">
+                <div class="accordion-inner">
+                    <div class="map-timeline">
         `;
         
         items.forEach((r) => {
@@ -214,29 +220,41 @@ function renderRounds(data, isLive) {
             }
 
             html += `
-            <div class="circuit-node">
-                <div class="circuit-marker ${isActive ? 'active' : ''}"></div>
-                <div class="circuit-card">
-                    <div class="circuit-header">
-                        <h3 class="circuit-title">${r.Title || 'Exhibit'}</h3>
+            <div class="map-node">
+                <div class="map-marker ${isActive ? 'active' : ''}"></div>
+                <div class="map-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px">
+                        <h3 class="map-title">${r.Title || 'Exhibit'}</h3>
                         ${badge}
                     </div>
-                    <p class="circuit-desc">${r.Description || ''}</p>
-                    <div class="circuit-footer">
-                        <div class="circuit-meta">${timeInfo}</div>
-                        <div class="circuit-actions">${actions}</div>
+                    <p class="map-desc">${r.Description || ''}</p>
+                    <div class="map-footer">
+                        <div style="font-size:0.85rem">${timeInfo}</div>
+                        <div class="map-actions">${actions}</div>
                     </div>
                 </div>
             </div>`;
         });
         
         html += `
+                    </div>
+                </div>
             </div>
         </div>`;
+        
         animDelay++;
+        isFirst = false;
     }
 
     container.innerHTML = html;
+    
+    // Attach Accordion Listeners
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const item = header.parentElement;
+            item.classList.toggle('expanded');
+        });
+    });
     initScrollReveal();
 }
 
