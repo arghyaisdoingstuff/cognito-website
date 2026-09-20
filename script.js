@@ -119,8 +119,8 @@ const SAMPLE_SCORES = [
 // ──────────────────────────────────────────────────────────────
 // 4. ROUNDS ENGINE
 // ──────────────────────────────────────────────────────────────
-// Default to first tab's filter (Case Competition)
-let activeRoundFilter = 'Case Competition';
+// Default to first tab's filter (Contingent)
+let activeRoundFilter = 'Contingent';
 
 async function initRounds() {
     const container = document.getElementById('rounds-container');
