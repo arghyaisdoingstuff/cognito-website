@@ -72,6 +72,8 @@ body {
     filter: blur(80px);
     opacity: 0;
     animation: orbCycle var(--dur, 20s) var(--delay, 0s) infinite ease-in-out;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 .bg-orb-1 {
     width: 600px; height: 600px;
@@ -123,6 +125,8 @@ body {
     opacity: 0.03;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     background-repeat: repeat;
+    will-change: transform, filter;
+    transform: translateZ(0);
 }
 
 a { color: var(--primary); text-decoration: none; transition: color 0.2s; }
