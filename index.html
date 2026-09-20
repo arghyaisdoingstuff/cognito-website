@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- Always-moving background orbs -->
+<div class="bg-canvas">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-orb bg-orb-4"></div>
+    <div class="bg-orb bg-orb-5"></div>
+</div>
 <div class="grain-overlay"></div>
 
 <!-- Navigation -->
@@ -33,32 +42,42 @@
 
 <div class="page-wrap">
 
-<!-- Hero -->
+<!-- ───────────── HERO ───────────── -->
+<!-- First thing user sees: logo + tagline only, fullscreen -->
 <header class="hero-section">
-    <div class="container">
-        <div class="hero-badge reveal">✦ 19th Edition • International Commerce Fest ✦</div>
-
-        <div class="hero-logo-wrap reveal reveal-delay-1">
+    <div class="hero-inner">
+        <div class="hero-logo-wrap">
             <img src="assets/cognito-logo.png" alt="Cognito 2026" class="hero-logo">
         </div>
 
-        <h1 class="hero-title reveal reveal-delay-2">Welcome to <span class="accent">Reality</span></h1>
-        <p class="hero-tagline reveal reveal-delay-3">
-            Step into the <strong>Cognito Universe</strong> — high-pressure corporate simulations, premier finance case challenges, and international competition at CHRIST University.
+        <h1 class="hero-title">Welcome to <span class="accent">Reality</span></h1>
+        <p class="hero-tagline">
+            <strong>Dec 15–17, 2026</strong> &nbsp;•&nbsp; CHRIST University, Bengaluru
         </p>
 
-        <div class="hero-actions reveal reveal-delay-4">
+        <div class="hero-actions">
             <a href="#" target="_blank" class="btn btn-primary btn-pill link-case">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Register: Case Competition
             </a>
             <a href="#" target="_blank" class="btn btn-outline btn-pill link-quiz">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Register: Contingent & Quiz
+                Register: Contingent &amp; Quiz
             </a>
         </div>
+    </div>
 
-        <div class="stats-ribbon reveal-scale">
+    <!-- Scroll cue -->
+    <div class="scroll-cue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <span>Scroll</span>
+    </div>
+</header>
+
+<!-- ───────────── STATS ───────────── -->
+<section style="padding:0 0 80px">
+    <div class="container">
+        <div class="stats-ribbon reveal-stagger">
             <div class="stat-cell">
                 <div class="stat-val">₹2,50,000</div>
                 <div class="stat-label">Cash Pool</div>
@@ -77,15 +96,15 @@
             </div>
         </div>
     </div>
-</header>
+</section>
 
-<!-- Trailer -->
-<section class="section-gap">
+<!-- ───────────── TRAILER ───────────── -->
+<section class="section-gap" style="padding-top:0">
     <div class="container">
         <div class="section-header text-center reveal">
             <span class="section-tag">Official Teaser</span>
             <h2 class="section-title">Step Inside the Simulation</h2>
-            <p class="section-subtitle" style="margin:0 auto">Watch the official Cognito trailer to preview the intensity awaiting you.</p>
+            <p class="section-subtitle" style="margin:0 auto">Watch the official Cognito trailer to feel the intensity awaiting you.</p>
         </div>
         <div class="trailer-wrapper reveal-scale">
             <div class="video-container">
@@ -95,49 +114,78 @@
     </div>
 </section>
 
-<!-- About Pillars -->
+<!-- ───────────── ABOUT PILLARS (full-width alternating rows) ───────────── -->
 <section class="section-gap">
     <div class="container">
         <div class="section-header text-center reveal">
             <span class="section-tag">Our Legacy</span>
             <h2 class="section-title">The Foundations of Cognito</h2>
-            <p class="section-subtitle" style="margin:0 auto">Bridging theoretical commerce and challenging corporate realities for two decades.</p>
+            <p class="section-subtitle" style="margin:0 auto">Two decades of bridging the gap between theoretical commerce and corporate reality.</p>
         </div>
 
-        <div class="grid-2">
-            <div class="card card-accent-top reveal reveal-delay-1">
-                <div class="card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <!-- Cognito -->
+        <div class="about-pillar reveal" style="--orb-color:rgba(0,229,255,0.08)">
+            <div class="about-pillar-visual">
+                <div class="pillar-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
-                <h3>About Cognito</h3>
-                <p>COGNITO is the department's international A-level intercollegiate Commerce fest that has advanced exponentially in caliber and scope, presenting young professionals with opportunities to explore and embrace the corporate arena. As a spearhead for corporate simulation, Cognito bridges the gap between imagined conditions and the true realities of business.</p>
+                <span class="pillar-num">01</span>
             </div>
-            <div class="card card-accent-top reveal reveal-delay-2">
-                <div class="card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-1.02.98H7"/><path d="M14 14.66V17c0 .55.47.98 1.02.98H17"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                </div>
-                <h3>Professionals Festing Club</h3>
-                <p>A student-led platform committed to cultivating competitive excellence, professional acumen, and leadership. Operating under the motto <em>"Tempus • Imperium • Potentia"</em>, the Club enables students to apply classroom learning in high-pressure environments while developing sound judgment and strategic execution under real stakes.</p>
+            <div class="about-pillar-content">
+                <div class="about-pillar-tag">The Fest</div>
+                <h3 class="about-pillar-title">About Cognito</h3>
+                <p class="about-pillar-text">COGNITO is the department's international A-level intercollegiate Commerce fest that has advanced exponentially in caliber and scope, presenting young professionals with opportunities to explore and embrace the corporate arena. As a spearhead for corporate simulation, Cognito bridges the gap between imagined conditions and the true realities of business.</p>
             </div>
-            <div class="card card-accent-top reveal reveal-delay-3">
-                <div class="card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+
+        <!-- PFC -->
+        <div class="about-pillar reverse reveal" style="--orb-color:rgba(28,100,242,0.1)">
+            <div class="about-pillar-visual">
+                <div class="pillar-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-1.02.98H7"/><path d="M14 14.66V17c0 .55.47.98 1.02.98H17"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                 </div>
-                <h3>Department of Professional Studies</h3>
-                <p>Launched in 2002, the Department of Professional Studies (DPS) is built on a strong foundation of academic excellence, application-based learning, and futuristic vision. Home to more than 2,500 students, DPS offers an academic journey enriched by international professional body partnerships and seasoned corporate faculty.</p>
+                <span class="pillar-num">02</span>
             </div>
-            <div class="card card-accent-top reveal reveal-delay-4">
-                <div class="card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <div class="about-pillar-content">
+                <div class="about-pillar-tag">The Club</div>
+                <h3 class="about-pillar-title">Professionals Festing Club</h3>
+                <p class="about-pillar-text">A student-led platform committed to cultivating competitive excellence, professional acumen, and leadership. Operating under the motto <em>"Tempus • Imperium • Potentia"</em>, the Club enables students to apply classroom learning in high-pressure environments while developing sound judgment and strategic execution under real stakes.</p>
+            </div>
+        </div>
+
+        <!-- DPS -->
+        <div class="about-pillar reveal" style="--orb-color:rgba(0,100,200,0.1)">
+            <div class="about-pillar-visual">
+                <div class="pillar-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                 </div>
-                <h3>CHRIST (Deemed to be University)</h3>
-                <p>Established in 1969, CHRIST (Deemed to be University) has undertaken path-breaking initiatives in Indian Higher Education. Dedicated to <em>"Excellence and Service"</em>, the premier institution provides its students with comprehensive excellence, preparing them for leadership in an ever-evolving global landscape.</p>
+                <span class="pillar-num">03</span>
+            </div>
+            <div class="about-pillar-content">
+                <div class="about-pillar-tag">The Department</div>
+                <h3 class="about-pillar-title">Department of Professional Studies</h3>
+                <p class="about-pillar-text">Launched in 2002, the Department of Professional Studies (DPS) is built on a strong foundation of academic excellence, application-based learning, and futuristic vision. Home to more than 2,500 students, DPS offers an academic journey enriched by international professional body partnerships and seasoned corporate faculty.</p>
+            </div>
+        </div>
+
+        <!-- CHRIST -->
+        <div class="about-pillar reverse reveal" style="--orb-color:rgba(0,229,255,0.06)">
+            <div class="about-pillar-visual">
+                <div class="pillar-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                </div>
+                <span class="pillar-num">04</span>
+            </div>
+            <div class="about-pillar-content">
+                <div class="about-pillar-tag">The Institution</div>
+                <h3 class="about-pillar-title">CHRIST (Deemed to be University)</h3>
+                <p class="about-pillar-text">Established in 1969, CHRIST (Deemed to be University) has undertaken path-breaking initiatives in Indian Higher Education. Dedicated to <em>"Excellence and Service"</em>, the premier institution provides its students with comprehensive excellence, preparing them for leadership in an ever-evolving global landscape.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Gallery -->
+<!-- ───────────── GALLERY ───────────── -->
 <section class="section-gap">
     <div class="container">
         <div class="section-header text-center reveal">
@@ -166,15 +214,15 @@
     </div>
 </section>
 
-<!-- Past Sponsors CTA -->
+<!-- ───────────── CTA ───────────── -->
 <section class="section-gap" style="padding-top:10px">
     <div class="container">
         <div class="cta-box reveal-scale">
-            <span class="section-tag" style="margin-bottom:12px">Corporate Alliance</span>
+            <span class="section-tag" style="margin-bottom:14px">Corporate Alliance</span>
             <h2 class="cta-title">Backed by Visionary Industry Leaders</h2>
-            <p class="cta-desc">Over the years, Cognito has partnered with top organizations, dynamic startups, and leading brands sharing our vision for youth leadership.</p>
-            <a href="sponsors.html" class="btn btn-primary btn-pill" style="font-size:1rem;padding:14px 34px">
-                Check Out Our Past Sponsors
+            <p class="cta-desc">Over the years, Cognito has partnered with top organisations, dynamic startups, and leading brands who share our vision for youth leadership.</p>
+            <a href="sponsors.html" class="btn btn-primary btn-pill" style="font-size:1rem;padding:14px 36px">
+                View Our Past Sponsors
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
         </div>
@@ -183,7 +231,6 @@
 
 </div><!-- .page-wrap -->
 
-<!-- Footer -->
 <footer>
     <div class="container">
         <div class="footer-top">
@@ -195,7 +242,7 @@
                 <h5>Navigation</h5>
                 <ul>
                     <li><a href="index.html">Home</a></li>
-                    <li><a href="rounds.html">Rounds & Cases</a></li>
+                    <li><a href="rounds.html">Rounds &amp; Cases</a></li>
                     <li><a href="scores.html">Live Scores</a></li>
                     <li><a href="sponsors.html">Sponsors</a></li>
                     <li><a href="contact.html">Contact</a></li>

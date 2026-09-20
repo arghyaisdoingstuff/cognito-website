@@ -11,8 +11,8 @@ const CONFIG = {
     // -------------------------------------------------------------
     // Instructions: In Google Sheets, go to File > Share > Publish to web
     // Select the tab, choose 'Comma-separated values (.csv)', and copy the URL.
-    SCORES_CSV_URL: "", 
-    ROUNDS_CSV_URL: "",
+    SCORES_CSV_URL: "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Scores",
+    ROUNDS_CSV_URL: "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Rounds",
 
     // -------------------------------------------------------------
     // 2. Official Registration Links

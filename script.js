@@ -1,29 +1,32 @@
 /**
- * Cognito 2026 - Client Engine
- * Scroll Reveals, Page Transitions, CSV Parsing, Rounds Timer, Leaderboard (Contingent only)
+ * Cognito 2026 - Client Engine v2
+ * Scroll Reveals (IntersectionObserver), CSV Parsing,
+ * Rounds Timer Engine, Bar Chart Leaderboard (Contingent only)
  */
 
 // ──────────────────────────────────────────────────────────────
-// 1. SCROLL REVEAL (Intersection Observer)
+// 1. SCROLL REVEAL
 // ──────────────────────────────────────────────────────────────
 function initScrollReveal() {
-    const reveals = document.querySelectorAll('.reveal, .reveal-scale, .reveal-left, .reveal-right');
-    if (!reveals.length) return;
+    const targets = document.querySelectorAll(
+        '.reveal, .reveal-scale, .reveal-left, .reveal-right, .reveal-stagger'
+    );
+    if (!targets.length) return;
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                observer.unobserve(entry.target); // Fire once
+                observer.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
-    reveals.forEach(el => observer.observe(el));
+    targets.forEach(el => observer.observe(el));
 }
 
 // ──────────────────────────────────────────────────────────────
-// 2. CSV PARSER (handles quotes, multiline)
+// 2. CSV PARSER
 // ──────────────────────────────────────────────────────────────
 function parseCSV(text) {
     if (!text || !text.trim()) return [];
@@ -62,7 +65,7 @@ function parseCSV(text) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// 3. SAMPLE DATA (Brochure-Accurate Fallbacks)
+// 3. SAMPLE DATA (brochure-accurate fallbacks)
 // ──────────────────────────────────────────────────────────────
 const SAMPLE_ROUNDS = [
     {
@@ -116,7 +119,8 @@ const SAMPLE_SCORES = [
 // ──────────────────────────────────────────────────────────────
 // 4. ROUNDS ENGINE
 // ──────────────────────────────────────────────────────────────
-let activeRoundFilter = 'All';
+// Default to first tab's filter (Case Competition)
+let activeRoundFilter = 'Case Competition';
 
 async function initRounds() {
     const container = document.getElementById('rounds-container');
@@ -154,18 +158,17 @@ function renderRounds(data, isLive) {
 
     if (notice) {
         notice.innerHTML = isLive
-            ? `<div class="sample-banner"><div class="live-indicator"><span class="live-dot"></span> <strong>Live Sync Active</strong></div></div>`
-            : `<div class="sample-banner"><strong>Preview Mode</strong> — Connect your Google Sheet CSV in config.js for live data.</div>`;
+            ? `<div class="sample-banner"><div class="live-indicator"><span class="live-dot"></span><strong>Live Sync Active</strong></div></div>`
+            : `<div class="sample-banner"><strong>Preview Mode</strong> — Add tab names (Rounds, Scores) to your Google Sheet and ensure it is published.</div>`;
     }
 
     const filtered = data.filter(r => {
         if ((r.Show || 'yes').toLowerCase() !== 'yes') return false;
-        if (activeRoundFilter === 'All') return true;
         return (r.Event || '').toLowerCase().includes(activeRoundFilter.toLowerCase());
     });
 
     if (!filtered.length) {
-        container.innerHTML = `<div class="card text-center" style="grid-column:1/-1;padding:40px;"><h3>No rounds listed in this category yet.</h3><p>Round schedules will appear here automatically.</p></div>`;
+        container.innerHTML = `<div class="card text-center" style="grid-column:1/-1;padding:40px;"><h3>No rounds listed in this category yet.</h3><p>Round schedules will appear here automatically once added to the Sheet.</p></div>`;
         return;
     }
 
@@ -193,7 +196,7 @@ function renderRounds(data, isLive) {
             actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline">Read Case Brief</a><a href="${r.SubmitLink}" target="_blank" class="btn btn-cyan">Submit Solution</a>`;
         } else {
             badge = `<span class="status-badge closed">🔴 Closed</span>`;
-            timeInfo = `<div class="round-meta-item"><span><strong>Deadline Passed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>`;
+            timeInfo = `<div class="round-meta-item"><span><strong>Closed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} IST</span></div>`;
             actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
         }
 
@@ -209,12 +212,11 @@ function renderRounds(data, isLive) {
         </div>`;
     }).join('');
 
-    // Re-observe new cards for scroll reveal
     initScrollReveal();
 }
 
 // ──────────────────────────────────────────────────────────────
-// 5. LEADERBOARD (Contingent Only)
+// 5. BAR CHART LEADERBOARD (Contingent only)
 // ──────────────────────────────────────────────────────────────
 let allScoresData = [];
 let searchQuery = '';
@@ -227,20 +229,20 @@ async function initScores() {
     if (CONFIG.SCORES_CSV_URL && CONFIG.SCORES_CSV_URL.trim() !== "") {
         try {
             const res = await fetch(CONFIG.SCORES_CSV_URL);
-            allScoresData = parseCSV(await res.text());
-            isLive = true;
+            const text = await res.text();
+            allScoresData = parseCSV(text);
+            isLive = allScoresData.length > 0;
         } catch (e) { allScoresData = SAMPLE_SCORES; }
-    } else {
-        allScoresData = SAMPLE_SCORES;
     }
+    if (!isLive || allScoresData.length === 0) allScoresData = SAMPLE_SCORES;
 
-    renderLeaderboard(isLive);
+    renderBarChart(isLive);
 
     const search = document.getElementById('scores-search');
     if (search) {
         search.addEventListener('input', e => {
             searchQuery = e.target.value.toLowerCase().trim();
-            renderLeaderboard(isLive);
+            renderBarChart(isLive);
         });
     }
 
@@ -248,22 +250,24 @@ async function initScores() {
         setInterval(async () => {
             try {
                 const res = await fetch(CONFIG.SCORES_CSV_URL);
-                allScoresData = parseCSV(await res.text());
-                renderLeaderboard(true);
+                const text = await res.text();
+                const fresh = parseCSV(text);
+                if (fresh.length > 0) allScoresData = fresh;
+                renderBarChart(true);
             } catch (e) {}
         }, CONFIG.AUTO_REFRESH_INTERVAL);
     }
 }
 
-function renderLeaderboard(isLive) {
+function renderBarChart(isLive) {
     const container = document.getElementById('scores-table-container');
     const notice = document.getElementById('scores-notice');
     if (!container) return;
 
     if (notice) {
         notice.innerHTML = isLive
-            ? `<div class="sample-banner"><div class="live-indicator"><span class="live-dot"></span> <strong>Live Leaderboard</strong> — auto-refreshes from control sheet.</div><span style="font-size:0.78rem;color:var(--text-dim)">Updated: ${new Date().toLocaleTimeString()}</span></div>`
-            : `<div class="sample-banner"><strong>Preview Mode</strong> — Connect your Google Sheet CSV in config.js to stream real scores.</div>`;
+            ? `<div class="sample-banner"><div class="live-indicator"><span class="live-dot"></span><strong>Live Leaderboard</strong> — connected to event control sheet.</div><span style="font-size:0.78rem;color:var(--text-dim)">Updated: ${new Date().toLocaleTimeString()}</span></div>`
+            : `<div class="sample-banner"><strong>Preview Mode</strong> — Add a <em>Scores</em> tab to your Google Sheet with columns: Event, Round, Team, College, Score.</div>`;
     }
 
     // Filter to Contingent only
@@ -282,36 +286,52 @@ function renderLeaderboard(isLive) {
     filtered.sort((a, b) => (parseFloat(b.Score) || 0) - (parseFloat(a.Score) || 0));
 
     if (!filtered.length) {
-        container.innerHTML = `<div class="card text-center" style="padding:40px"><h3>No teams found${searchQuery ? ' for "' + searchQuery + '"' : ''}.</h3><p>Scores will appear here once published.</p></div>`;
+        container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>No teams found${searchQuery ? ' matching "' + searchQuery + '"' : ''}.</h3><p style="margin-top:8px">Scores will appear here once published from the event sheet.</p></div>`;
         return;
     }
 
-    container.innerHTML = `
-    <div class="table-responsive">
-        <table class="leaderboard-table">
-            <thead><tr>
-                <th style="text-align:center;width:70px">Rank</th>
-                <th>Team & Institution</th>
-                <th style="text-align:center">Round</th>
-                <th style="text-align:right;padding-right:30px">Score</th>
-            </tr></thead>
-            <tbody>
-                ${filtered.map((row, i) => {
-                    const rank = i + 1;
-                    let rc = '';
-                    if (rank === 1) rc = 'rank-1';
-                    else if (rank === 2) rc = 'rank-2';
-                    else if (rank === 3) rc = 'rank-3';
-                    return `<tr>
-                        <td style="text-align:center"><span class="rank-pill ${rc}">${rank}</span></td>
-                        <td><div class="team-cell">${row.Team||'Team '+rank}</div><div class="college-cell">${row.College||''}</div></td>
-                        <td style="text-align:center;color:var(--text-secondary);font-size:0.88rem">${row.Round||'Overall'}</td>
-                        <td class="score-cell" style="text-align:right;padding-right:30px">${row.Score||'0'}</td>
-                    </tr>`;
-                }).join('')}
-            </tbody>
-        </table>
-    </div>`;
+    // Compute max score for bar width proportions
+    const maxScore = Math.max(...filtered.map(r => parseFloat(r.Score) || 0));
+
+    const rows = filtered.map((row, i) => {
+        const rank = i + 1;
+        const score = parseFloat(row.Score) || 0;
+        const pct = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
+
+        let rankClass = '';
+        let fillClass = '';
+        if (rank === 1) { rankClass = 'rank-1'; fillClass = 'rank-1-fill'; }
+        else if (rank === 2) { rankClass = 'rank-2'; fillClass = 'rank-2-fill'; }
+        else if (rank === 3) { rankClass = 'rank-3'; fillClass = 'rank-3-fill'; }
+
+        return `
+        <div class="bar-row" data-pct="${pct}" data-fill="${fillClass}">
+            <span class="bar-rank ${rankClass}">${rank}</span>
+            <div class="bar-team-info">
+                <div class="bar-team-name">${row.Team || 'Team ' + rank}</div>
+                <div class="bar-college">${row.College || ''}</div>
+            </div>
+            <div class="bar-track">
+                <div class="bar-fill ${fillClass}" style="width:0%"></div>
+            </div>
+            <div class="bar-score">${score}</div>
+        </div>
+        ${rank < filtered.length ? '<div class="bar-divider"></div>' : ''}`;
+    }).join('');
+
+    container.innerHTML = `<div class="bar-chart-container">${rows}</div>`;
+
+    // Animate bars in after a short delay
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            container.querySelectorAll('.bar-fill').forEach((fill, i) => {
+                const row = fill.closest('.bar-row');
+                const pct = row ? row.getAttribute('data-pct') : 0;
+                fill.style.transitionDelay = `${i * 0.07}s`;
+                fill.style.width = pct + '%';
+            });
+        }, 120);
+    });
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -325,16 +345,16 @@ document.addEventListener('DOMContentLoaded', () => {
         toggle.addEventListener('click', () => navLinks.classList.toggle('open'));
     }
 
-    // Bind links
-    document.querySelectorAll('.link-case').forEach(el => el.href = CONFIG.CASE_COMPETITION_LINK);
-    document.querySelectorAll('.link-quiz').forEach(el => el.href = CONFIG.CONTINGENT_QUIZ_LINK);
+    // Bind config links
+    document.querySelectorAll('.link-case').forEach(el => { el.href = CONFIG.CASE_COMPETITION_LINK; });
+    document.querySelectorAll('.link-quiz').forEach(el => { el.href = CONFIG.CONTINGENT_QUIZ_LINK; });
     document.querySelectorAll('.contact-email-link').forEach(el => {
         el.href = `mailto:${CONFIG.CONTACT_EMAIL}`;
-        if (!el.textContent.includes('@')) el.textContent = CONFIG.CONTACT_EMAIL;
+        if (!el.textContent.trim()) el.textContent = CONFIG.CONTACT_EMAIL;
     });
     document.querySelectorAll('.instagram-link').forEach(el => {
         el.href = CONFIG.INSTAGRAM_URL;
-        if (!el.textContent.includes('@')) el.textContent = `@${CONFIG.INSTAGRAM_HANDLE}`;
+        if (!el.textContent.trim()) el.textContent = `@${CONFIG.INSTAGRAM_HANDLE}`;
     });
 
     // Trailer
