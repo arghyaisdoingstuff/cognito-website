@@ -264,6 +264,8 @@ img { max-width: 100%; height: auto; display: block; }
 .btn-outline:hover { background:var(--primary-ghost); color:#fff; transform:translateY(-2px); box-shadow:0 4px 20px var(--primary-glow); }
 .btn-secondary { background:rgba(255,255,255,0.06); border:1px solid var(--edge-dim); color:var(--text-primary); }
 .btn-secondary:hover { color:var(--text-primary); background:rgba(255,255,255,0.1); transform:translateY(-2px); }
+.btn-hero { background:transparent; border:1px solid var(--primary); color:var(--primary); }
+.btn-hero:hover { background:linear-gradient(135deg,#00C6FF 0%,#0072FF 100%); color:#fff; border-color:transparent; transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,114,255,0.5); }
 
 /* ==========================================================================
    HERO SECTION — fullscreen with only logo + tagline visible first
