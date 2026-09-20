@@ -76,8 +76,11 @@ function initTypewriter() {
             j++;
             setTimeout(type, 25);
         } else {
-            // Typing complete, fade out cursor after 3 seconds
-            setTimeout(() => cursor.style.display = 'none', 3000);
+            // Typing complete, hide cursor seamlessly without layout shift
+            setTimeout(() => {
+                cursor.style.animation = 'none';
+                cursor.style.opacity = '0';
+            }, 3000);
         }
     };
     
