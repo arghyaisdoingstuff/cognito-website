@@ -4,8 +4,43 @@
  * Rounds Timer Engine, Bar Chart Leaderboard (Contingent only)
  */
 
-// 1. SCROLL REVEAL & TYPEWRITER
+// 1. SCROLL REVEAL & TYPEWRITER & LIGHTBOX
 // ==========================================================================
+function initLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const closeBtn = document.querySelector('.lightbox-close');
+    
+    if (!lightbox || !lightboxImg || !closeBtn) return;
+
+    document.querySelectorAll('.gallery-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const img = item.querySelector('img');
+            if (img) {
+                lightboxImg.src = img.src;
+                lightbox.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        });
+    });
+
+    const closeLightbox = () => {
+        lightbox.classList.remove('show');
+        document.body.style.overflow = '';
+        setTimeout(() => {
+            if (!lightbox.classList.contains('show')) lightboxImg.src = '';
+        }, 300);
+    };
+
+    closeBtn.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', e => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && lightbox.classList.contains('show')) closeLightbox();
+    });
+}
+
 function initTypewriter() {
     const el = document.querySelector('.typewriter-target');
     if (!el) return;
@@ -480,6 +515,7 @@ function renderBarChart(isLive) {
 // ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initTypewriter();
+    initLightbox();
 
     // Mobile nav
     const toggle = document.querySelector('.mobile-toggle');
