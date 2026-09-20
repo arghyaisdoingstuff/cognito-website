@@ -533,8 +533,8 @@ function initMagneticButtons() {
             const x = e.clientX - rect.left - h;
             const y = e.clientY - rect.top - v;
             
-            // The pull factor (0.3 = 30% towards the cursor)
-            btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            // The pull factor (reduced from 30% to 15% for a more gentle, subtle effect)
+            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
             btn.style.transition = 'transform 0.1s ease-out';
         });
 
