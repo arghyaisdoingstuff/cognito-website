@@ -380,33 +380,7 @@ img { max-width: 100%; height: auto; display: block; }
     50%     { opacity:1; transform: translateX(-50%) translateY(8px); }
 }
 
-/* Stats Ribbon */
-.stats-ribbon {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    max-width: 880px;
-    margin: 0 auto;
-    background: var(--edge-dim);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--edge);
-}
-.stat-cell {
-    background: var(--bg-glass);
-    backdrop-filter: blur(12px);
-    padding: 28px 16px;
-    text-align: center;
-}
-.stat-val {
-    font-family: var(--font-display);
-    font-size: 1.7rem; font-weight: 700;
-    color: var(--primary); line-height: 1.2;
-}
-.stat-label {
-    font-size: 0.8rem; color: var(--text-dim);
-    text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
-}
+
 
 /* ==========================================================================
    SECTION HEADERS
@@ -787,7 +761,7 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
 @media (max-width: 1024px) {
     .grid-4 { grid-template-columns:repeat(2,1fr); }
     .footer-top { grid-template-columns:1fr 1fr; }
-    .stats-ribbon { grid-template-columns:repeat(2,1fr); }
+
     .about-pillar { grid-template-columns:1fr; min-height:auto; }
     .about-pillar-visual { border-right:none; border-bottom:1px solid var(--edge-dim); min-height:200px; }
     .about-pillar.reverse .about-pillar-visual { order:0; border-left:none; border-bottom:1px solid var(--edge-dim); }
@@ -809,7 +783,7 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .grid-2, .grid-3 { grid-template-columns:1fr; }
     .gallery-grid { grid-template-columns:1fr; grid-auto-rows:200px; }
     .gallery-item.large { grid-column:span 1; }
-    .stats-ribbon { grid-template-columns:1fr; }
+
     .footer-top { grid-template-columns:1fr; }
     .bar-row { grid-template-columns:36px 1fr 70px; }
 }
