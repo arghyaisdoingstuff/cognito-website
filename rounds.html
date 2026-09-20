@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Rounds | Cognito 2026</title>
+    <meta name="description" content="Access live case briefs and submit solutions for Cognito 2026 rounds.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="grain-overlay"></div>
+
+<nav class="navbar">
+    <div class="container nav-inner">
+        <a href="index.html" class="brand-link">
+            <img src="assets/cognito-logo.png" alt="Cognito" class="brand-icon">
+            <span class="brand-name">COGNITO <span>2026</span></span>
+        </a>
+        <button class="mobile-toggle" aria-label="Toggle navigation">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="rounds.html" class="active">Rounds</a></li>
+            <li><a href="scores.html">Live Scores</a></li>
+            <li><a href="sponsors.html">Sponsors</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="scores.html" class="btn btn-pill nav-cta">Leaderboard</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="page-wrap">
+
+<header class="section-gap" style="padding-bottom:30px">
+    <div class="container text-center">
+        <span class="section-tag reveal">Competition Portal</span>
+        <h1 class="section-title reveal reveal-delay-1">Event Rounds & Submissions</h1>
+        <p class="section-subtitle reveal reveal-delay-2" style="margin:0 auto 30px">
+            Rounds unlock automatically at their scheduled release time. Review briefs and submit before the countdown ends.
+        </p>
+        <div class="filter-tabs reveal reveal-delay-3">
+            <button class="tab-btn active" data-round-filter="All">All Events</button>
+            <button class="tab-btn" data-round-filter="Case Competition">Case Competition</button>
+            <button class="tab-btn" data-round-filter="Contingent">Contingent</button>
+            <button class="tab-btn" data-round-filter="Business Quiz">Business Quiz</button>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <div id="rounds-notice" class="reveal"></div>
+
+    <!-- Business Quiz Info -->
+    <div class="card card-accent-top reveal" style="margin-bottom:32px;border-color:var(--primary-dim)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+            <span class="section-tag" style="margin:0">Special Event</span>
+            <span class="status-badge live">In-Person Challenge</span>
+        </div>
+        <h3 style="font-size:1.3rem">Cognito Business Quiz</h3>
+        <p>A fast-paced intellectual clash connecting the dots across global commerce, finance, pop culture, advertising, and sports — through audio-visual rounds and executive trivia.</p>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.88rem;color:var(--text-secondary);margin-top:14px">
+            <div><strong>Team Size:</strong> 2 Members</div>
+            <div><strong>Dates:</strong> Dec 15–17, 2026</div>
+            <div><strong>Venue:</strong> CHRIST Central Campus</div>
+        </div>
+    </div>
+
+    <!-- Dynamic Rounds -->
+    <div class="grid-2" id="rounds-container"></div>
+
+    <!-- Submission Guidelines -->
+    <div class="card reveal" style="margin-top:45px;border-left:3px solid var(--secondary)">
+        <h3 style="color:var(--primary);font-size:1.15rem">Submission Protocol</h3>
+        <ul style="color:var(--text-secondary);font-size:0.92rem;margin-left:20px;line-height:1.9;margin-top:10px">
+            <li>Upload in <strong>PDF or PPTX</strong> format, max <strong>50 MB</strong>.</li>
+            <li>Include your <strong>Team ID</strong> and Team Leader email.</li>
+            <li>Only the <strong>latest submission</strong> before the deadline is evaluated.</li>
+            <li>Don't wait until the final minute — Google Forms processing may delay late entries.</li>
+        </ul>
+    </div>
+</main>
+
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <h4>COGNITO 2026</h4>
+                <p>Department of Professional Studies, CHRIST (Deemed to be University), Bengaluru.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Navigation</h5>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="rounds.html">Rounds</a></li>
+                    <li><a href="scores.html">Live Scores</a></li>
+                    <li><a href="sponsors.html">Sponsors</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Quick Links</h5>
+                <ul>
+                    <li><a href="#" class="link-case" target="_blank">Register: Case Competition</a></li>
+                    <li><a href="#" class="link-quiz" target="_blank">Register: Contingent & Quiz</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Support</h5>
+                <ul>
+                    <li><a href="#" class="contact-email-link"></a></li>
+                    <li><a href="https://instagram.com/cognitodps" target="_blank" class="instagram-link"></a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div>© 2026 Department of Professional Studies, CHRIST (Deemed to be University).</div>
+            <div>Cognito 2026 • Welcome to Reality</div>
+        </div>
+    </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
