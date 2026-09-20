@@ -493,14 +493,24 @@ img { max-width: 100%; height: auto; display: block; }
     object-fit: contain;
     filter: drop-shadow(0 0 30px rgba(0, 229, 255, 0.15));
 }
-.pillar-num {
+.pillar-photo {
     position: absolute;
-    bottom: 20px; right: 24px;
-    font-family: var(--font-display);
-    font-size: 4rem; font-weight: 700;
-    color: rgba(0,229,255,0.06);
-    line-height: 1;
-    user-select: none;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.pillar-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    transition: opacity 0.4s ease;
+    filter: grayscale(40%);
+}
+.about-pillar:hover .pillar-photo img {
+    opacity: 0.9;
+    filter: grayscale(0%);
 }
 .about-pillar-content {
     padding: 50px 48px;
