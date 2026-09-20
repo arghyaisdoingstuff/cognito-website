@@ -303,11 +303,10 @@ img { max-width: 100%; height: auto; display: block; }
 
 .hero-inner { position:relative; z-index:1; }
 
-/* Large logo centered on screen */
 .hero-logo-wrap {
-    display: flex;
+    display: inline-flex;
     justify-content: center;
-    margin-bottom: 36px;
+    margin: 0 auto 36px auto;
 }
 .hero-logo {
     width: 180px;

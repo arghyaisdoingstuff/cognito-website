@@ -489,21 +489,14 @@ function initNodes() {
                 }
             }
 
-            // Connect to mouse (creates interactive data terminal feel)
+            // Invisible gravity well (creates interactive data terminal feel without visual snapping)
             const dxm = p.x - mouse.x;
             const dym = p.y - mouse.y;
             const distm = Math.sqrt(dxm*dxm + dym*dym);
 
-            if(distm < maxDistance * 1.5) {
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(mouse.x, mouse.y);
-                ctx.strokeStyle = `rgba(0, 240, 255, ${0.3 * (1 - distm/(maxDistance*1.5))})`;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                
+            if(distm < maxDistance * 2.5) { // Expanded radius for a gentler, wider pull
                 // Gentle pull by modifying velocity instead of snapping position
-                const force = (1 - distm / (maxDistance * 1.5)) * 0.015;
+                const force = (1 - distm / (maxDistance * 2.5)) * 0.02;
                 p.vx -= (dxm / distm) * force;
                 p.vy -= (dym / distm) * force;
             }
@@ -525,7 +518,8 @@ initNodes();
 // 7. MAGNETIC BUTTONS
 // ──────────────────────────────────────────────────────────────
 function initMagneticButtons() {
-    const magneticElements = document.querySelectorAll('.btn, .tab-btn');
+    // Select buttons and the hero logo wrapper for magnetic effect
+    const magneticElements = document.querySelectorAll('.btn, .tab-btn, .hero-logo-wrap');
     
     magneticElements.forEach(btn => {
         // We only want the magnetic pull on desktop/mouse devices
@@ -542,7 +536,7 @@ function initMagneticButtons() {
         });
 
         btn.addEventListener('mouseleave', () => {
-            btn.style.transform = 'translate(0px, 0px)';
+            btn.style.transform = '';
             btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // snappy bounce back
         });
     });
