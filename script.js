@@ -153,14 +153,7 @@ async function initRounds() {
 
 function renderRounds(data, isLive) {
     const container = document.getElementById('rounds-container');
-    const notice = document.getElementById('rounds-notice');
     if (!container) return;
-
-    if (notice) {
-        notice.innerHTML = isLive
-            ? `<div class="sample-banner"><div class="live-indicator"><span class="live-dot"></span><strong>Live Sync Active</strong></div></div>`
-            : `<div class="sample-banner"><strong>Preview Mode</strong> — Add tab names (Rounds, Scores) to your Google Sheet and ensure it is published.</div>`;
-    }
 
     const filtered = data.filter(r => {
         if ((r.Show || 'yes').toLowerCase() !== 'yes') return false;
@@ -261,14 +254,7 @@ async function initScores() {
 
 function renderBarChart(isLive) {
     const container = document.getElementById('scores-table-container');
-    const notice = document.getElementById('scores-notice');
     if (!container) return;
-
-    if (notice) {
-        notice.innerHTML = isLive
-            ? `<div class="sample-banner"><div class="live-indicator"><span class="live-dot"></span><strong>Live Leaderboard</strong> — connected to event control sheet.</div><span style="font-size:0.78rem;color:var(--text-dim)">Updated: ${new Date().toLocaleTimeString()}</span></div>`
-            : `<div class="sample-banner"><strong>Preview Mode</strong> — Add a <em>Scores</em> tab to your Google Sheet with columns: Event, Round, Team, College, Score.</div>`;
-    }
 
     // Filter to Contingent only
     let filtered = allScoresData.filter(row => {
