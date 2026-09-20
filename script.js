@@ -462,9 +462,12 @@ function initNodes() {
             p.x += p.vx;
             p.y += p.vy;
 
-            // Bounce off edges
-            if(p.x < 0 || p.x > width) p.vx *= -1;
-            if(p.y < 0 || p.y > height) p.vy *= -1;
+            // Screen-wrap (Infinite Flow)
+            if(p.x < 0) p.x = width;
+            else if(p.x > width) p.x = 0;
+            
+            if(p.y < 0) p.y = height;
+            else if(p.y > height) p.y = 0;
 
             // Draw node
             ctx.beginPath();
