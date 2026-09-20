@@ -166,31 +166,15 @@ function renderRounds(data, isLive) {
     }
 
     const now = new Date();
-    
-    // Group exhibits by their Round name
-    const grouped = {};
-    filtered.forEach(r => {
-        const roundName = r.Round || 'General';
-        if (!grouped[roundName]) grouped[roundName] = [];
-        grouped[roundName].push(r);
-    });
-
     let html = '';
     let animDelay = 1;
 
-    for (const [roundName, items] of Object.entries(grouped)) {
-        html += `
-        <div class="accordion-item reveal reveal-delay-${(animDelay % 4) + 1}">
-            <div class="accordion-header">
-                <h2 class="accordion-title">${roundName}</h2>
-                <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div class="accordion-content">
-                <div class="accordion-inner">
-                    <div class="timeline-track">
-        `;
-        
-        items.forEach((r) => {
+    const isCaseComp = activeRoundFilter.toLowerCase() === 'case competition';
+
+    if (isCaseComp) {
+        // Flat timeline for Case Competition without accordions
+        html += '<div class="timeline-track" style="margin-top:20px;">';
+        filtered.forEach(r => {
             const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
             const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
             const valid = !isNaN(release) && !isNaN(deadline);
@@ -218,12 +202,14 @@ function renderRounds(data, isLive) {
                 actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
             }
 
+            const displayTitle = r.Round ? `${r.Round}: ${r.Title || 'Exhibit'}` : (r.Title || 'Exhibit');
+
             html += `
-            <div class="timeline-node">
+            <div class="timeline-node reveal reveal-delay-${(animDelay % 4) + 1}">
                 <div class="timeline-marker ${isActive ? 'active' : ''}"></div>
                 <div class="timeline-card card">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
-                        <h3 class="timeline-title">${r.Title || 'Exhibit'}</h3>
+                        <h3 class="timeline-title">${displayTitle}</h3>
                         ${badge}
                     </div>
                     <p class="timeline-desc">${r.Description || ''}</p>
@@ -233,15 +219,82 @@ function renderRounds(data, isLive) {
                     </div>
                 </div>
             </div>`;
+            animDelay++;
         });
-        
-        html += `
+        html += '</div>';
+    } else {
+        // Group exhibits by their Round name for Accordions (Contingent, etc.)
+        const grouped = {};
+        filtered.forEach(r => {
+            const roundName = r.Round || 'General';
+            if (!grouped[roundName]) grouped[roundName] = [];
+            grouped[roundName].push(r);
+        });
+
+        for (const [roundName, items] of Object.entries(grouped)) {
+            html += `
+            <div class="accordion-item reveal reveal-delay-${(animDelay % 4) + 1}">
+                <div class="accordion-header">
+                    <h2 class="accordion-title">${roundName}</h2>
+                    <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-inner">
+                        <div class="timeline-track">
+            `;
+            
+            items.forEach((r) => {
+                const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
+                const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
+                const valid = !isNaN(release) && !isNaN(deadline);
+                let badge = '', timeInfo = '', actions = '';
+                let isActive = false;
+
+                if (!valid) {
+                    badge = `<span class="status-badge live">Scheduled</span>`;
+                    timeInfo = `<span><strong>Schedule:</strong> TBA</span>`;
+                    actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
+                } else if (now < release) {
+                    const diff = release - now;
+                    const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
+                    badge = `<span class="status-badge locked">🔒 Unlocks Soon</span>`;
+                    timeInfo = `<span><strong>Unlocks:</strong> ${release.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span><br><span style="color:var(--text-dim)">Countdown: ${d > 0 ? d + 'd ' : ''}${h}h</span>`;
+                    actions = `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;width:100%">Locked until Release</button>`;
+                } else if (now <= deadline) {
+                    isActive = true;
+                    badge = `<span class="status-badge live">🟢 Accepting Submissions</span>`;
+                    timeInfo = `<span><strong>Deadline:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`;
+                    actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline">Brief</a><a href="${r.SubmitLink}" target="_blank" class="btn btn-cyan">Submit</a>`;
+                } else {
+                    badge = `<span class="status-badge closed">🔴 Closed</span>`;
+                    timeInfo = `<span><strong>Closed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`;
+                    actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
+                }
+
+                html += `
+                <div class="timeline-node">
+                    <div class="timeline-marker ${isActive ? 'active' : ''}"></div>
+                    <div class="timeline-card card">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
+                            <h3 class="timeline-title">${r.Title || 'Exhibit'}</h3>
+                            ${badge}
+                        </div>
+                        <p class="timeline-desc">${r.Description || ''}</p>
+                        <div class="timeline-footer">
+                            <div style="font-size:0.85rem">${timeInfo}</div>
+                            <div class="timeline-actions">${actions}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            html += `
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>`;
-        
-        animDelay++;
+            </div>`;
+            animDelay++;
+        }
     }
 
     container.innerHTML = html;
