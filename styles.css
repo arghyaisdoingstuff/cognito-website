@@ -479,17 +479,20 @@ img { max-width: 100%; height: auto; display: block; }
     background: radial-gradient(ellipse 80% 80% at 50% 50%, var(--orb-color, rgba(0,229,255,0.06)) 0%, transparent 70%);
     pointer-events: none;
 }
-.pillar-icon-large {
-    width: 80px; height: 80px;
-    border-radius: 20px;
-    background: var(--primary-ghost);
-    border: 1px solid var(--edge);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--primary);
-    position: relative; z-index: 1;
-    box-shadow: 0 0 40px var(--primary-glow);
+.pillar-image {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
 }
-.pillar-icon-large svg { width:38px; height:38px; }
+.pillar-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 30px rgba(0, 229, 255, 0.15));
+}
 .pillar-num {
     position: absolute;
     bottom: 20px; right: 24px;
