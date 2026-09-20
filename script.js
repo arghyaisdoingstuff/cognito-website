@@ -187,7 +187,7 @@ function renderRounds(data, isLive) {
             </div>
             <div class="accordion-content">
                 <div class="accordion-inner">
-                    <div class="winding-track">
+                    <div class="timeline-track">
         `;
         
         items.forEach((r) => {
@@ -219,17 +219,17 @@ function renderRounds(data, isLive) {
             }
 
             html += `
-            <div class="winding-node">
-                <div class="winding-marker ${isActive ? 'active' : ''}"></div>
-                <div class="winding-card">
+            <div class="timeline-node">
+                <div class="timeline-marker ${isActive ? 'active' : ''}"></div>
+                <div class="timeline-card card">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
-                        <h3 class="winding-title">${r.Title || 'Exhibit'}</h3>
+                        <h3 class="timeline-title">${r.Title || 'Exhibit'}</h3>
                         ${badge}
                     </div>
-                    <p class="winding-desc">${r.Description || ''}</p>
-                    <div class="winding-footer">
+                    <p class="timeline-desc">${r.Description || ''}</p>
+                    <div class="timeline-footer">
                         <div style="font-size:0.85rem">${timeInfo}</div>
-                        <div class="winding-actions">${actions}</div>
+                        <div class="timeline-actions">${actions}</div>
                     </div>
                 </div>
             </div>`;
@@ -305,30 +305,38 @@ function renderBarChart(isLive) {
     if (!container) return;
 
     // Filter to Contingent only
-    let filtered = allScoresData.filter(row => {
+    let contingentRows = allScoresData.filter(row => {
         const ev = (row.Event || '').toLowerCase();
         return ev.includes('contingent');
     });
 
+    // Sort to determine true ranking
+    contingentRows.sort((a, b) => (parseFloat(b.Score) || 0) - (parseFloat(a.Score) || 0));
+    
+    // Assign permanent ranks based on full contingent list
+    contingentRows.forEach((row, i) => {
+        row._rank = i + 1;
+    });
+
+    // Apply search filter
+    let filtered = contingentRows;
     if (searchQuery) {
-        filtered = filtered.filter(row =>
+        filtered = contingentRows.filter(row =>
             (row.Team || '').toLowerCase().includes(searchQuery) ||
             (row.College || '').toLowerCase().includes(searchQuery)
         );
     }
-
-    filtered.sort((a, b) => (parseFloat(b.Score) || 0) - (parseFloat(a.Score) || 0));
 
     if (!filtered.length) {
         container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>No teams found${searchQuery ? ' matching "' + searchQuery + '"' : ''}.</h3><p style="margin-top:8px">Scores will appear here once published from the event sheet.</p></div>`;
         return;
     }
 
-    // Compute max score for bar width proportions
-    const maxScore = Math.max(...filtered.map(r => parseFloat(r.Score) || 0));
+    // Compute max score for bar width proportions (use overall max, not just filtered max)
+    const maxScore = Math.max(0, ...contingentRows.map(r => parseFloat(r.Score) || 0));
 
-    const rows = filtered.map((row, i) => {
-        const rank = i + 1;
+    const rows = filtered.map((row) => {
+        const rank = row._rank;
         const score = parseFloat(row.Score) || 0;
         const pct = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
 

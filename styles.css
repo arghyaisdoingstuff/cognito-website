@@ -434,49 +434,32 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 /* ==========================================================================
-   WINDING TRAIL MAP (S-CURVE ROUNDS)
+   TIMELINE (STANDARD ROUNDS)
    ========================================================================== */
-.winding-track {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: 60px 40px;
-}
-.winding-node {
+.timeline-track {
     position: relative;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: 60px 0;
+    padding: 20px 0;
 }
-/* Odd Nodes: Line on Left, connects across bottom to Right */
-.winding-node:nth-child(odd) {
-    border-left: 3px solid var(--edge-dim);
-    border-bottom: 3px solid var(--edge-dim);
-    border-bottom-left-radius: 40px;
-    justify-content: flex-end;
-    padding-right: 60px; /* spacing for card */
-}
-/* Even Nodes: Line on Right, connects across bottom to Left */
-.winding-node:nth-child(even) {
-    border-right: 3px solid var(--edge-dim);
-    border-bottom: 3px solid var(--edge-dim);
-    border-bottom-right-radius: 40px;
-    justify-content: flex-start;
-    padding-left: 60px; /* spacing for card */
-}
-/* The very last node just points down, no curve */
-.winding-node:last-child {
-    border-bottom: none;
-    border-radius: 0;
-    padding-bottom: 0; 
+/* The Vertical Line */
+.timeline-track::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0; left: 20px;
+    width: 2px;
+    background: var(--edge-dim);
 }
 
-/* The Glowing Timeline Marker */
-.winding-marker {
+.timeline-node {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 40px;
+}
+.timeline-node:last-child { margin-bottom: 0; }
+
+.timeline-marker {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    left: 13px; /* 20px - 7px half width */
+    top: 24px;
     width: 16px; height: 16px;
     border-radius: 50%;
     background: var(--bg);
@@ -484,68 +467,28 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 2;
     transition: all 0.3s ease;
 }
-/* Align marker exactly on the respective vertical borders */
-.winding-node:nth-child(odd) .winding-marker { left: -9.5px; }
-.winding-node:nth-child(even) .winding-marker { right: -9.5px; }
-
-.winding-marker.active {
-    border-color: var(--primary);
+.timeline-marker.active {
     background: var(--primary);
-    box-shadow: 0 0 16px var(--primary-glow);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px var(--primary-glow);
 }
 
-/* Horizontal Connector Line (Marker -> Card) */
-.winding-node::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    height: 1px;
-    border-top: 1px dashed var(--edge-hover);
-    z-index: 1;
-    width: calc(55% - 60px); /* 100% - 45% (card) = 55% minus padding */
-}
-.winding-node:nth-child(odd)::before { left: 0; }
-.winding-node:nth-child(even)::before { right: 0; }
-
-/* The Exhibit Card */
-.winding-card {
-    width: 45%;
-    background: var(--bg-glass);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--edge);
-    border-radius: 12px;
-    padding: 24px;
-    position: relative;
-    z-index: 3;
-    transition: all 0.3s ease;
-}
-.winding-card:hover {
-    border-color: var(--edge-hover);
-    box-shadow: 0 8px 32px rgba(0,229,255,0.05);
-}
-
-/* Card Typography & Footer */
-.winding-title {
-    font-size: 1.25rem;
-    color: var(--text-primary);
-    font-weight: 600;
+.timeline-card {
+    text-align: left;
     margin: 0;
 }
-.winding-desc {
-    color: var(--text-secondary);
-    font-size: 0.92rem;
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-.winding-footer {
+.timeline-title { font-size: 1.15rem; color: var(--text-primary); font-weight: 600; margin-bottom: 8px; }
+.timeline-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px; }
+
+.timeline-footer {
     display: flex;
     flex-direction: column;
     gap: 16px;
     padding-top: 16px;
     border-top: 1px dashed var(--edge-dim);
 }
-.winding-actions { display: flex; gap: 8px; }
-.winding-actions .btn { padding: 6px 14px; font-size: 0.8rem; }
+.timeline-actions { display: flex; gap: 8px; }
+.timeline-actions .btn { padding: 6px 14px; font-size: 0.8rem; }
 
 /* ==========================================================================
    SECTION HEADERS
@@ -963,19 +906,5 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .gallery-item.large { grid-column:span 1; }
 
     .footer-top { grid-template-columns:1fr; }
-    .winding-node:nth-child(odd),
-    .winding-node:nth-child(even) {
-        border-right: none;
-        border-left: 3px solid var(--edge-dim);
-        border-bottom: none;
-        border-radius: 0;
-        justify-content: flex-start;
-        padding-left: 40px;
-        padding-right: 0;
-        padding-bottom: 40px;
-    }
-    .winding-node:nth-child(even) .winding-marker { right: auto; left: -9.5px; }
-    .winding-node::before { display: none; }
-    .winding-card { width: 100%; }
     .accordion-header { padding: 20px; }
 }
