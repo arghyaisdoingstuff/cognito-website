@@ -1,0 +1,50 @@
+    <!-- Past Collaborators: Main -->
+    <div class="sponsor-tier-heading reveal" style="margin-top:50px">
+        <h3>Previous Collaborators</h3>
+        <div class="tier-line"></div>
+    </div>
+    <div class="sponsor-logo-grid reveal">
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/1.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/2.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/3.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/4.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/5.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/6.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/7.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/8.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/9.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/10.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/11.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/12.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/13.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/14.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/15.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/16.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/17.png" loading="lazy"></div>
+    </div>
+
+    <!-- Past Collaborators: Startup Village -->
+    <div class="sponsor-tier-heading reveal" style="margin-top:50px">
+        <h3>Startup Village — Previous Collaborators</h3>
+        <div class="tier-line"></div>
+    </div>
+    <div class="sponsor-logo-grid reveal">
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/18.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/19.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/20.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/21.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/22.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/23.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/24.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/25.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/26.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/27.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/28.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/29.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/30.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/31.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/32.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/33.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/34.png" loading="lazy"></div>
+        <div class="sponsor-logo-card"><img src="assets/sponsor-logos/startup/35.png" loading="lazy"></div>
+    </div>
