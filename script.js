@@ -551,7 +551,6 @@ function renderBarChart(isLive) {
             <div class="bar-track">
                 <div class="bar-fill ${fillClass}" style="width:0%"></div>
             </div>
-            <div class="bar-score">${score}</div>
         </div>
         ${rank < filtered.length ? '<div class="bar-divider"></div>' : ''}`;
     }).join('');

@@ -882,7 +882,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .bar-row {
     display: grid;
-    grid-template-columns: 36px 180px 1fr 80px;
+    grid-template-columns: 36px 180px 1fr;
     align-items: center;
     gap: 16px;
 }
@@ -992,8 +992,8 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .about-pillar { grid-template-columns:1fr; min-height:auto; }
     .about-pillar-visual { border-right:none; border-bottom:1px solid var(--edge-dim); min-height:200px; }
     .about-pillar.reverse .about-pillar-visual { order:0; border-left:none; border-bottom:1px solid var(--edge-dim); }
-    .bar-row { grid-template-columns:36px 1fr 80px; }
-    .bar-track { display:none; }
+    .bar-row { grid-template-columns: 36px 1fr; }
+    .bar-track { grid-column: 1 / -1; height: 16px; margin-top: 4px; }
 }
 @media (max-width: 768px) {
     .hero-logo { width:130px; height:130px; }
