@@ -22,16 +22,21 @@ function initCarousel() {
 
     let speed = 1; // Pixels per frame (baseline speed)
     let isHovered = false;
+    let isButtonScrolling = false; // Pause continuous scroll during button smooth scroll
     let rafId;
+    
+    // Calculate exact jump distance based on item width + gap, rather than scrollWidth / 2
+    const getJumpDistance = () => items.length * (items[0].offsetWidth + 16);
 
     const animate = () => {
-        if (!isHovered) {
+        if (!isHovered && !isButtonScrolling) {
             carousel.scrollLeft += speed;
-            // If we've scrolled exactly halfway (past the original set), instantly jump back to 0
-            if (carousel.scrollLeft >= carousel.scrollWidth / 2) {
-                carousel.scrollLeft = 0;
+            
+            const jumpDistance = getJumpDistance();
+            if (carousel.scrollLeft >= jumpDistance) {
+                carousel.scrollLeft -= jumpDistance;
             } else if (carousel.scrollLeft <= 0) {
-                carousel.scrollLeft = carousel.scrollWidth / 2;
+                carousel.scrollLeft += jumpDistance;
             }
         }
         rafId = requestAnimationFrame(animate);
@@ -52,12 +57,29 @@ function initCarousel() {
     }
 
     const getItemWidth = () => items[0].offsetWidth + 16;
+    
+    const pauseForButton = () => {
+        isButtonScrolling = true;
+        setTimeout(() => isButtonScrolling = false, 600); // Pause auto-scroll while smooth scrolling
+    };
 
     prevBtn.addEventListener('click', () => {
+        const jumpDistance = getJumpDistance();
+        // If we are at the very beginning, silently jump to the clones first so smooth scroll has space
+        if (carousel.scrollLeft <= getItemWidth()) {
+            carousel.scrollLeft += jumpDistance;
+        }
+        pauseForButton();
         carousel.scrollBy({ left: -getItemWidth(), behavior: 'smooth' });
     });
 
     nextBtn.addEventListener('click', () => {
+        const jumpDistance = getJumpDistance();
+        // If we are near the end of the original set, silently jump to the start first
+        if (carousel.scrollLeft >= jumpDistance) {
+            carousel.scrollLeft -= jumpDistance;
+        }
+        pauseForButton();
         carousel.scrollBy({ left: getItemWidth(), behavior: 'smooth' });
     });
 }
@@ -508,9 +530,13 @@ function renderBarChart(isLive) {
     // Sort to determine true ranking
     contingentRows.sort((a, b) => (parseFloat(b.Score) || 0) - (parseFloat(a.Score) || 0));
     
-    // Assign permanent ranks based on full contingent list
+    // Assign permanent ranks based on full contingent list (handling ties)
     contingentRows.forEach((row, i) => {
-        row._rank = i + 1;
+        if (i > 0 && (parseFloat(row.Score) || 0) === (parseFloat(contingentRows[i-1].Score) || 0)) {
+            row._rank = contingentRows[i-1]._rank;
+        } else {
+            row._rank = i + 1;
+        }
     });
 
     // Apply search filter
