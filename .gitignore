@@ -1,0 +1,8 @@
+# Ignore large PDF/design files — keep locally but not in the repo
+assets/*.pdf
+assets/*.pptx
+assets/*.docx
+
+# OS files
+.DS_Store
+Thumbs.db
