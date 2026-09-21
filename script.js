@@ -325,7 +325,7 @@ function renderRounds(data, isLive) {
     });
 
     if (!filtered.length) {
-        container.innerHTML = `<div class="card text-center" style="grid-column:1/-1;padding:40px;"><h3>No rounds listed in this category yet.</h3><p>Round schedules will appear here automatically once added to the Sheet.</p></div>`;
+        container.innerHTML = `<div class="card text-center" style="grid-column:1/-1;padding:40px;"><h3>Stay Tuned!</h3><p>Round details and schedules for this category will be revealed soon.</p></div>`;
         return;
     }
 
