@@ -549,7 +549,11 @@ function renderBarChart(isLive) {
     }
 
     if (!filtered.length) {
-        container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>No teams found${searchQuery ? ' matching "' + searchQuery + '"' : ''}.</h3><p style="margin-top:8px">Scores will appear here once published from the event sheet.</p></div>`;
+        if (searchQuery) {
+            container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>No teams found matching "${searchQuery}".</h3><p style="margin-top:8px">Please check your spelling and try again.</p></div>`;
+        } else {
+            container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>Stay Tuned!</h3><p style="margin-top:8px">The leaderboards will be updated live as soon as the first rounds conclude.</p></div>`;
+        }
         return;
     }
 
