@@ -298,9 +298,9 @@ async function initRounds() {
             const res = await fetch(CONFIG.ROUNDS_CSV_URL);
             roundsData = parseCSV(await res.text());
             isLive = true;
-        } catch (e) { roundsData = SAMPLE_ROUNDS; }
+        } catch (e) { roundsData = []; }
     } else {
-        roundsData = SAMPLE_ROUNDS;
+        roundsData = [];
     }
 
     renderRounds(roundsData, isLive);
@@ -490,9 +490,9 @@ async function initScores() {
             const text = await res.text();
             allScoresData = parseCSV(text);
             isLive = allScoresData.length > 0;
-        } catch (e) { allScoresData = SAMPLE_SCORES; }
+        } catch (e) { allScoresData = []; }
     }
-    if (!isLive || allScoresData.length === 0) allScoresData = SAMPLE_SCORES;
+    if (!isLive || allScoresData.length === 0) allScoresData = [];
 
     renderBarChart(isLive);
 
