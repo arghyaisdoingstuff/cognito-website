@@ -642,7 +642,7 @@ function renderRounds(data, isLive) {
     let html = '';
     let globalIndex = 0;
 
-    const renderExhibitItem = (r, idx, isExpanded) => {
+    const renderExhibitItem = (r, idx) => {
         const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
         const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
         const valid = !isNaN(release) && !isNaN(deadline);
@@ -684,38 +684,23 @@ function renderRounds(data, isLive) {
         const exhibitCode = `EX // ${String(idx + 1).padStart(2, '0')}`;
         const roundTag = escapeHtml(r.Round || activeRoundFilter);
         const title = escapeHtml(r.Title || `Exhibit ${idx + 1}`);
-        const shortDesc = r.Description ? escapeHtml(r.Description) : '';
         const fullDesc = r.Description ? escapeHtml(r.Description) : '';
 
         return `
-        <div class="rounds-ledger-item ${isExpanded ? 'expanded' : ''} reveal">
-            <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')" tabindex="0" role="button" aria-expanded="${isExpanded ? 'true' : 'false'}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.parentElement.classList.toggle('expanded');}">
-                <span class="r-code">${exhibitCode}</span>
-                <div class="r-title-group">
-                    <span class="r-round-name">${roundTag}</span>
-                    <h3 class="r-exhibit-heading">${title}</h3>
+        <div class="exhibit-card reveal">
+            <div class="exhibit-card-header">
+                <div class="exhibit-header-left">
+                    <span class="exhibit-code">${exhibitCode}</span>
+                    <h3 class="exhibit-title">${title}</h3>
                 </div>
-                <span class="r-desc-brief">${shortDesc}</span>
-                <div class="r-status">
-                    ${statusBeacon}
-                </div>
-                <div class="r-toggle-action">
-                    <span>Dossier</span>
-                    <svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                </div>
+                ${statusBeacon ? `<div class="exhibit-status">${statusBeacon}</div>` : ''}
             </div>
-            <div class="rounds-drawer">
-                <div class="rounds-drawer-inner">
-                    <div class="rounds-drawer-main">
-                        ${fullDesc ? `<p class="rounds-drawer-desc">${fullDesc}</p>` : ''}
-                        ${timeInfo ? `<div class="rounds-drawer-meta">${timeInfo}</div>` : ''}
-                        ${!fullDesc && !timeInfo && !actions ? `<p class="rounds-drawer-desc" style="color:var(--text-dim);margin-bottom:0;">Brief details pending release.</p>` : ''}
-                    </div>
-                    ${actions ? `<div class="rounds-drawer-actions">${actions}</div>` : ''}
-                </div>
-            </div>
+            ${fullDesc ? `<p class="exhibit-desc">${fullDesc}</p>` : (!timeInfo && !actions ? `<p class="exhibit-desc" style="color:var(--text-dim);margin:0;">Brief details pending release.</p>` : '')}
+            ${(timeInfo || actions) ? `
+            <div class="exhibit-footer">
+                <div class="exhibit-meta">${timeInfo}</div>
+                ${actions ? `<div class="exhibit-actions">${actions}</div>` : ''}
+            </div>` : ''}
         </div>`;
     };
 
@@ -727,22 +712,20 @@ function renderRounds(data, isLive) {
         grouped[roundName].push(r);
     });
 
-    let groupIndex = 0;
     for (const [roundName, items] of Object.entries(grouped)) {
-        const isOpen = groupIndex === 0;
         let itemsHtml = '';
 
         items.forEach((r, idx) => {
             globalIndex++;
-            itemsHtml += renderExhibitItem(r, globalIndex - 1, false);
+            itemsHtml += renderExhibitItem(r, globalIndex - 1);
         });
 
         const safeRound = escapeHtml(roundName);
         const countText = `${items.length} Exhibit${items.length === 1 ? '' : 's'}`;
 
         html += `
-        <div class="round-accordion-group ${isOpen ? 'open' : ''} reveal" data-round-group="${safeRound}">
-            <div class="round-accordion-header" tabindex="0" role="button" aria-expanded="${isOpen ? 'true' : 'false'}" onclick="toggleRoundAccordion(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRoundAccordion(this);}">
+        <div class="round-accordion-group reveal" data-round-group="${safeRound}">
+            <div class="round-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleRoundAccordion(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRoundAccordion(this);}">
                 <div class="round-header-left">
                     <h2 class="round-header-title">${safeRound}</h2>
                     <span class="round-header-badge">${countText}</span>
@@ -756,14 +739,12 @@ function renderRounds(data, isLive) {
             </div>
             <div class="round-accordion-body">
                 <div class="round-accordion-body-inner">
-                    <div class="rounds-ledger-stack">
+                    <div class="round-exhibits-list">
                         ${itemsHtml}
                     </div>
                 </div>
             </div>
         </div>`;
-
-        groupIndex++;
     }
 
     container.innerHTML = html;
