@@ -5,7 +5,7 @@
  * Dynamically releases the trailer video only when configured in the Google Sheet.
  */
 
-const DEFAULT_TRAILER_URL = "";
+const DEFAULT_TRAILER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=265950681&single=true&output=csv";
 
 export async function onRequest(context) {
     // 1. Direct browser navigation -> redirect to homepage

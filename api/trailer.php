@@ -14,7 +14,7 @@ if ($secFetchDest === 'document' || $secFetchMode === 'navigate' || strpos($acce
     exit;
 }
 
-$sheetUrl = getenv('TRAILER_CSV_URL') ?: "";
+$sheetUrl = getenv('TRAILER_CSV_URL') ?: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=265950681&single=true&output=csv";
 
 if (empty($sheetUrl)) {
     header("Content-Type: text/csv; charset=utf-8");

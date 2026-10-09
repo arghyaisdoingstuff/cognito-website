@@ -17,7 +17,7 @@ const url = require('url');
 const PORT = process.env.PORT || 3000;
 const SCORES_SHEET_URL = process.env.SCORES_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=0&single=true&output=csv";
 const ROUNDS_SHEET_URL = process.env.ROUNDS_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=1586686373&single=true&output=csv";
-const TRAILER_SHEET_URL = process.env.TRAILER_CSV_URL || "";
+const TRAILER_SHEET_URL = process.env.TRAILER_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=265950681&single=true&output=csv";
 
 // In-memory 30s edge cache
 let scoresCache = { data: '', timestamp: 0 };
