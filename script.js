@@ -330,35 +330,42 @@ const SAMPLE_ROUNDS = [
         Title: "The Valuation Dilemma: Alternative Assets & Hedging",
         Description: "Analyze portfolio risk allocation for a multi-million sovereign fund navigating macroeconomic volatility.",
         Release: "2026-11-15 10:00", Deadline: "2026-11-25 23:59",
-        BriefLink: "#", SubmitLink: "#", Show: "Yes"
+        BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: ""
     },
     {
         Event: "Case Competition", Round: "Final Round - Executive Pitch",
         Title: "Corporate Restructuring & Distress M&A",
         Description: "Qualified teams defend their recommendations before industry specialists and executive jury.",
         Release: "2026-12-01 10:00", Deadline: "2026-12-11 18:00",
-        BriefLink: "#", SubmitLink: "#", Show: "Yes"
+        BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: ""
     },
     {
-        Event: "Contingent", Round: "Prelims - The Qualifier",
+        Event: "Contingent", Round: "Round 1 - The Qualifier",
         Title: "Corporate Genesis & Market Entry",
         Description: "Comprehensive cross-functional simulation testing the contingent's agility, strategy, and resource allocation.",
         Release: "2026-12-15 09:30", Deadline: "2026-12-15 14:00",
-        BriefLink: "#", SubmitLink: "#", Show: "Yes"
+        BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: "1"
     },
     {
-        Event: "Contingent", Round: "Semi-Finals - Crisis Management",
+        Event: "Contingent", Round: "Round 1 - The Qualifier",
+        Title: "Algorithmic Arbitrage & Liquidity Shock",
+        Description: "High-frequency trade distress event requiring rapid capital deployment and balance-sheet immunisation.",
+        Release: "2026-12-15 11:30", Deadline: "2026-12-15 15:30",
+        BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: "1"
+    },
+    {
+        Event: "Contingent", Round: "Round 2 - Crisis Simulation",
         Title: "Hostile Takeover & Stakeholder Defense",
         Description: "A sudden supply-chain collapse threatens corporate continuity. Re-align strategies live.",
         Release: "2026-12-16 10:00", Deadline: "2026-12-16 16:00",
-        BriefLink: "#", SubmitLink: "#", Show: "Yes"
+        BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: "2"
     },
     {
-        Event: "Contingent", Round: "Grand Finale",
+        Event: "Contingent", Round: "Round 3 - Grand Finale",
         Title: "The Final Conquest",
         Description: "The overarching storyline reaches its climax. Top contingents battle live for the Cognito 2026 Trophy.",
         Release: "2026-12-17 11:00", Deadline: "2026-12-17 17:30",
-        BriefLink: "#", SubmitLink: "#", Show: "Yes"
+        BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: "3"
     }
 ];
 
@@ -376,47 +383,89 @@ const SAMPLE_SCORES = [
 // ──────────────────────────────────────────────────────────────
 // 4. ROUNDS ENGINE
 // ──────────────────────────────────────────────────────────────
-// Default to first tab's filter (Contingent)
+// Default to first tab's filter (Contingent) and Day 1
 let activeRoundFilter = 'Contingent';
+let activeDayFilter = '1';
 let roundsDataCache = null;
 let isRoundsLiveCache = false;
 
 function initFilterGlider() {
     const glider = document.getElementById('filter-glider');
     const filterBtns = document.querySelectorAll('[data-round-filter]');
-    if (!glider || !filterBtns.length) return;
+    const dayWrapper = document.getElementById('day-filter-wrapper');
+    const dayGlider = document.getElementById('day-filter-glider');
+    const dayBtns = document.querySelectorAll('[data-day-filter]');
 
-    function updateFilterGlider(activeBtn) {
-        if (!glider || !activeBtn) return;
-        glider.style.width = activeBtn.offsetWidth + 'px';
-        glider.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+    function updateGlider(gliderEl, activeBtn) {
+        if (!gliderEl || !activeBtn) return;
+        gliderEl.style.width = activeBtn.offsetWidth + 'px';
+        gliderEl.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
     }
 
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateFilterGlider(btn);
-            activeRoundFilter = btn.getAttribute('data-round-filter');
-            if (roundsDataCache !== null) {
-                renderRounds(roundsDataCache, isRoundsLiveCache);
-            }
-        });
-    });
+    function syncDayGlider() {
+        if (!dayGlider) return;
+        const activeDayBtn = document.querySelector('[data-day-filter].active');
+        if (activeDayBtn) updateGlider(dayGlider, activeDayBtn);
+    }
 
-    const initialActive = document.querySelector('[data-round-filter].active');
-    if (initialActive) {
-        updateFilterGlider(initialActive);
-        window.addEventListener('resize', () => {
-            const currentActive = document.querySelector('[data-round-filter].active');
-            if (currentActive) updateFilterGlider(currentActive);
-        });
-        if (document.fonts) {
-            document.fonts.ready.then(() => {
-                const currentActive = document.querySelector('[data-round-filter].active');
-                if (currentActive) updateFilterGlider(currentActive);
-            });
+    function toggleDaySlider() {
+        if (!dayWrapper) return;
+        const isContingent = activeRoundFilter.toLowerCase().includes('contingent');
+        if (isContingent) {
+            dayWrapper.style.display = 'flex';
+            requestAnimationFrame(() => syncDayGlider());
+        } else {
+            dayWrapper.style.display = 'none';
         }
+    }
+
+    if (glider && filterBtns.length) {
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                updateGlider(glider, btn);
+                activeRoundFilter = btn.getAttribute('data-round-filter');
+                toggleDaySlider();
+                if (roundsDataCache !== null) {
+                    renderRounds(roundsDataCache, isRoundsLiveCache);
+                }
+            });
+        });
+
+        const initialActive = document.querySelector('[data-round-filter].active');
+        if (initialActive) updateGlider(glider, initialActive);
+    }
+
+    if (dayGlider && dayBtns.length) {
+        dayBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dayBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                updateGlider(dayGlider, btn);
+                activeDayFilter = btn.getAttribute('data-day-filter');
+                if (roundsDataCache !== null) {
+                    renderRounds(roundsDataCache, isRoundsLiveCache);
+                }
+            });
+        });
+
+        syncDayGlider();
+    }
+
+    toggleDaySlider();
+
+    window.addEventListener('resize', () => {
+        const currentActive = document.querySelector('[data-round-filter].active');
+        if (glider && currentActive) updateGlider(glider, currentActive);
+        syncDayGlider();
+    });
+    if (document.fonts) {
+        document.fonts.ready.then(() => {
+            const currentActive = document.querySelector('[data-round-filter].active');
+            if (glider && currentActive) updateGlider(glider, currentActive);
+            syncDayGlider();
+        });
     }
 }
 
@@ -487,21 +536,62 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+function toggleRoundAccordion(headerEl) {
+    const group = headerEl.closest('.round-accordion-group');
+    if (!group) return;
+    const willOpen = !group.classList.contains('open');
+    group.classList.toggle('open', willOpen);
+    headerEl.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+}
+
 function renderRounds(data, isLive) {
     const container = document.getElementById('rounds-container');
     if (!container) return;
 
+    const isContingent = activeRoundFilter.toLowerCase().includes('contingent');
+
     const filtered = data.filter(r => {
         if ((r.Show || 'yes').toLowerCase() !== 'yes') return false;
-        return (r.Event || '').toLowerCase().includes(activeRoundFilter.toLowerCase());
+        
+        const eventVal = (r.Event || '').toLowerCase();
+        if (!eventVal.includes(activeRoundFilter.toLowerCase())) return false;
+
+        // If on Contingent, filter by Day
+        if (isContingent) {
+            // Find day column case-insensitively
+            const dayKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'day');
+            const rawDay = dayKey ? String(r[dayKey] || '').trim().toLowerCase() : '';
+            const dayNum = rawDay.replace(/[^0-9]/g, '');
+
+            const hasAnyDaySpecified = data.some(item => {
+                if ((item.Event || '').toLowerCase().includes('contingent')) {
+                    const k = Object.keys(item).find(key => key.trim().toLowerCase() === 'day');
+                    const d = k ? String(item[k] || '').trim() : '';
+                    return d.length > 0;
+                }
+                return false;
+            });
+
+            if (hasAnyDaySpecified) {
+                return dayNum === activeDayFilter;
+            }
+            // If no day numbers are configured in the sheet yet, display on Day 1
+            return activeDayFilter === '1';
+        }
+
+        return true;
     });
 
     if (!filtered.length) {
+        const emptyTitle = isContingent ? `Day ${activeDayFilter} Docket Under Seal` : `Simulation Docket Under Seal`;
+        const emptyDesc = isContingent
+            ? `No exhibits are currently scheduled for Day ${activeDayFilter}. Check other days or revisit as rounds are published.`
+            : `Briefs, schedules, and submission parameters for this division will be unsealed according to the festival schedule.`;
         container.innerHTML = `
             <div class="rounds-empty-docket text-center reveal">
                 <span class="r-empty-code">STATUS // PENDING</span>
-                <h3 class="r-empty-title">Simulation Docket Under Seal</h3>
-                <p class="r-empty-desc">Briefs, schedules, and submission parameters for this division will be unsealed according to the festival schedule.</p>
+                <h3 class="r-empty-title">${emptyTitle}</h3>
+                <p class="r-empty-desc">${emptyDesc}</p>
             </div>`;
         initScrollReveal();
         return;
@@ -598,19 +688,40 @@ function renderRounds(data, isLive) {
 
     let groupIndex = 0;
     for (const [roundName, items] of Object.entries(grouped)) {
-        html += `
-        <div class="rounds-phase-divider reveal">
-            <span class="r-phase-tag">${escapeHtml(activeRoundFilter).toUpperCase()}</span>
-            <h2 class="r-phase-title">${escapeHtml(roundName)}</h2>
-        </div>
-        <div class="rounds-ledger-stack">`;
+        const isOpen = groupIndex === 0;
+        let itemsHtml = '';
 
         items.forEach((r, idx) => {
             globalIndex++;
-            html += renderExhibitItem(r, globalIndex - 1, groupIndex === 0 && idx === 0);
+            itemsHtml += renderExhibitItem(r, globalIndex - 1, false);
         });
 
-        html += `</div>`;
+        const safeRound = escapeHtml(roundName);
+        const countText = `${items.length} Exhibit${items.length === 1 ? '' : 's'}`;
+
+        html += `
+        <div class="round-accordion-group ${isOpen ? 'open' : ''} reveal" data-round-group="${safeRound}">
+            <div class="round-accordion-header" tabindex="0" role="button" aria-expanded="${isOpen ? 'true' : 'false'}" onclick="toggleRoundAccordion(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRoundAccordion(this);}">
+                <div class="round-header-left">
+                    <h2 class="round-header-title">${safeRound}</h2>
+                    <span class="round-header-badge">${countText}</span>
+                </div>
+                <div class="round-dropdown-btn">
+                    <span>Exhibits</span>
+                    <svg class="round-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="round-accordion-body">
+                <div class="round-accordion-body-inner">
+                    <div class="rounds-ledger-stack">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
         groupIndex++;
     }
 
