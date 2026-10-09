@@ -670,35 +670,36 @@ function renderRounds(data, isLive) {
             let dotClass = 'live';
 
             if (!valid) {
-                const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
-                const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
-                actions = submitBtn + briefBtn;
+                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
                 statusLabel = 'Open';
                 dotClass = 'live';
             } else if (now < release) {
                 const diff = release - now;
-                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
-                const countdownStr = (d > 0 ? d + 'd ' : '') + h + 'h';
+                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
+                const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
                 const releaseFormatted = release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                 timeInfo = `<span class="meta-strip-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="meta-countdown-tag">T-minus ${countdownStr}</span>`;
                 actions = `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Locked until Release</button>`;
-                statusLabel = 'Unlocks ' + releaseFormatted;
+                statusLabel = 'Unlocks in ' + countdownStr;
                 dotClass = 'locked';
             } else if (now <= deadline) {
+                // Round unlocked: release countdown transitions into active deadline countdown
+                const diff = deadline - now;
+                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
+                const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
                 const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                timeInfo = `<span class="meta-strip-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span>`;
 
-                const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
-                const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
-                actions = submitBtn + briefBtn;
-                statusLabel = 'Live';
+                timeInfo = `<span class="meta-strip-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag deadline-countdown-tag">Deadline in ${countdownStr}</span>`;
+                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
+                statusLabel = 'Deadline in ' + countdownStr;
                 dotClass = 'live';
             } else {
+                // Past deadline: brief stays active and unlocked
                 const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                timeInfo = `<span class="meta-strip-item"><strong>Concluded:</strong> ${deadlineFormatted}</span>`;
-                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Archived Brief ↗</a>` : `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Concluded</button>`;
-                statusLabel = 'Closed';
+                timeInfo = `<span class="meta-strip-item"><strong>Concluded:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag closed-tag">Concluded</span>`;
+                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
+                statusLabel = 'Concluded';
                 dotClass = 'closed';
             }
 
@@ -751,6 +752,27 @@ function renderRounds(data, isLive) {
             </div>
         `;
 
+        const submitItem = items.find(it => it.SubmitLink && it.SubmitLink.trim());
+        const roundSubmitLink = submitItem ? submitItem.SubmitLink.trim() : '';
+
+        const hasValidRelease = items.some(it => {
+            const rel = new Date(it.Release ? it.Release.replace(/-/g, '/') : '');
+            return !isNaN(rel);
+        });
+        const isRoundLocked = hasValidRelease && items.every(it => {
+            const rel = new Date(it.Release ? it.Release.replace(/-/g, '/') : '');
+            return !isNaN(rel) && now < rel;
+        });
+
+        let roundSubmitBtnHtml = '';
+        if (roundSubmitLink) {
+            if (isRoundLocked) {
+                roundSubmitBtnHtml = `<button class="round-submit-btn disabled" disabled onclick="event.stopPropagation();" title="Submissions open upon round release">Round Locked</button>`;
+            } else {
+                roundSubmitBtnHtml = `<a href="${roundSubmitLink}" target="_blank" rel="noopener noreferrer" class="round-submit-btn" onclick="event.stopPropagation();">Submit Round →</a>`;
+            }
+        }
+
         const safeRound = escapeHtml(roundName);
         const countText = `${items.length} Exhibit${items.length === 1 ? '' : 's'}`;
 
@@ -761,11 +783,14 @@ function renderRounds(data, isLive) {
                     <h2 class="round-header-title">${safeRound}</h2>
                     <span class="round-header-badge">${countText}</span>
                 </div>
-                <div class="round-dropdown-btn">
-                    <span>Exhibits</span>
-                    <svg class="round-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 12 15 18 9"/>
-                    </svg>
+                <div class="round-header-right">
+                    ${roundSubmitBtnHtml}
+                    <div class="round-dropdown-btn">
+                        <span>Exhibits</span>
+                        <svg class="round-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
                 </div>
             </div>
             <div class="round-accordion-body">
@@ -935,23 +960,15 @@ function renderBarChart(isLive) {
 
         let rankClass = 'rank-general';
         let fillClass = '';
-        let tagText = 'Qualified';
-        let tagClass = '';
         if (rank === 1) { 
             rankClass = 'rank-gold'; 
             fillClass = 'rank-gold-fill'; 
-            tagText = 'Leader // Pace';
-            tagClass = 'tag-lead';
         } else if (rank === 2) { 
             rankClass = 'rank-silver'; 
             fillClass = 'rank-silver-fill'; 
-            tagText = 'Contender';
         } else if (rank === 3) { 
             rankClass = 'rank-bronze'; 
             fillClass = 'rank-bronze-fill'; 
-            tagText = 'Contender';
-        } else if (parseFloat(pct) < 65) {
-            tagText = 'In Contention';
         }
 
         const rankDisplay = String(rank).padStart(2, '0');
@@ -967,7 +984,6 @@ function renderBarChart(isLive) {
                 <div class="relative-gauge-groove">
                     <div class="relative-gauge-fill ${fillClass}" style="width:0%"></div>
                 </div>
-                <span class="relative-spectrum-tag ${tagClass}">${tagText}</span>
             </div>
         </div>`;
     }).join('');
@@ -976,8 +992,8 @@ function renderBarChart(isLive) {
     <div class="relative-horizon-ledger">
         <div class="horizon-ledger-header">
             <div>Rank</div>
-            <div>Contingent / Institution</div>
-            <div>Relative Standings Spectrum</div>
+            <div>Contingent</div>
+            <div></div>
         </div>
         ${rows}
     </div>`;
@@ -1258,6 +1274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initHeroSpotlight();
     initButtonHaptics();
     initFilterGlider();
+    initHeroZenFullscreen();
 
     // Mobile nav
     const toggle = document.querySelector('.mobile-toggle');
@@ -1551,17 +1568,19 @@ function initNodes() {
                 }
             }
 
-            // Mouse gravity well
-            const dxm = p.x - mouse.x;
-            const dym = p.y - mouse.y;
-            const distmSq = dxm * dxm + dym * dym;
+            // Mouse gravity well (disabled in zen fullscreen mode)
+            if (!window.isZenFullscreen) {
+                const dxm = p.x - mouse.x;
+                const dym = p.y - mouse.y;
+                const distmSq = dxm * dxm + dym * dym;
 
-            if (distmSq < gravityDistSq) {
-                const distm = Math.sqrt(distmSq);
-                if (distm > 0.1) {
-                    const force = (1 - distm / gravityDist) * 0.02;
-                    p.vx -= (dxm / distm) * force;
-                    p.vy -= (dym / distm) * force;
+                if (distmSq < gravityDistSq) {
+                    const distm = Math.sqrt(distmSq);
+                    if (distm > 0.1) {
+                        const force = (1 - distm / gravityDist) * 0.02;
+                        p.vx -= (dxm / distm) * force;
+                        p.vy -= (dym / distm) * force;
+                    }
                 }
             }
             
@@ -1607,3 +1626,44 @@ function initMagneticButtons() {
 }
 
 initMagneticButtons();
+
+// ──────────────────────────────────────────────────────────────
+// 8. HERO LOGO ZEN FULLSCREEN EASTER EGG
+// ──────────────────────────────────────────────────────────────
+function initHeroZenFullscreen() {
+    const heroLogoWrap = document.querySelector('.hero-logo-wrap');
+    if (!heroLogoWrap) return;
+
+    heroLogoWrap.setAttribute('title', 'Cognito Zen View');
+
+    heroLogoWrap.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isZen = document.body.classList.contains('zen-fullscreen-mode');
+
+        if (!isZen) {
+            document.body.classList.add('zen-fullscreen-mode');
+            window.isZenFullscreen = true;
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        } else {
+            document.body.classList.remove('zen-fullscreen-mode');
+            window.isZenFullscreen = false;
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+    });
+
+    const onFullscreenChange = () => {
+        if (!document.fullscreenElement) {
+            document.body.classList.remove('zen-fullscreen-mode');
+            window.isZenFullscreen = false;
+        }
+    };
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+}
+
+initHeroZenFullscreen();
