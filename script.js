@@ -384,7 +384,7 @@ const SAMPLE_ROUNDS = [
         Event: "Contingent", Round: "Round 1 - The Qualifier",
         Title: "Corporate Genesis & Market Entry",
         Description: "Comprehensive cross-functional simulation testing the contingent's agility, strategy, and resource allocation.",
-        Release: "2026-12-15 09:30", Deadline: "2026-12-15 14:00",
+        Release: "2026-12-15 09:30", Deadline: "2026-12-15 15:30",
         BriefLink: "#", SubmitLink: "#", Show: "Yes", Day: "1"
     },
     {
@@ -657,50 +657,105 @@ function renderRounds(data, isLive) {
         roundIndex++;
         const currentRoundIdx = roundIndex;
 
+        // Common round deadline: check if any row in items has Deadline / RoundDeadline
+        const deadlineItem = items.find(it => {
+            const k = Object.keys(it).find(key => /deadline/i.test(key));
+            return k && it[k] && it[k].trim();
+        });
+        const deadlineKey = deadlineItem ? Object.keys(deadlineItem).find(k => /deadline/i.test(k)) : null;
+        const roundDeadlineStr = (deadlineItem && deadlineKey) ? deadlineItem[deadlineKey].trim() : '';
+        const roundDeadline = new Date(roundDeadlineStr ? roundDeadlineStr.replace(/-/g, '/') : '');
+        const hasValidRoundDeadline = !isNaN(roundDeadline.getTime());
+
+        // Common round submit link: check if any row in items has SubmitLink / RoundSubmitLink
+        const submitItem = items.find(it => {
+            const k = Object.keys(it).find(key => /submit/i.test(key));
+            return k && it[k] && it[k].trim();
+        });
+        const submitKey = submitItem ? Object.keys(submitItem).find(key => /submit/i.test(key)) : null;
+        const roundSubmitLink = (submitItem && submitKey) ? submitItem[submitKey].trim() : '';
+
+        // Check if all exhibits with release dates are still in the future
+        const exhibitsWithRelease = items.filter(it => {
+            const relKey = Object.keys(it).find(key => /release/i.test(key));
+            const rel = relKey && it[relKey] ? new Date(it[relKey].replace(/-/g, '/')) : NaN;
+            return !isNaN(rel.getTime());
+        });
+        const isRoundLocked = exhibitsWithRelease.length > 0 && exhibitsWithRelease.every(it => {
+            const relKey = Object.keys(it).find(key => /release/i.test(key));
+            const rel = new Date(it[relKey].replace(/-/g, '/'));
+            return now < rel;
+        });
+
+        // Round countdown badge for the round masthead
+        let roundCountdownTag = '';
+        if (hasValidRoundDeadline && !isRoundLocked) {
+            const deadlineFormatted = roundDeadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            if (now <= roundDeadline) {
+                const diff = roundDeadline - now;
+                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
+                const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
+                roundCountdownTag = `<span class="round-deadline-tag" title="Submission Deadline: ${deadlineFormatted}"><span class="dot live"></span> Deadline in ${countdownStr}</span>`;
+            } else {
+                roundCountdownTag = `<span class="round-deadline-tag closed-tag" title="Concluded: ${deadlineFormatted}"><span class="dot closed"></span> Concluded</span>`;
+            }
+        }
+
+        let roundSubmitBtnHtml = '';
+        if (roundSubmitLink) {
+            if (isRoundLocked) {
+                roundSubmitBtnHtml = `<button class="round-submit-btn disabled" disabled onclick="event.stopPropagation();" title="Submissions open upon round release">Round Locked</button>`;
+            } else {
+                roundSubmitBtnHtml = `<a href="${roundSubmitLink}" target="_blank" rel="noopener noreferrer" class="round-submit-btn" onclick="event.stopPropagation();">Submit Round →</a>`;
+            }
+        }
+
         const preparedItems = items.map((r) => {
             globalIndex++;
             const idxNum = globalIndex;
             const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
-            const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
-            const valid = !isNaN(release) && !isNaN(deadline);
+            const hasValidRelease = !isNaN(release.getTime());
+            const releaseFormatted = hasValidRelease ? release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
             let timeInfo = '';
             let actions = '';
             let statusLabel = 'Accepting Submissions';
             let dotClass = 'live';
 
-            if (!valid) {
-                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
-                statusLabel = 'Open';
-                dotClass = 'live';
-            } else if (now < release) {
+            if (hasValidRelease && now < release) {
+                // Exhibit has not unlocked yet (individual release timing)
                 const diff = release - now;
                 const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
                 const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
-                const releaseFormatted = release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                 timeInfo = `<span class="meta-strip-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="meta-countdown-tag">T-minus ${countdownStr}</span>`;
                 actions = `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Locked until Release</button>`;
                 statusLabel = 'Unlocks in ' + countdownStr;
                 dotClass = 'locked';
-            } else if (now <= deadline) {
-                // Round unlocked: release countdown transitions into active deadline countdown
-                const diff = deadline - now;
-                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
-                const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
-                const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-                timeInfo = `<span class="meta-strip-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag deadline-countdown-tag">Deadline in ${countdownStr}</span>`;
-                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
-                statusLabel = 'Deadline in ' + countdownStr;
-                dotClass = 'live';
             } else {
-                // Past deadline: brief stays active and unlocked
-                const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                timeInfo = `<span class="meta-strip-item"><strong>Concluded:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag closed-tag">Concluded</span>`;
+                // Exhibit is unlocked!
                 actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
-                statusLabel = 'Concluded';
-                dotClass = 'closed';
+
+                if (hasValidRoundDeadline) {
+                    const deadlineFormatted = roundDeadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    if (now <= roundDeadline) {
+                        const diff = roundDeadline - now;
+                        const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
+                        const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
+                        timeInfo = `<span class="meta-strip-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag deadline-countdown-tag">Deadline in ${countdownStr}</span>`;
+                        statusLabel = 'Deadline in ' + countdownStr;
+                        dotClass = 'live';
+                    } else {
+                        // Past deadline: brief stays active and unlocked
+                        timeInfo = `<span class="meta-strip-item"><strong>Concluded:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag closed-tag">Concluded</span>`;
+                        statusLabel = 'Concluded';
+                        dotClass = 'closed';
+                    }
+                } else {
+                    timeInfo = hasValidRelease ? `<span class="meta-strip-item"><strong>Released:</strong> ${releaseFormatted}</span>` : '';
+                    statusLabel = 'Open';
+                    dotClass = 'live';
+                }
             }
 
             const exhibitCode = `EXHIBIT // ${String(idxNum).padStart(2, '0')}`;
@@ -752,27 +807,6 @@ function renderRounds(data, isLive) {
             </div>
         `;
 
-        const submitItem = items.find(it => it.SubmitLink && it.SubmitLink.trim());
-        const roundSubmitLink = submitItem ? submitItem.SubmitLink.trim() : '';
-
-        const hasValidRelease = items.some(it => {
-            const rel = new Date(it.Release ? it.Release.replace(/-/g, '/') : '');
-            return !isNaN(rel);
-        });
-        const isRoundLocked = hasValidRelease && items.every(it => {
-            const rel = new Date(it.Release ? it.Release.replace(/-/g, '/') : '');
-            return !isNaN(rel) && now < rel;
-        });
-
-        let roundSubmitBtnHtml = '';
-        if (roundSubmitLink) {
-            if (isRoundLocked) {
-                roundSubmitBtnHtml = `<button class="round-submit-btn disabled" disabled onclick="event.stopPropagation();" title="Submissions open upon round release">Round Locked</button>`;
-            } else {
-                roundSubmitBtnHtml = `<a href="${roundSubmitLink}" target="_blank" rel="noopener noreferrer" class="round-submit-btn" onclick="event.stopPropagation();">Submit Round →</a>`;
-            }
-        }
-
         const safeRound = escapeHtml(roundName);
         const countText = `${items.length} Exhibit${items.length === 1 ? '' : 's'}`;
 
@@ -784,6 +818,7 @@ function renderRounds(data, isLive) {
                     <span class="round-header-badge">${countText}</span>
                 </div>
                 <div class="round-header-right">
+                    ${roundCountdownTag}
                     ${roundSubmitBtnHtml}
                     <div class="round-dropdown-btn">
                         <span>Exhibits</span>
@@ -1569,7 +1604,7 @@ function initNodes() {
             }
 
             // Mouse gravity well (disabled in zen fullscreen mode)
-            if (!window.isZenFullscreen) {
+            if (!window.isZenFullscreen && !document.body.classList.contains('zen-fullscreen-mode')) {
                 const dxm = p.x - mouse.x;
                 const dym = p.y - mouse.y;
                 const distmSq = dxm * dxm + dym * dym;
@@ -1634,36 +1669,84 @@ function initHeroZenFullscreen() {
     const heroLogoWrap = document.querySelector('.hero-logo-wrap');
     if (!heroLogoWrap) return;
 
-    heroLogoWrap.setAttribute('title', 'Cognito Zen View');
+    heroLogoWrap.setAttribute('title', 'Click to toggle Zen Fullscreen');
+
+    function getFullscreenElement() {
+        return document.fullscreenElement 
+            || document.webkitFullscreenElement 
+            || document.mozFullScreenElement 
+            || document.msFullscreenElement 
+            || null;
+    }
+
+    function setZenMode(enable) {
+        window.isZenFullscreen = enable;
+        if (enable) {
+            document.body.classList.add('zen-fullscreen-mode');
+            document.documentElement.classList.add('zen-fullscreen-mode');
+        } else {
+            document.body.classList.remove('zen-fullscreen-mode');
+            document.documentElement.classList.remove('zen-fullscreen-mode');
+        }
+    }
+
+    let isTransitioning = false;
 
     heroLogoWrap.addEventListener('click', (e) => {
         e.preventDefault();
-        const isZen = document.body.classList.contains('zen-fullscreen-mode');
+        e.stopPropagation();
 
-        if (!isZen) {
-            document.body.classList.add('zen-fullscreen-mode');
-            window.isZenFullscreen = true;
-            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
+        const currentlyZen = document.body.classList.contains('zen-fullscreen-mode') 
+            || document.documentElement.classList.contains('zen-fullscreen-mode') 
+            || !!getFullscreenElement();
+
+        if (!currentlyZen) {
+            setZenMode(true);
+            isTransitioning = true;
+            setTimeout(() => { isTransitioning = false; }, 800);
+
+            const requestFs = document.documentElement.requestFullscreen 
+                || document.documentElement.webkitRequestFullscreen 
+                || document.documentElement.mozRequestFullScreen 
+                || document.documentElement.msRequestFullscreen;
+
+            if (requestFs) {
+                try {
+                    const res = requestFs.call(document.documentElement);
+                    if (res && res.catch) res.catch(() => {});
+                } catch (_) {}
             }
         } else {
-            document.body.classList.remove('zen-fullscreen-mode');
-            window.isZenFullscreen = false;
-            if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(() => {});
+            setZenMode(false);
+            isTransitioning = true;
+            setTimeout(() => { isTransitioning = false; }, 800);
+
+            const exitFs = document.exitFullscreen 
+                || document.webkitExitFullscreen 
+                || document.mozCancelFullScreen 
+                || document.msExitFullscreen;
+
+            if (getFullscreenElement() && exitFs) {
+                try {
+                    const res = exitFs.call(document);
+                    if (res && res.catch) res.catch(() => {});
+                } catch (_) {}
             }
         }
     });
 
     const onFullscreenChange = () => {
-        if (!document.fullscreenElement) {
-            document.body.classList.remove('zen-fullscreen-mode');
-            window.isZenFullscreen = false;
+        if (isTransitioning) return;
+        if (!getFullscreenElement()) {
+            setZenMode(false);
+        } else {
+            setZenMode(true);
         }
     };
 
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+        document.addEventListener(evt, onFullscreenChange);
+    });
 }
 
 initHeroZenFullscreen();
