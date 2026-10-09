@@ -420,6 +420,38 @@ function initFilterGlider() {
     }
 }
 
+let resolvedRoundsUrl = null;
+let resolvedScoresUrl = null;
+
+async function fetchCsvWithFallback(primaryUrl, fallbackUrl) {
+    if (primaryUrl) {
+        try {
+            const res = await fetch(primaryUrl);
+            if (res.ok) {
+                const text = await res.text();
+                // Ensure response is valid CSV and not an HTML 404 error page
+                if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
+                    return { ok: true, text, url: primaryUrl };
+                }
+            }
+        } catch (e) {}
+    }
+
+    if (fallbackUrl) {
+        try {
+            const res = await fetch(fallbackUrl);
+            if (res.ok) {
+                const text = await res.text();
+                if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
+                    return { ok: true, text, url: fallbackUrl };
+                }
+            }
+        } catch (e) {}
+    }
+
+    return { ok: false, text: '', url: null };
+}
+
 async function initRounds() {
     const container = document.getElementById('rounds-container');
     if (!container) return;
@@ -427,16 +459,15 @@ async function initRounds() {
     let roundsData = [];
     let isLive = false;
 
-    if (CONFIG.ROUNDS_CSV_URL && CONFIG.ROUNDS_CSV_URL.trim() !== "") {
-        try {
-            const res = await fetch(CONFIG.ROUNDS_CSV_URL);
-            if (res.ok) {
-                roundsData = parseCSV(await res.text());
-                isLive = true;
-            }
-        } catch (e) { roundsData = []; }
-    } else {
-        roundsData = [];
+    const res = await fetchCsvWithFallback(
+        resolvedRoundsUrl || CONFIG.ROUNDS_CSV_URL,
+        CONFIG.FALLBACK_ROUNDS_CSV_URL
+    );
+
+    if (res.ok) {
+        resolvedRoundsUrl = res.url;
+        roundsData = parseCSV(res.text);
+        isLive = roundsData.length > 0;
     }
 
     roundsDataCache = roundsData;
@@ -613,17 +644,18 @@ async function initScores() {
     if (!container) return;
 
     let isLive = false;
-    if (CONFIG.SCORES_CSV_URL && CONFIG.SCORES_CSV_URL.trim() !== "") {
-        try {
-            const res = await fetch(CONFIG.SCORES_CSV_URL);
-            if (res.ok) {
-                const text = await res.text();
-                allScoresData = parseCSV(text);
-                isLive = allScoresData.length > 0;
-            }
-        } catch (e) { allScoresData = []; }
+    const res = await fetchCsvWithFallback(
+        resolvedScoresUrl || CONFIG.SCORES_CSV_URL,
+        CONFIG.FALLBACK_SCORES_CSV_URL
+    );
+
+    if (res.ok) {
+        resolvedScoresUrl = res.url;
+        allScoresData = parseCSV(res.text);
+        isLive = allScoresData.length > 0;
+    } else {
+        allScoresData = [];
     }
-    if (!isLive || allScoresData.length === 0) allScoresData = [];
 
     renderBarChart(isLive);
 
@@ -638,10 +670,12 @@ async function initScores() {
     if (isLive && CONFIG.AUTO_REFRESH_INTERVAL) {
         setInterval(async () => {
             try {
-                const res = await fetch(CONFIG.SCORES_CSV_URL);
-                if (res.ok) {
-                    const text = await res.text();
-                    const fresh = parseCSV(text);
+                const refreshRes = await fetchCsvWithFallback(
+                    resolvedScoresUrl || CONFIG.SCORES_CSV_URL,
+                    CONFIG.FALLBACK_SCORES_CSV_URL
+                );
+                if (refreshRes.ok) {
+                    const fresh = parseCSV(refreshRes.text);
                     if (fresh.length > 0) allScoresData = fresh;
                     renderBarChart(true);
                 }

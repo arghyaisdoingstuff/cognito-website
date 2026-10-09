@@ -8,11 +8,15 @@
 
 const CONFIG = {
     // -------------------------------------------------------------
-    // 1. Google Sheets Integration (Protected via Cloudflare Edge API)
+    // 1. Google Sheets Integration (Local Edge/PHP/Node + Cloudflare Fallback)
     // -------------------------------------------------------------
-    // Secure internal proxies hiding the Google Sheets ID from Inspect Element:
+    // Primary local endpoint (works on Cloudflare Pages, Apache+PHP, and Node.js):
     SCORES_CSV_URL: "/api/scores",
     ROUNDS_CSV_URL: "/api/rounds",
+
+    // Cloudflare Edge Fallback (automatically used if hosted on a static college server):
+    FALLBACK_SCORES_CSV_URL: "https://cognito-website-1nx.pages.dev/api/scores",
+    FALLBACK_ROUNDS_CSV_URL: "https://cognito-website-1nx.pages.dev/api/rounds",
 
     // -------------------------------------------------------------
     // 2. Official Registration Links

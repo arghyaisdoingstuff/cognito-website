@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Route /api/scores to PHP proxy
+RewriteRule ^api/scores/?$ api/scores.php [L,QSA]
+
+# Route /api/rounds to PHP proxy
+RewriteRule ^api/rounds/?$ api/rounds.php [L,QSA]
+</IfModule>
