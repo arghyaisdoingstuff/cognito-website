@@ -378,6 +378,47 @@ const SAMPLE_SCORES = [
 // ──────────────────────────────────────────────────────────────
 // Default to first tab's filter (Contingent)
 let activeRoundFilter = 'Contingent';
+let roundsDataCache = null;
+let isRoundsLiveCache = false;
+
+function initFilterGlider() {
+    const glider = document.getElementById('filter-glider');
+    const filterBtns = document.querySelectorAll('[data-round-filter]');
+    if (!glider || !filterBtns.length) return;
+
+    function updateFilterGlider(activeBtn) {
+        if (!glider || !activeBtn) return;
+        glider.style.width = activeBtn.offsetWidth + 'px';
+        glider.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+    }
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateFilterGlider(btn);
+            activeRoundFilter = btn.getAttribute('data-round-filter');
+            if (roundsDataCache !== null) {
+                renderRounds(roundsDataCache, isRoundsLiveCache);
+            }
+        });
+    });
+
+    const initialActive = document.querySelector('[data-round-filter].active');
+    if (initialActive) {
+        updateFilterGlider(initialActive);
+        window.addEventListener('resize', () => {
+            const currentActive = document.querySelector('[data-round-filter].active');
+            if (currentActive) updateFilterGlider(currentActive);
+        });
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                const currentActive = document.querySelector('[data-round-filter].active');
+                if (currentActive) updateFilterGlider(currentActive);
+            });
+        }
+    }
+}
 
 async function initRounds() {
     const container = document.getElementById('rounds-container');
@@ -398,40 +439,9 @@ async function initRounds() {
         roundsData = [];
     }
 
+    roundsDataCache = roundsData;
+    isRoundsLiveCache = isLive;
     renderRounds(roundsData, isLive);
-
-    function updateFilterGlider(activeBtn) {
-        const glider = document.getElementById('filter-glider');
-        if (!glider || !activeBtn) return;
-        glider.style.width = activeBtn.offsetWidth + 'px';
-        glider.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
-    }
-
-    const filterBtns = document.querySelectorAll('[data-round-filter]');
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateFilterGlider(btn);
-            activeRoundFilter = btn.getAttribute('data-round-filter');
-            renderRounds(roundsData, isLive);
-        });
-    });
-
-    const initialActive = document.querySelector('[data-round-filter].active');
-    if (initialActive) {
-        requestAnimationFrame(() => updateFilterGlider(initialActive));
-        window.addEventListener('resize', () => {
-            const currentActive = document.querySelector('[data-round-filter].active');
-            if (currentActive) updateFilterGlider(currentActive);
-        });
-        if (document.fonts) {
-            document.fonts.ready.then(() => {
-                const currentActive = document.querySelector('[data-round-filter].active');
-                if (currentActive) updateFilterGlider(currentActive);
-            });
-        }
-    }
 }
 
 function renderRounds(data, isLive) {
@@ -785,10 +795,13 @@ function initNavGlider() {
         const navRect = navLinks.getBoundingClientRect();
         const targetRect = targetEl.getBoundingClientRect();
         const offsetLeft = targetRect.left - navRect.left;
+        const offsetTop = targetRect.top - navRect.top;
         const width = targetRect.width;
+        const height = targetRect.height;
 
         glider.style.width = `${width}px`;
-        glider.style.transform = `translate(${offsetLeft}px, -50%)`;
+        glider.style.height = `${height}px`;
+        glider.style.transform = `translate3d(${offsetLeft}px, ${offsetTop}px, 0)`;
         glider.style.opacity = '1';
     }
 
@@ -808,6 +821,7 @@ function initNavGlider() {
         if (activeLink) moveGlider(activeLink);
     };
 
+    refreshGlider();
     setTimeout(refreshGlider, 120);
     window.addEventListener('resize', refreshGlider);
     if (document.fonts) document.fonts.ready.then(refreshGlider);
@@ -949,6 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavGlider();
     initHeroSpotlight();
     initButtonHaptics();
+    initFilterGlider();
 
     // Mobile nav
     const toggle = document.querySelector('.mobile-toggle');
@@ -1147,8 +1162,8 @@ initNodes();
 // 7. MAGNETIC BUTTONS
 // ──────────────────────────────────────────────────────────────
 function initMagneticButtons() {
-    // Select buttons and the hero logo wrapper for magnetic effect
-    const magneticElements = document.querySelectorAll('.btn, .tab-btn, .hero-logo-wrap');
+    // Select buttons and the hero logo wrapper for magnetic effect (excluding slider tabs)
+    const magneticElements = document.querySelectorAll('.btn, .hero-logo-wrap');
     
     magneticElements.forEach(btn => {
         // We only want the magnetic pull on desktop/mouse devices
