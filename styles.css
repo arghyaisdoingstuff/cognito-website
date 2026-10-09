@@ -411,21 +411,31 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 2;
 }
 
-/* Global scanline texture – static hardware-accelerated overlay (zero repaint cost) */
+/* Global scanline sweep – GPU-accelerated continuous drift */
 body::after {
     content: '';
     position: fixed;
-    inset: 0;
+    top: -12px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh + 24px);
     background: repeating-linear-gradient(
         to bottom,
         transparent 0px,
         transparent 3px,
-        rgba(0, 229, 255, 0.015) 3px,
-        rgba(0, 229, 255, 0.015) 4px
+        rgba(0, 229, 255, 0.016) 3px,
+        rgba(0, 229, 255, 0.016) 4px
     );
     pointer-events: none;
     z-index: 99;
     transform: translate3d(0, 0, 0);
+    will-change: transform;
+    animation: scanlineDrift 0.45s linear infinite;
+}
+
+@keyframes scanlineDrift {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, 8px, 0); }
 }
 
 .hero-inner { position:relative; z-index:1; }
@@ -738,7 +748,7 @@ body.zen-fullscreen-mode .hero-actions,
     margin: 0 -24px;
     border-radius: 18px;
     position: relative;
-    transition: background 0.4s var(--ease-out);
+    transition: background 0.4s var(--ease-out), opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
 }
 .editorial-row::after {
     content: '';
@@ -748,7 +758,14 @@ body.zen-fullscreen-mode .hero-actions,
     right: 24px;
     height: 1px;
     background: linear-gradient(90deg, transparent 0%, var(--edge-dim) 20%, var(--edge-dim) 80%, transparent 100%);
-    transition: background 0.4s var(--ease-out);
+    transition: background 0.4s var(--ease-out), transform 0.9s var(--ease-out) 0.1s, opacity 0.9s var(--ease-out) 0.1s;
+    transform: scaleX(0);
+    transform-origin: center;
+    opacity: 0;
+}
+.editorial-row.visible::after {
+    transform: scaleX(1);
+    opacity: 1;
 }
 .editorial-row:last-child::after {
     display: none;
@@ -758,6 +775,37 @@ body.zen-fullscreen-mode .hero-actions,
 }
 .editorial-row:hover::after {
     background: linear-gradient(90deg, transparent 0%, var(--primary) 30%, var(--secondary) 70%, transparent 100%);
+}
+
+/* Staggered child scroll reveal elements inside about pillars */
+.editorial-row.reveal .editorial-index-huge {
+    opacity: 0;
+    transform: translate3d(-28px, 0, 0);
+    transition: opacity 0.7s var(--ease-out) 0.06s, transform 0.7s var(--ease-out) 0.06s, color 0.45s var(--ease-out), text-shadow 0.45s var(--ease-out);
+}
+.editorial-row.reveal.visible .editorial-index-huge {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.editorial-row.reveal .editorial-narrative {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    transition: opacity 0.75s var(--ease-out) 0.12s, transform 0.75s var(--ease-out) 0.12s;
+}
+.editorial-row.reveal.visible .editorial-narrative {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.editorial-row.reveal .editorial-image-frame {
+    opacity: 0;
+    transform: scale3d(0.92, 0.92, 1) translate3d(24px, 0, 0);
+    transition: opacity 0.8s var(--ease-out) 0.18s, transform 0.8s var(--ease-spring) 0.18s, border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+}
+.editorial-row.reveal.visible .editorial-image-frame {
+    opacity: 1;
+    transform: scale3d(1, 1, 1) translate3d(0, 0, 0);
 }
 
 .editorial-index-huge {

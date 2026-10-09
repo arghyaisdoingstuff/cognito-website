@@ -1639,11 +1639,11 @@ function initNodes() {
     resize();
 
     const particles = [];
-    const numParticles = width > 768 ? 30 : 16;
-    const maxDistance = 130;
+    const numParticles = width > 768 ? 42 : 22;
+    const maxDistance = 135;
     const maxDistanceSq = maxDistance * maxDistance;
-    const halfDistanceSq = (maxDistance * 0.52) * (maxDistance * 0.52);
-    const gravityDist = maxDistance * 2.0;
+    const halfDistanceSq = (maxDistance * 0.5) * (maxDistance * 0.5);
+    const gravityDist = maxDistance * 2.2;
     const gravityDistSq = gravityDist * gravityDist;
     
     let mouse = { x: -1000, y: -1000 };
