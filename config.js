@@ -1,18 +1,18 @@
 /**
  * Cognito 2026 - Central Configuration File
  * 
- * Edit this file to connect your live Google Sheets and update external links.
- * You DO NOT need to touch any HTML/CSS code on event day!
+ * Secure Edge API Proxy Integration:
+ * Requests are routed through Cloudflare Pages Functions (/api/scores, /api/rounds).
+ * This completely hides your private Google Sheet ID from participants and DevTools.
  */
 
 const CONFIG = {
     // -------------------------------------------------------------
-    // 1. Google Sheets Integration (Published as CSV)
+    // 1. Google Sheets Integration (Protected via Cloudflare Edge API)
     // -------------------------------------------------------------
-    // Instructions: In Google Sheets, go to File > Share > Publish to web
-    // Select the tab, choose 'Comma-separated values (.csv)', and copy the URL.
-    SCORES_CSV_URL: "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Scores",
-    ROUNDS_CSV_URL: "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Rounds",
+    // Secure internal proxies hiding the Google Sheets ID from Inspect Element:
+    SCORES_CSV_URL: "/api/scores",
+    ROUNDS_CSV_URL: "/api/rounds",
 
     // -------------------------------------------------------------
     // 2. Official Registration Links
@@ -38,12 +38,10 @@ const CONFIG = {
     // -------------------------------------------------------------
     // 5. Video Trailer Embed
     // -------------------------------------------------------------
-    // Replace with your YouTube Embed URL (e.g. "https://www.youtube.com/embed/YOUR_VIDEO_ID")
     TRAILER_EMBED_URL: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0",
 
     // -------------------------------------------------------------
     // 6. Refresh Interval (in milliseconds)
     // -------------------------------------------------------------
-    // Auto-refresh scores every 60 seconds (60000 ms)
     AUTO_REFRESH_INTERVAL: 60000
 };

@@ -419,8 +419,10 @@ async function initRounds() {
     if (CONFIG.ROUNDS_CSV_URL && CONFIG.ROUNDS_CSV_URL.trim() !== "") {
         try {
             const res = await fetch(CONFIG.ROUNDS_CSV_URL);
-            roundsData = parseCSV(await res.text());
-            isLive = true;
+            if (res.ok) {
+                roundsData = parseCSV(await res.text());
+                isLive = true;
+            }
         } catch (e) { roundsData = []; }
     } else {
         roundsData = [];
@@ -634,9 +636,11 @@ async function initScores() {
     if (CONFIG.SCORES_CSV_URL && CONFIG.SCORES_CSV_URL.trim() !== "") {
         try {
             const res = await fetch(CONFIG.SCORES_CSV_URL);
-            const text = await res.text();
-            allScoresData = parseCSV(text);
-            isLive = allScoresData.length > 0;
+            if (res.ok) {
+                const text = await res.text();
+                allScoresData = parseCSV(text);
+                isLive = allScoresData.length > 0;
+            }
         } catch (e) { allScoresData = []; }
     }
     if (!isLive || allScoresData.length === 0) allScoresData = [];
@@ -655,10 +659,12 @@ async function initScores() {
         setInterval(async () => {
             try {
                 const res = await fetch(CONFIG.SCORES_CSV_URL);
-                const text = await res.text();
-                const fresh = parseCSV(text);
-                if (fresh.length > 0) allScoresData = fresh;
-                renderBarChart(true);
+                if (res.ok) {
+                    const text = await res.text();
+                    const fresh = parseCSV(text);
+                    if (fresh.length > 0) allScoresData = fresh;
+                    renderBarChart(true);
+                }
             } catch (e) {}
         }, CONFIG.AUTO_REFRESH_INTERVAL);
     }
