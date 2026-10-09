@@ -3,26 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito 2026 - Bespoke Design Paradigms</title>
+    <title>Cognito 2026 - Real Content Design Paradigms</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-deep: #030712;
             --bg-surface: #070d1e;
-            --bg-subtle: #0d162d;
+            --bg-elevated: #0d162d;
+            --bg-glass: rgba(10, 18, 38, 0.65);
             --primary: #00e5ff;
-            --primary-dim: rgba(0, 229, 255, 0.4);
+            --primary-dim: rgba(0, 229, 255, 0.35);
             --primary-ghost: rgba(0, 229, 255, 0.08);
             --edge: rgba(255, 255, 255, 0.08);
+            --edge-dim: rgba(255, 255, 255, 0.04);
             --edge-bright: rgba(255, 255, 255, 0.16);
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
             --font-display: 'Space Grotesk', sans-serif;
             --font-body: 'Plus Jakarta Sans', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,30 +36,36 @@
             color: var(--text-primary);
             font-family: var(--font-body);
             line-height: 1.6;
-            padding: 40px 24px;
+            padding: 40px 20px 80px;
+            overflow-x: hidden;
         }
 
-        .showcase-header {
+        .container {
             max-width: 1200px;
-            margin: 0 auto 50px;
-            text-align: center;
+            margin: 0 auto;
         }
-        .showcase-tag {
+
+        /* TOP SHOWCASE CONTROLS */
+        .showcase-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .showcase-pill {
             font-family: var(--font-mono);
             font-size: 0.75rem;
             color: var(--primary);
             letter-spacing: 2px;
             text-transform: uppercase;
             background: var(--primary-ghost);
-            padding: 6px 14px;
+            padding: 6px 16px;
             border-radius: 100px;
             border: 1px solid var(--primary-dim);
             display: inline-block;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
         .showcase-title {
             font-family: var(--font-display);
-            font-size: 2.4rem;
+            font-size: 2.5rem;
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 12px;
@@ -62,426 +73,1139 @@
         .showcase-subtitle {
             color: var(--text-secondary);
             font-size: 1.05rem;
-            max-width: 680px;
+            max-width: 720px;
             margin: 0 auto;
         }
 
-        /* TABS */
-        .tab-bar {
+        /* DUAL CONTROLLER BAR */
+        .control-dock {
+            background: rgba(7, 13, 30, 0.85);
+            border: 1px solid var(--edge-bright);
+            backdrop-filter: blur(20px);
+            padding: 14px 20px;
+            border-radius: 16px;
+            max-width: 980px;
+            margin: 0 auto 50px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 12px;
-            margin-bottom: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
             flex-wrap: wrap;
         }
-        .tab-btn {
+        .control-label {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--edge);
             color: var(--text-secondary);
-            padding: 10px 22px;
-            border-radius: 10px;
+            padding: 8px 18px;
+            border-radius: 8px;
             font-family: var(--font-display);
+            font-size: 0.88rem;
             font-weight: 600;
-            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.2s var(--ease-out);
         }
-        .tab-btn:hover {
+        .mode-btn:hover {
             color: #fff;
             border-color: var(--edge-bright);
         }
-        .tab-btn.active {
+        .mode-btn.active {
             background: var(--primary-ghost);
             color: var(--primary);
             border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(0,229,255,0.15);
+            box-shadow: 0 0 16px rgba(0,229,255,0.2);
+        }
+        .mode-btn.current-ai.active {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border-color: #ef4444;
+            box-shadow: 0 0 16px rgba(239,68,68,0.2);
         }
 
-        .paradigm-section {
-            max-width: 1140px;
-            margin: 0 auto 60px;
+        .view-frame {
             display: none;
         }
-        .paradigm-section.active { display: block; }
+        .view-frame.active {
+            display: block;
+            animation: fadeIn 0.4s var(--ease-out);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        .paradigm-desc-box {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--edge);
-            border-left: 3px solid var(--primary);
-            padding: 18px 24px;
-            border-radius: 8px;
-            margin-bottom: 32px;
+        .section-intro-bar {
+            border-bottom: 1px solid var(--edge);
+            padding-bottom: 20px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 16px;
         }
-        .paradigm-desc-box h4 {
+        .section-intro-bar h2 {
             font-family: var(--font-display);
-            font-size: 1.1rem;
-            margin-bottom: 4px;
+            font-size: 1.8rem;
+            font-weight: 700;
         }
-        .paradigm-desc-box p {
+        .section-intro-bar .badge-note {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--primary);
+            background: var(--primary-ghost);
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--primary-dim);
+        }
+
+        /* =============================================================
+           PARADIGM 02 // EXECUTIVE DOSSIER & LEDGER ROWS
+           ============================================================= */
+
+        /* 1. Rounds Ledger */
+        .rounds-ledger-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .rounds-ledger-item {
+            background: rgba(7, 13, 30, 0.6);
+            border: 1px solid var(--edge);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s var(--ease-out);
+        }
+        .rounds-ledger-item:hover {
+            border-color: var(--primary-dim);
+            background: rgba(13, 22, 45, 0.7);
+        }
+        .rounds-ledger-item.expanded {
+            border-color: var(--primary);
+            background: rgba(13, 22, 45, 0.9);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+        }
+        .rounds-ledger-header {
+            display: grid;
+            grid-template-columns: 90px 240px 1fr 180px 140px;
+            align-items: center;
+            padding: 22px 28px;
+            cursor: pointer;
+            user-select: none;
+            gap: 16px;
+        }
+        .r-code {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+        .r-title-group h3 {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+        .r-title-group .r-round-name {
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+        }
+        .r-desc-brief {
             color: var(--text-secondary);
             font-size: 0.92rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .r-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-family: var(--font-mono);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .status-dot.live { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+        .status-dot.locked { background: var(--accent-amber); box-shadow: 0 0 10px var(--accent-amber); }
+        .status-dot.closed { background: #64748b; }
+        .r-toggle-action {
+            text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-family: var(--font-mono);
+        }
+        .rounds-ledger-item:hover .r-toggle-action {
+            color: var(--primary);
+        }
+        .r-chevron {
+            transition: transform 0.3s;
+        }
+        .rounds-ledger-item.expanded .r-chevron {
+            transform: rotate(180deg);
+        }
+        .rounds-drawer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s var(--ease-out);
+            border-top: 1px solid transparent;
+            background: rgba(3, 7, 18, 0.4);
+        }
+        .rounds-ledger-item.expanded .rounds-drawer {
+            max-height: 250px;
+            border-top-color: var(--edge);
+        }
+        .rounds-drawer-inner {
+            padding: 24px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .rounds-drawer-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            max-width: 650px;
+            line-height: 1.7;
+        }
+        .rounds-drawer-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-action-primary {
+            background: var(--primary);
+            color: #030712;
+            padding: 9px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        .btn-action-primary:hover {
+            box-shadow: 0 0 20px var(--primary-dim);
+            transform: translateY(-2px);
+        }
+        .btn-action-secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid var(--edge-bright);
+            padding: 9px 18px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        .btn-action-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
-        /* -------------------------------------------------------------
-           CURRENT (AI TROPES)
-           ------------------------------------------------------------- */
-        .ai-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        /* 2. Contact Directory Ledger */
+        .faculty-dossier {
+            background: linear-gradient(135deg, rgba(13, 22, 45, 0.8) 0%, rgba(7, 13, 30, 0.8) 100%);
+            border: 1px solid var(--edge-bright);
+            border-left: 3px solid var(--primary);
+            padding: 28px 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 20px;
         }
-        .ai-card {
-            background: rgba(13, 22, 45, 0.45);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 28px;
-            position: relative;
-            transition: all 0.4s ease;
-        }
-        .ai-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(0, 229, 255, 0.4);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(0,229,255,0.1);
-        }
-        .ai-badge {
-            display: inline-block;
-            font-size: 0.7rem;
-            padding: 4px 10px;
-            border-radius: 50px;
-            background: rgba(0,229,255,0.1);
-            color: var(--primary);
-            margin-bottom: 14px;
-        }
-
-        /* -------------------------------------------------------------
-           PARADIGM 1: ARCHITECTURAL MONOLITHIC GRID (Zero Floating Cards)
-           Continuous structural frame with hairline rule lines and technical crosshairs
-           ------------------------------------------------------------- */
-        .arch-matrix {
-            border: 1px solid var(--edge-bright);
-            background: var(--bg-surface);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            position: relative;
-        }
-        .arch-cell {
-            padding: 36px 32px;
-            border-right: 1px solid var(--edge);
-            position: relative;
-            background: transparent;
-            transition: background 0.3s ease;
-        }
-        .arch-cell:last-child { border-right: none; }
-        .arch-cell:hover {
-            background: rgba(0, 229, 255, 0.025);
-        }
-        .arch-crosshair {
-            position: absolute;
-            top: -7px;
-            right: -7px;
-            width: 13px;
-            height: 13px;
-            color: var(--primary-dim);
-            font-family: var(--font-mono);
-            font-size: 13px;
-            line-height: 13px;
-            text-align: center;
-            pointer-events: none;
-            z-index: 2;
-        }
-        .arch-kicker {
+        .faculty-dossier-meta .f-tag {
             font-family: var(--font-mono);
             font-size: 0.72rem;
             color: var(--primary);
             letter-spacing: 1.5px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
-        .arch-kicker::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--primary);
-        }
-        .arch-title {
+        .faculty-dossier-meta .f-name {
             font-family: var(--font-display);
-            font-size: 1.35rem;
+            font-size: 1.6rem;
             font-weight: 700;
             color: #fff;
-            margin-bottom: 12px;
-            line-height: 1.3;
         }
-        .arch-desc {
+        .faculty-dossier-meta .f-sub {
             color: var(--text-secondary);
             font-size: 0.92rem;
-            line-height: 1.7;
+            margin-top: 4px;
         }
-
-        /* -------------------------------------------------------------
-           PARADIGM 2: EXECUTIVE DOSSIER / LEDGER ROWS
-           High-density professional rows inspired by financial terminals & corporate desks
-           ------------------------------------------------------------- */
-        .ledger-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .contact-ledger-table {
+            border: 1px solid var(--edge);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-surface);
         }
-        .ledger-row {
+        .contact-row {
             display: grid;
             grid-template-columns: 80px 240px 1fr 180px 140px;
+            padding: 20px 28px;
             align-items: center;
-            padding: 22px 28px;
-            background: rgba(7, 13, 30, 0.6);
-            border: 1px solid var(--edge);
-            border-radius: 8px;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
+            border-bottom: 1px solid var(--edge);
+            transition: background 0.2s;
         }
-        .ledger-row:hover {
-            background: rgba(13, 22, 45, 0.9);
-            border-color: var(--primary-dim);
-            transform: translateX(6px);
-        }
-        .ledger-num {
+        .contact-row:last-child { border-bottom: none; }
+        .contact-row:hover { background: rgba(0,229,255,0.03); }
+        .contact-id {
             font-family: var(--font-mono);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            font-weight: 600;
         }
-        .ledger-entity {
+        .contact-name {
             font-family: var(--font-display);
             font-size: 1.15rem;
             font-weight: 700;
             color: #fff;
         }
-        .ledger-detail {
+        .contact-dept {
             color: var(--text-secondary);
             font-size: 0.9rem;
-            padding-right: 20px;
         }
-        .ledger-meta {
+        .contact-phone {
             font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: var(--primary);
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            text-decoration: none;
         }
-        .ledger-action {
-            text-align: right;
-        }
-        .ledger-btn {
+        .contact-phone:hover { color: var(--primary); }
+        .contact-btn-wa {
             font-family: var(--font-mono);
             font-size: 0.78rem;
-            color: #fff;
-            background: transparent;
-            border: 1px solid var(--edge-bright);
-            padding: 7px 16px;
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 14px;
             border-radius: 6px;
-            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
             transition: all 0.2s;
+            display: inline-block;
         }
-        .ledger-row:hover .ledger-btn {
-            background: var(--primary);
-            color: #030712;
-            border-color: var(--primary);
-            font-weight: 600;
+        .contact-btn-wa:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--accent-green);
         }
 
-        /* -------------------------------------------------------------
-           PARADIGM 3: EDITORIAL TYPOGRAPHY & NEGATIVE SPACE
-           Magazine/Pentagram style, zero borders, pure layout rhythm
-           ------------------------------------------------------------- */
-        .editorial-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 48px;
-            border-top: 1px solid var(--edge-bright);
-            padding-top: 40px;
+        /* =============================================================
+           PARADIGM 03 // EDITORIAL TYPOGRAPHIC MONOGRAPH
+           ============================================================= */
+
+        .editorial-pillars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
         }
-        .editorial-col {
+        .editorial-row {
+            display: grid;
+            grid-template-columns: 120px 1fr 420px;
+            gap: 40px;
+            align-items: center;
+            border-bottom: 1px solid var(--edge);
+            padding-bottom: 60px;
             position: relative;
         }
-        .editorial-num {
+        .editorial-row:last-child { border-bottom: none; }
+        .editorial-index-huge {
             font-family: var(--font-display);
-            font-size: 4rem;
+            font-size: 6rem;
             font-weight: 800;
-            color: rgba(255, 255, 255, 0.06);
-            line-height: 1;
-            margin-bottom: -16px;
+            color: rgba(255, 255, 255, 0.05);
+            line-height: 0.8;
             user-select: none;
+            transition: color 0.3s;
         }
-        .editorial-title {
+        .editorial-row:hover .editorial-index-huge {
+            color: rgba(0, 229, 255, 0.15);
+        }
+        .editorial-narrative .ed-tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        .editorial-narrative .ed-title {
             font-family: var(--font-display);
-            font-size: 1.45rem;
+            font-size: 2.1rem;
             font-weight: 700;
             color: #fff;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
+            line-height: 1.2;
         }
-        .editorial-desc {
+        .editorial-narrative .ed-text {
             color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.75;
+            font-size: 1.02rem;
+            line-height: 1.8;
+            max-width: 620px;
             border-left: 2px solid var(--edge);
-            padding-left: 16px;
+            padding-left: 20px;
             transition: border-color 0.3s;
         }
-        .editorial-col:hover .editorial-desc {
+        .editorial-row:hover .editorial-narrative .ed-text {
             border-color: var(--primary);
-            color: #e2e8f0;
+            color: #f1f5f9;
+        }
+        .editorial-image-frame {
+            position: relative;
+            height: 240px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, rgba(0,229,255,0.05) 0%, transparent 70%);
+        }
+        .editorial-image-frame img {
+            max-height: 85%;
+            max-width: 85%;
+            object-fit: contain;
+            filter: drop-shadow(0 12px 30px rgba(0,0,0,0.6));
+            transition: transform 0.5s var(--ease-out);
+        }
+        .editorial-row:hover .editorial-image-frame img {
+            transform: scale(1.04);
+        }
+
+        /* =============================================================
+           CURRENT AI CARDS (FOR DIRECT CONTRAST)
+           ============================================================= */
+        .ai-pillars-contrast {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .ai-old-pillar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            background: rgba(10, 18, 38, 0.65);
+            backdrop-filter: blur(16px);
+            overflow: hidden;
+            padding: 30px;
+            gap: 30px;
+            align-items: center;
+            transition: transform 0.4s, border-color 0.4s, box-shadow 0.4s;
+        }
+        .ai-old-pillar:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary-dim);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(0,229,255,0.1);
+        }
+
+        @media (max-width: 900px) {
+            .rounds-ledger-header {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .contact-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .editorial-row {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .editorial-index-huge {
+                font-size: 3.5rem;
+            }
+            .ai-old-pillar {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
 
-    <header class="showcase-header">
-        <span class="showcase-tag">Design Architecture Elevation</span>
-        <h1 class="showcase-title">Beyond the Generic AI Card Trope</h1>
-        <p class="showcase-subtitle">
-            AI templates rely on identical floating rounded glass boxes with generic dropshadows. 
-            Compare the current pattern with three custom design architectures below.
-        </p>
-    </header>
-
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('arch')">01 // Architectural Wireframe Grid</button>
-        <button class="tab-btn" onclick="switchTab('ledger')">02 // Executive Ledger / Dossier</button>
-        <button class="tab-btn" onclick="switchTab('editorial')">03 // Editorial Typographic Layout</button>
-        <button class="tab-btn" onclick="switchTab('current')">00 // Current Floating Glass Cards (AI)</button>
-    </div>
-
-    <!-- 01 ARCHITECTURAL GRID -->
-    <div id="tab-arch" class="paradigm-section active">
-        <div class="paradigm-desc-box">
-            <h4>Paradigm 01: The Monolithic Architectural Grid (Recommended)</h4>
-            <p>
-                Used by Linear, Stripe Press, and Teenage Engineering. Instead of individual cards floating in space, content sits in a continuous structural matrix separated by precision hairline rule lines with subtle coordinate markers. It feels engineered and authoritative, not like a template.
+    <div class="container">
+        <header class="showcase-header">
+            <span class="showcase-pill">Bespoke Design Elevation</span>
+            <h1 class="showcase-title">Real Content Showcase</h1>
+            <p class="showcase-subtitle">
+                Compare your selected design architectures with the actual official Cognito 2026 data.
             </p>
+        </header>
+
+        <!-- DOCK CONTROLLER -->
+        <div class="control-dock">
+            <div class="control-row">
+                <span class="control-label">Design Paradigm:</span>
+                <div class="btn-group">
+                    <button class="mode-btn active" onclick="setParadigm('ledger', this)">02 // Executive Ledger & Dossier</button>
+                    <button class="mode-btn" onclick="setParadigm('editorial', this)">03 // Editorial Typographic Layout</button>
+                    <button class="mode-btn" onclick="setParadigm('combined', this)">★ Recommended Synergy (03 + 02)</button>
+                    <button class="mode-btn current-ai" onclick="setParadigm('current', this)">00 // Current Floating AI Cards</button>
+                </div>
+            </div>
+            <div class="control-row" id="section-control-row" style="transition: opacity 0.3s;">
+                <span class="control-label">Page Context:</span>
+                <div class="btn-group">
+                    <button class="mode-btn active" onclick="setSection('pillars', this)">Homepage Pillars</button>
+                    <button class="mode-btn" onclick="setSection('rounds', this)">Event Rounds Timeline</button>
+                    <button class="mode-btn" onclick="setSection('contact', this)">Contact & Representatives</button>
+                </div>
+            </div>
         </div>
 
-        <div class="arch-matrix">
-            <div class="arch-cell">
-                <div class="arch-crosshair">+</div>
-                <div class="arch-kicker">SIMULATION 01</div>
-                <h3 class="arch-title">Corporate Genesis & Market Entry</h3>
-                <p class="arch-desc">Cross-functional corporate crisis simulation testing resource allocation, liquidity stress tests, and aggressive market entry strategy under macroeconomic volatility.</p>
-            </div>
-            <div class="arch-cell">
-                <div class="arch-crosshair">+</div>
-                <div class="arch-kicker">SIMULATION 02</div>
-                <h3 class="arch-title">Distress Restructuring & M&A</h3>
-                <p class="arch-desc">Live hostile takeover defenses before executive jury. Teams restructure toxic asset portfolios and navigate board governance battles under timed deadlines.</p>
-            </div>
-            <div class="arch-cell">
-                <div class="arch-kicker">SIMULATION 03</div>
-                <h3 class="arch-title">The Grand Conquest Finale</h3>
-                <p class="arch-desc">The overarching storyline reaches its climax on the auditorium stage. Top qualifying contingents battle live for the prestigious Cognito 2026 Trophy.</p>
-            </div>
-        </div>
-    </div>
+        <!-- =======================================================
+             VIEW FRAME: PARADIGM 02 (EXECUTIVE LEDGER & DOSSIER)
+             ======================================================= -->
+        <div id="frame-ledger" class="view-frame active">
 
-    <!-- 02 EXECUTIVE LEDGER -->
-    <div id="tab-ledger" class="paradigm-section">
-        <div class="paradigm-desc-box">
-            <h4>Paradigm 02: Executive Ledger / Dossier System</h4>
-            <p>
-                Inspired by Bloomberg terminals, private wealth portals, and McKinsey war-room dashboards. High-density horizontal exhibits with monospace timestamps and status indicators. Perfect for Rounds, Timeline exhibits, and Representatives.
-            </p>
+            <!-- PILLARS (LEDGER STYLE) -->
+            <div class="section-block sec-pillars">
+                <div class="section-intro-bar">
+                    <div>
+                        <h2>Institutional Dossier</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;">High-density executive ledger presenting the core foundations.</p>
+                    </div>
+                    <span class="badge-note">PARADIGM 02 // LEDGER DOCKET</span>
+                </div>
+
+                <div class="rounds-ledger-stack">
+                    <div class="rounds-ledger-item expanded">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">DOC // 01</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">The Fest</span>
+                                <h3>About Cognito</h3>
+                            </div>
+                            <span class="r-desc-brief">International A-level intercollegiate corporate simulation fest.</span>
+                            <div class="r-status"><span class="status-dot live"></span><span>20th Edition</span></div>
+                            <div class="r-toggle-action"><span>Inspect</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">COGNITO is the department's international A-level intercollegiate Commerce fest that has advanced exponentially in caliber and scope, presenting young professionals with opportunities to explore and embrace the corporate arena. As a spearhead for corporate simulation, Cognito bridges the gap between imagined conditions and the true realities of business.</p>
+                                <div class="rounds-drawer-actions">
+                                    <a href="rounds.html" class="btn-action-primary">Explore Rounds →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounds-ledger-item">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">DOC // 02</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">The Club</span>
+                                <h3>Professionals Festing Club</h3>
+                            </div>
+                            <span class="r-desc-brief">Student-led platform under the motto "Tempus • Imperium • Potentia".</span>
+                            <div class="r-status"><span class="status-dot live"></span><span>Executive Wing</span></div>
+                            <div class="r-toggle-action"><span>Inspect</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">A student-led platform committed to cultivating competitive excellence, professional acumen, and leadership. Operating under the motto <em>"Tempus • Imperium • Potentia"</em>, the Club enables students to apply classroom learning in high-pressure environments while developing sound judgment and strategic execution under real stakes.</p>
+                                <div class="rounds-drawer-actions">
+                                    <a href="contact.html" class="btn-action-secondary">Meet Representatives</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounds-ledger-item">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">DOC // 03</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">The Department</span>
+                                <h3>Department of Professional Studies</h3>
+                            </div>
+                            <span class="r-desc-brief">Academic excellence launched in 2002 with 2,500+ aspiring professionals.</span>
+                            <div class="r-status"><span class="status-dot live"></span><span>Faculty Body</span></div>
+                            <div class="r-toggle-action"><span>Inspect</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">Launched in 2002, the Department of Professional Studies (DPS) is built on a strong foundation of academic excellence, application-based learning, and futuristic vision. Home to more than 2,500 students, DPS offers an academic journey enriched by international professional body partnerships and seasoned corporate faculty.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounds-ledger-item">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">DOC // 04</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">The Institution</span>
+                                <h3>CHRIST (Deemed to be University)</h3>
+                            </div>
+                            <span class="r-desc-brief">Established in 1969, dedicated to "Excellence and Service".</span>
+                            <div class="r-status"><span class="status-dot live"></span><span>Bengaluru Campus</span></div>
+                            <div class="r-toggle-action"><span>Inspect</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">Established in 1969, CHRIST (Deemed to be University) has undertaken path-breaking initiatives in Indian Higher Education. Dedicated to <em>"Excellence and Service"</em>, the premier institution provides its students with comprehensive excellence, preparing them for leadership in an ever-evolving global landscape.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROUNDS (LEDGER STYLE) -->
+            <div class="section-block sec-rounds" style="display:none;">
+                <div class="section-intro-bar">
+                    <div>
+                        <h2>Simulation Dossier Exhibits</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;">Click any exhibit row to inspect the brief drawer and submission protocols.</p>
+                    </div>
+                    <span class="badge-note">PARADIGM 02 // TIMELINE DOSSIER</span>
+                </div>
+
+                <div class="rounds-ledger-stack">
+                    <div class="rounds-ledger-item expanded">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">EX // 01</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">Contingent • Prelims</span>
+                                <h3>Corporate Genesis & Market Entry</h3>
+                            </div>
+                            <span class="r-desc-brief">Comprehensive cross-functional simulation testing agility & resource allocation.</span>
+                            <div class="r-status"><span class="status-dot live"></span><span>Accepting Submissions</span></div>
+                            <div class="r-toggle-action"><span>Dossier</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">Comprehensive cross-functional simulation testing the contingent's agility, strategy, and resource allocation under sudden macro-economic liquidity constraints.</p>
+                                <div class="rounds-drawer-actions">
+                                    <a href="#" class="btn-action-secondary">Read Brief</a>
+                                    <a href="#" class="btn-action-primary">Submit Solution →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounds-ledger-item">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">EX // 02</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">Contingent • Semi-Finals</span>
+                                <h3>Hostile Takeover & Stakeholder Defense</h3>
+                            </div>
+                            <span class="r-desc-brief">A sudden supply-chain collapse threatens continuity. Re-align strategies live.</span>
+                            <div class="r-status"><span class="status-dot locked"></span><span>Unlocks Dec 16</span></div>
+                            <div class="r-toggle-action"><span>Dossier</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">A sudden supply-chain collapse threatens corporate continuity. Re-align strategies live before an unforgiving board of directors.</p>
+                                <div class="rounds-drawer-actions">
+                                    <button class="btn-action-secondary" disabled style="opacity:0.5;cursor:not-allowed">Locked until 10:00 IST</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounds-ledger-item">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">EX // 03</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">Contingent • Grand Finale</span>
+                                <h3>The Final Conquest</h3>
+                            </div>
+                            <span class="r-desc-brief">The overarching storyline reaches its climax for the Cognito 2026 Trophy.</span>
+                            <div class="r-status"><span class="status-dot locked"></span><span>Unlocks Dec 17</span></div>
+                            <div class="r-toggle-action"><span>Dossier</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">The overarching storyline reaches its climax. Top contingents battle live on the main auditorium stage for the Cognito 2026 Trophy.</p>
+                                <div class="rounds-drawer-actions">
+                                    <button class="btn-action-secondary" disabled style="opacity:0.5;cursor:not-allowed">Locked until Release</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACT (LEDGER STYLE) -->
+            <div class="section-block sec-contact" style="display:none;">
+                <div class="section-intro-bar">
+                    <div>
+                        <h2>Executive Directorate Directory</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;">Direct access lines to the Cognito 2026 Steering Committee.</p>
+                    </div>
+                    <span class="badge-note">PARADIGM 02 // DIRECTORY LEDGER</span>
+                </div>
+
+                <!-- Faculty Dossier -->
+                <div class="faculty-dossier">
+                    <div class="faculty-dossier-meta">
+                        <div class="f-tag">FACULTY REPRESENTATIVE & ADVISOR</div>
+                        <h3 class="f-name">Dr. Rajeswari R Menon</h3>
+                        <p class="f-sub">Department of Professional Studies, CHRIST (Deemed to be University)</p>
+                    </div>
+                    <div>
+                        <a href="tel:+918123775200" class="btn-action-secondary" style="font-family:var(--font-mono);font-size:0.9rem;">
+                            📞 +91 81237 75200
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Student Reps Table -->
+                <div class="contact-ledger-table">
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 01</span>
+                        <div class="contact-name">Adithya Sambaragi</div>
+                        <span class="contact-dept">Student Representative • Logistics & Operations</span>
+                        <a href="tel:+919341055024" class="contact-phone">+91 93410 55024</a>
+                        <a href="https://wa.me/919341055024" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 02</span>
+                        <div class="contact-name">Aritro Mukherjee</div>
+                        <span class="contact-dept">Student Representative • Corporate Relations</span>
+                        <a href="tel:+919663046633" class="contact-phone">+91 96630 46633</a>
+                        <a href="https://wa.me/919663046633" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 03</span>
+                        <div class="contact-name">Kaneesha Prasad</div>
+                        <span class="contact-dept">Student Representative • Events & Delegate Experience</span>
+                        <a href="tel:+917899005345" class="contact-phone">+91 78990 05345</a>
+                        <a href="https://wa.me/917899005345" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 04</span>
+                        <div class="contact-name">Kashvi Golechha</div>
+                        <span class="contact-dept">Student Representative • Registrations & Contingents</span>
+                        <a href="tel:+919513824466" class="contact-phone">+91 95138 24466</a>
+                        <a href="https://wa.me/919513824466" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="ledger-stack">
-            <div class="ledger-row">
-                <div class="ledger-num">EX // 01</div>
-                <div class="ledger-entity">Corporate Genesis</div>
-                <div class="ledger-detail">Cross-functional cross-examination simulation testing resource allocation & strategy.</div>
-                <div class="ledger-meta">DEC 15 • 09:30 IST</div>
-                <div class="ledger-action"><button class="ledger-btn">View Dossier →</button></div>
-            </div>
-            <div class="ledger-row">
-                <div class="ledger-num">EX // 02</div>
-                <div class="ledger-entity">Crisis Management</div>
-                <div class="ledger-detail">Supply-chain collapse scenario requiring instant boardroom strategic realignment.</div>
-                <div class="ledger-meta">DEC 16 • 10:00 IST</div>
-                <div class="ledger-action"><button class="ledger-btn">View Dossier →</button></div>
-            </div>
-            <div class="ledger-row">
-                <div class="ledger-num">EX // 03</div>
-                <div class="ledger-entity">The Final Conquest</div>
-                <div class="ledger-detail">Live executive pitch & hostile defense before senior industry partners.</div>
-                <div class="ledger-meta">DEC 17 • 11:00 IST</div>
-                <div class="ledger-action"><button class="ledger-btn">View Dossier →</button></div>
-            </div>
-        </div>
-    </div>
+        <!-- =======================================================
+             VIEW FRAME: PARADIGM 03 (EDITORIAL TYPOGRAPHIC LAYOUT)
+             ======================================================= -->
+        <div id="frame-editorial" class="view-frame">
 
-    <!-- 03 EDITORIAL TYPOGRAPHY -->
-    <div id="tab-editorial" class="paradigm-section">
-        <div class="paradigm-desc-box">
-            <h4>Paradigm 03: Editorial Typographic Hierarchy</h4>
-            <p>
-                Used by high-end design houses (Pentagram, Apple Pro campaigns, Architectural Digest). Deletes card boxes entirely! Relies on dramatic scale contrast, large faint numerals, and crisp accent borders. Feels like an elite print monograph brought to life.
-            </p>
+            <!-- PILLARS (EDITORIAL) -->
+            <div class="section-block sec-pillars">
+                <div class="section-intro-bar">
+                    <div>
+                        <h2>Foundational Monograph</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;">Zero rounded boxes. High typographic scale with integrated photography.</p>
+                    </div>
+                    <span class="badge-note">PARADIGM 03 // EDITORIAL MONOGRAPH</span>
+                </div>
+
+                <div class="editorial-pillars-container">
+                    <!-- Cognito -->
+                    <div class="editorial-row">
+                        <div class="editorial-index-huge">01</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">THE FESTIVAL</span>
+                            <h3 class="ed-title">About Cognito</h3>
+                            <p class="ed-text">COGNITO is the department's international A-level intercollegiate Commerce fest that has advanced exponentially in caliber and scope, presenting young professionals with opportunities to explore and embrace the corporate arena. As a spearhead for corporate simulation, Cognito bridges the gap between imagined conditions and the true realities of business.</p>
+                        </div>
+                        <div class="editorial-image-frame">
+                            <img src="assets/cognito-logo.png" alt="Cognito">
+                        </div>
+                    </div>
+
+                    <!-- PFC -->
+                    <div class="editorial-row">
+                        <div class="editorial-index-huge">02</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">THE GUILD</span>
+                            <h3 class="ed-title">Professionals Festing Club</h3>
+                            <p class="ed-text">A student-led platform committed to cultivating competitive excellence, professional acumen, and leadership. Operating under the motto <em>"Tempus • Imperium • Potentia"</em>, the Club enables students to apply classroom learning in high-pressure environments while developing sound judgment and strategic execution under real stakes.</p>
+                        </div>
+                        <div class="editorial-image-frame">
+                            <img src="assets/festing-logo.png" alt="PFC">
+                        </div>
+                    </div>
+
+                    <!-- DPS -->
+                    <div class="editorial-row">
+                        <div class="editorial-index-huge">03</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">THE FACULTY</span>
+                            <h3 class="ed-title">Department of Professional Studies</h3>
+                            <p class="ed-text">Launched in 2002, the Department of Professional Studies (DPS) is built on a strong foundation of academic excellence, application-based learning, and futuristic vision. Home to more than 2,500 students, DPS offers an academic journey enriched by international professional body partnerships and seasoned corporate faculty.</p>
+                        </div>
+                        <div class="editorial-image-frame">
+                            <img src="assets/dps-photo.png" alt="DPS" style="border-radius:10px;object-fit:cover;width:100%;height:100%;">
+                        </div>
+                    </div>
+
+                    <!-- CHRIST -->
+                    <div class="editorial-row">
+                        <div class="editorial-index-huge">04</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">THE INSTITUTION</span>
+                            <h3 class="ed-title">CHRIST (Deemed to be University)</h3>
+                            <p class="ed-text">Established in 1969, CHRIST (Deemed to be University) has undertaken path-breaking initiatives in Indian Higher Education. Dedicated to <em>"Excellence and Service"</em>, the premier institution provides its students with comprehensive excellence, preparing them for leadership in an ever-evolving global landscape.</p>
+                        </div>
+                        <div class="editorial-image-frame">
+                            <img src="assets/christ-photo.png" alt="CHRIST" style="border-radius:10px;object-fit:cover;width:100%;height:100%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROUNDS (EDITORIAL) -->
+            <div class="section-block sec-rounds" style="display:none;">
+                <div class="section-intro-bar">
+                    <div>
+                        <h2>Editorial Timeline Chronicle</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;">Clean chronological layout with full-width rule dividers.</p>
+                    </div>
+                    <span class="badge-note">PARADIGM 03 // EDITORIAL TIMELINE</span>
+                </div>
+
+                <div class="editorial-pillars-container">
+                    <div class="editorial-row" style="grid-template-columns: 120px 1fr 220px;">
+                        <div class="editorial-index-huge">R1</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">CONTINGENT • PRELIMS</span>
+                            <h3 class="ed-title">Corporate Genesis & Market Entry</h3>
+                            <p class="ed-text">Comprehensive cross-functional simulation testing the contingent's agility, strategy, and resource allocation.</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--accent-green);margin-bottom:12px;">🟢 Accepting Submissions</div>
+                            <a href="#" class="btn-action-primary">View Brief →</a>
+                        </div>
+                    </div>
+
+                    <div class="editorial-row" style="grid-template-columns: 120px 1fr 220px;">
+                        <div class="editorial-index-huge">R2</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">CONTINGENT • SEMI-FINALS</span>
+                            <h3 class="ed-title">Hostile Takeover & Stakeholder Defense</h3>
+                            <p class="ed-text">A sudden supply-chain collapse threatens corporate continuity. Re-align strategies live.</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--accent-amber);margin-bottom:12px;">🔒 Unlocks Dec 16</div>
+                            <button class="btn-action-secondary" disabled style="opacity:0.5;">Locked</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACT (EDITORIAL) -->
+            <div class="section-block sec-contact" style="display:none;">
+                <div class="section-intro-bar">
+                    <div>
+                        <h2>Executive Directorate Masthead</h2>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;">High-contrast editorial masthead without cards.</p>
+                    </div>
+                    <span class="badge-note">PARADIGM 03 // EDITORIAL DIRECTORY</span>
+                </div>
+
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 40px; border-bottom:1px solid var(--edge); padding-bottom:40px; margin-bottom:40px;">
+                    <div>
+                        <span class="ed-tag" style="font-family:var(--font-mono);color:var(--primary);font-size:0.75rem;">FACULTY ADVISOR</span>
+                        <h3 style="font-family:var(--font-display);font-size:2rem;margin:6px 0 10px;">Dr. Rajeswari R Menon</h3>
+                        <p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:16px;">Department of Professional Studies, CHRIST (Deemed to be University)</p>
+                        <a href="tel:+918123775200" style="font-family:var(--font-mono);color:var(--primary);text-decoration:none;font-size:1.1rem;font-weight:600;">+91 81237 75200 →</a>
+                    </div>
+                    <div style="border-left:1px solid var(--edge); padding-left:40px;">
+                        <span class="ed-tag" style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.75rem;">OFFICIAL COMMUNICATIONS</span>
+                        <h3 style="font-family:var(--font-display);font-size:1.4rem;margin:6px 0 10px;">Festival Secretariat</h3>
+                        <p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:12px;">Central Campus, Hosur Road, Bengaluru - 560029</p>
+                        <div style="font-family:var(--font-mono);font-size:0.9rem;color:var(--primary);">cognitodps@fest.christuniversity.in</div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 24px;">
+                    <div style="border-left:2px solid var(--edge-bright); padding-left:16px;">
+                        <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);">REP 01</div>
+                        <h4 style="font-family:var(--font-display);font-size:1.2rem;margin:4px 0 10px;">Adithya Sambaragi</h4>
+                        <a href="tel:+919341055024" style="color:var(--text-secondary);font-family:var(--font-mono);font-size:0.85rem;text-decoration:none;display:block;margin-bottom:8px;">+91 93410 55024</a>
+                        <a href="https://wa.me/919341055024" target="_blank" style="color:var(--accent-green);font-family:var(--font-mono);font-size:0.78rem;text-decoration:none;">WhatsApp →</a>
+                    </div>
+                    <div style="border-left:2px solid var(--edge-bright); padding-left:16px;">
+                        <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);">REP 02</div>
+                        <h4 style="font-family:var(--font-display);font-size:1.2rem;margin:4px 0 10px;">Aritro Mukherjee</h4>
+                        <a href="tel:+919663046633" style="color:var(--text-secondary);font-family:var(--font-mono);font-size:0.85rem;text-decoration:none;display:block;margin-bottom:8px;">+91 96630 46633</a>
+                        <a href="https://wa.me/919663046633" target="_blank" style="color:var(--accent-green);font-family:var(--font-mono);font-size:0.78rem;text-decoration:none;">WhatsApp →</a>
+                    </div>
+                    <div style="border-left:2px solid var(--edge-bright); padding-left:16px;">
+                        <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);">REP 03</div>
+                        <h4 style="font-family:var(--font-display);font-size:1.2rem;margin:4px 0 10px;">Kaneesha Prasad</h4>
+                        <a href="tel:+917899005345" style="color:var(--text-secondary);font-family:var(--font-mono);font-size:0.85rem;text-decoration:none;display:block;margin-bottom:8px;">+91 78990 05345</a>
+                        <a href="https://wa.me/917899005345" target="_blank" style="color:var(--accent-green);font-family:var(--font-mono);font-size:0.78rem;text-decoration:none;">WhatsApp →</a>
+                    </div>
+                    <div style="border-left:2px solid var(--edge-bright); padding-left:16px;">
+                        <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);">REP 04</div>
+                        <h4 style="font-family:var(--font-display);font-size:1.2rem;margin:4px 0 10px;">Kashvi Golechha</h4>
+                        <a href="tel:+919513824466" style="color:var(--text-secondary);font-family:var(--font-mono);font-size:0.85rem;text-decoration:none;display:block;margin-bottom:8px;">+91 95138 24466</a>
+                        <a href="https://wa.me/919513824466" target="_blank" style="color:var(--accent-green);font-family:var(--font-mono);font-size:0.78rem;text-decoration:none;">WhatsApp →</a>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="editorial-grid">
-            <div class="editorial-col">
-                <div class="editorial-num">01</div>
-                <h3 class="editorial-title">Corporate Genesis</h3>
-                <p class="editorial-desc">Testing the contingent's agility, cross-departmental coordination, and capital allocation in high-pressure simulation chambers.</p>
+        <!-- =======================================================
+             VIEW FRAME: MASTER COMBINED PROPOSAL (BEST OF BOTH)
+             Editorial Monograph for Pillars + Executive Ledger for Rounds/Contact
+             ======================================================= -->
+        <div id="frame-combined" class="view-frame">
+            <div class="section-intro-bar">
+                <div>
+                    <h2>The Master Synergy Architecture</h2>
+                    <p style="color:var(--text-secondary);font-size:0.92rem;">
+                        <strong>Editorial Monograph (03)</strong> for the brand story & about pillars + <strong>Executive Ledger (02)</strong> for high-density rounds and contacts.
+                    </p>
+                </div>
+                <span class="badge-note" style="color:#10b981;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);">RECOMMENDED COMBO</span>
             </div>
-            <div class="editorial-col">
-                <div class="editorial-num">02</div>
-                <h3 class="editorial-title">Hostile Takeovers</h3>
-                <p class="editorial-desc">Unannounced stakeholder revolts and supply collapse. Defend your corporate valuation before an uncompromising jury.</p>
-            </div>
-            <div class="editorial-col">
-                <div class="editorial-num">03</div>
-                <h3 class="editorial-title">Grand Champions</h3>
-                <p class="editorial-desc">The overarching storyline reaches its climax. The premier contingents battle live for the prestigious Cognito 2026 Trophy.</p>
-            </div>
-        </div>
-    </div>
 
-    <!-- 00 CURRENT AI TROPES -->
-    <div id="tab-current" class="paradigm-section">
-        <div class="paradigm-desc-box" style="border-left-color: #ef4444;">
-            <h4 style="color: #f87171;">Current Look: The Floating Glassmorphic AI Trope</h4>
-            <p>
-                Identical rounded rectangles floating with <code>translateY(-6px)</code> on hover, glass blur, and glowing borders. This pattern was generated by AI tools thousands of times in 2024 and feels like a clone template.
-            </p>
+            <!-- Homepage Pillars in Editorial Mode -->
+            <div style="margin-bottom:60px;">
+                <h3 style="font-family:var(--font-mono);font-size:0.85rem;color:var(--primary);margin-bottom:24px;letter-spacing:1.5px;">HOMEPAGE: EDITORIAL PILLARS (NO BOXES)</h3>
+                <div class="editorial-pillars-container">
+                    <div class="editorial-row">
+                        <div class="editorial-index-huge">01</div>
+                        <div class="editorial-narrative">
+                            <span class="ed-tag">THE FESTIVAL</span>
+                            <h3 class="ed-title">About Cognito</h3>
+                            <p class="ed-text">COGNITO is the department's international A-level intercollegiate Commerce fest that has advanced exponentially in caliber and scope, presenting young professionals with opportunities to explore and embrace the corporate arena. As a spearhead for corporate simulation, Cognito bridges the gap between imagined conditions and the true realities of business.</p>
+                        </div>
+                        <div class="editorial-image-frame">
+                            <img src="assets/cognito-logo.png" alt="Cognito">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rounds in Ledger Mode -->
+            <div>
+                <h3 style="font-family:var(--font-mono);font-size:0.85rem;color:var(--primary);margin-bottom:24px;letter-spacing:1.5px;">ROUNDS & TIMELINE: EXECUTIVE LEDGER DOSSIER</h3>
+                <div class="rounds-ledger-stack">
+                    <div class="rounds-ledger-item expanded">
+                        <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <span class="r-code">EX // 01</span>
+                            <div class="r-title-group">
+                                <span class="r-round-name">Contingent • Prelims</span>
+                                <h3>Corporate Genesis & Market Entry</h3>
+                            </div>
+                            <span class="r-desc-brief">Comprehensive cross-functional simulation testing agility & resource allocation.</span>
+                            <div class="r-status"><span class="status-dot live"></span><span>Accepting Submissions</span></div>
+                            <div class="r-toggle-action"><span>Dossier</span><svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div class="rounds-drawer">
+                            <div class="rounds-drawer-inner">
+                                <p class="rounds-drawer-desc">Comprehensive cross-functional simulation testing the contingent's agility, strategy, and resource allocation under sudden macro-economic liquidity constraints.</p>
+                                <div class="rounds-drawer-actions">
+                                    <a href="#" class="btn-action-secondary">Read Brief</a>
+                                    <a href="#" class="btn-action-primary">Submit Solution →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Contact in Ledger Mode -->
+            <div style="margin-top:60px;">
+                <h3 style="font-family:var(--font-mono);font-size:0.85rem;color:var(--primary);margin-bottom:24px;letter-spacing:1.5px;">CONTACT DIRECTORY: EXECUTIVE LEDGER DOSSIER</h3>
+                <div class="faculty-dossier">
+                    <div class="faculty-dossier-meta">
+                        <div class="f-tag">FACULTY REPRESENTATIVE & ADVISOR</div>
+                        <h3 class="f-name">Dr. Rajeswari R Menon</h3>
+                        <p class="f-sub">Department of Professional Studies, CHRIST (Deemed to be University)</p>
+                    </div>
+                    <div>
+                        <a href="tel:+918123775200" class="btn-action-secondary" style="font-family:var(--font-mono);font-size:0.9rem;">
+                            📞 +91 81237 75200
+                        </a>
+                    </div>
+                </div>
+
+                <div class="contact-ledger-table">
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 01</span>
+                        <div class="contact-name">Adithya Sambaragi</div>
+                        <span class="contact-dept">Student Representative • Logistics & Operations</span>
+                        <a href="tel:+919341055024" class="contact-phone">+91 93410 55024</a>
+                        <a href="https://wa.me/919341055024" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 02</span>
+                        <div class="contact-name">Aritro Mukherjee</div>
+                        <span class="contact-dept">Student Representative • Corporate Relations</span>
+                        <a href="tel:+919663046633" class="contact-phone">+91 96630 46633</a>
+                        <a href="https://wa.me/919663046633" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 03</span>
+                        <div class="contact-name">Kaneesha Prasad</div>
+                        <span class="contact-dept">Student Representative • Events & Delegate Experience</span>
+                        <a href="tel:+917899005345" class="contact-phone">+91 78990 05345</a>
+                        <a href="https://wa.me/917899005345" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-id">REP // 04</span>
+                        <div class="contact-name">Kashvi Golechha</div>
+                        <span class="contact-dept">Student Representative • Registrations & Contingents</span>
+                        <a href="tel:+919513824466" class="contact-phone">+91 95138 24466</a>
+                        <a href="https://wa.me/919513824466" target="_blank" class="contact-btn-wa">WhatsApp →</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="ai-grid">
-            <div class="ai-card">
-                <span class="ai-badge">ROUND 1</span>
-                <h3 style="margin-bottom:10px;">Corporate Genesis</h3>
-                <p style="color:var(--text-secondary);font-size:0.9rem;">Cross-functional corporate simulation testing agility, strategy, and resource allocation.</p>
+        <!-- =======================================================
+             VIEW FRAME: CURRENT AI CARDS (FOR DIRECT COMPARISON)
+             ======================================================= -->
+        <div id="frame-current" class="view-frame">
+            <div class="section-intro-bar">
+                <div>
+                    <h2 style="color:#f87171;">Current AI Card Architecture</h2>
+                    <p style="color:var(--text-secondary);font-size:0.92rem;">The floating glassmorphic container trope currently active on the site.</p>
+                </div>
+                <span class="badge-note" style="color:#ef4444;border-color:#ef4444;background:rgba(239,68,68,0.08);">CURRENT PRODUCTION</span>
             </div>
-            <div class="ai-card">
-                <span class="ai-badge">SEMI-FINALS</span>
-                <h3 style="margin-bottom:10px;">Hostile Defense</h3>
-                <p style="color:var(--text-secondary);font-size:0.9rem;">Unannounced supply-chain collapse threatening corporate continuity live.</p>
+
+            <!-- Pillars AI comparison -->
+            <div class="section-block sec-pillars">
+                <div class="ai-pillars-contrast">
+                    <div class="ai-old-pillar">
+                        <div style="background:rgba(0,229,255,0.03);padding:30px;border-radius:12px;display:flex;justify-content:center;">
+                            <img src="assets/cognito-logo.png" style="max-height:160px;object-fit:contain;">
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem;color:var(--primary);background:var(--primary-ghost);padding:4px 10px;border-radius:20px;border:1px solid var(--primary-dim);">The Fest</span>
+                            <h3 style="font-family:var(--font-display);font-size:1.6rem;margin:12px 0;">About Cognito</h3>
+                            <p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.75;">COGNITO is the department's international A-level intercollegiate Commerce fest that has advanced exponentially in caliber and scope, presenting young professionals with opportunities to explore and embrace the corporate arena. As a spearhead for corporate simulation, Cognito bridges the gap between imagined conditions and the true realities of business.</p>
+                        </div>
+                    </div>
+
+                    <div class="ai-old-pillar">
+                        <div style="background:rgba(28,100,242,0.05);padding:30px;border-radius:12px;display:flex;justify-content:center;">
+                            <img src="assets/festing-logo.png" style="max-height:160px;object-fit:contain;">
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem;color:var(--primary);background:var(--primary-ghost);padding:4px 10px;border-radius:20px;border:1px solid var(--primary-dim);">The Club</span>
+                            <h3 style="font-family:var(--font-display);font-size:1.6rem;margin:12px 0;">Professionals Festing Club</h3>
+                            <p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.75;">A student-led platform committed to cultivating competitive excellence, professional acumen, and leadership. Operating under the motto <em>"Tempus • Imperium • Potentia"</em>, the Club enables students to apply classroom learning in high-pressure environments while developing sound judgment and strategic execution under real stakes.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="ai-card">
-                <span class="ai-badge">FINALE</span>
-                <h3 style="margin-bottom:10px;">The Final Conquest</h3>
-                <p style="color:var(--text-secondary);font-size:0.9rem;">Top qualifying contingents battle live on the auditorium stage for the trophy.</p>
+
+            <!-- Rounds AI comparison -->
+            <div class="section-block sec-rounds" style="display:none;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="background:rgba(10,18,38,0.65);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,0.4);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <h3 style="font-size:1.2rem;">Contingent: Corporate Genesis & Market Entry</h3>
+                            <span style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:4px 12px;border-radius:20px;font-size:0.75rem;">🟢 Accepting Submissions</span>
+                        </div>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;margin-bottom:16px;">Comprehensive cross-functional simulation testing the contingent's agility, strategy, and resource allocation under sudden macro-economic liquidity constraints.</p>
+                        <div style="display:flex;gap:10px;">
+                            <a href="#" class="btn-action-secondary">Brief</a>
+                            <a href="#" class="btn-action-primary">Submit</a>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(10,18,38,0.65);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,0.4);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <h3 style="font-size:1.2rem;">Contingent: Hostile Takeover & Stakeholder Defense</h3>
+                            <span style="background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:4px 12px;border-radius:20px;font-size:0.75rem;">🔒 Unlocks Soon</span>
+                        </div>
+                        <p style="color:var(--text-secondary);font-size:0.92rem;margin-bottom:16px;">A sudden supply-chain collapse threatens corporate continuity. Re-align strategies live before an unforgiving board of directors.</p>
+                        <button class="btn-action-secondary" disabled style="opacity:0.5;">Locked until Release</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact AI comparison -->
+            <div class="section-block sec-contact" style="display:none;">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+                    <div style="background:rgba(10,18,38,0.65);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;text-align:center;">
+                        <h4 style="font-size:1.15rem;margin-bottom:8px;">Adithya Sambaragi</h4>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">+91 93410 55024</p>
+                        <a href="https://wa.me/919341055024" target="_blank" style="color:var(--accent-green);font-size:0.85rem;text-decoration:none;">WhatsApp →</a>
+                    </div>
+                    <div style="background:rgba(10,18,38,0.65);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;text-align:center;">
+                        <h4 style="font-size:1.15rem;margin-bottom:8px;">Aritro Mukherjee</h4>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">+91 96630 46633</p>
+                        <a href="https://wa.me/919663046633" target="_blank" style="color:var(--accent-green);font-size:0.85rem;text-decoration:none;">WhatsApp →</a>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 
     <script>
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.paradigm-section').forEach(s => s.classList.remove('active'));
-            
-            const targetSection = document.getElementById('tab-' + tabId);
-            if (targetSection) targetSection.classList.add('active');
+        let currentParadigm = 'ledger';
+        let currentSection = 'pillars';
 
-            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
-            if (activeBtn) activeBtn.classList.add('active');
+        function setParadigm(paradigm, btn) {
+            currentParadigm = paradigm;
+            document.querySelectorAll('.control-dock .control-row:nth-child(1) .mode-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            if (btn) btn.classList.add('active');
+
+            document.querySelectorAll('.view-frame').forEach(f => f.classList.remove('active'));
+            const frame = document.getElementById('frame-' + paradigm);
+            if (frame) frame.classList.add('active');
+
+            // Toggle section controls visibility if in combined view
+            const secRow = document.getElementById('section-control-row');
+            if (secRow) {
+                secRow.style.opacity = (paradigm === 'combined') ? '0.4' : '1';
+                secRow.style.pointerEvents = (paradigm === 'combined') ? 'none' : 'auto';
+            }
+        }
+
+        function setSection(section, btn) {
+            currentSection = section;
+            document.querySelectorAll('.control-dock .control-row:nth-child(2) .mode-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            if (btn) btn.classList.add('active');
+
+            document.querySelectorAll('.section-block').forEach(b => b.style.display = 'none');
+            document.querySelectorAll('.sec-' + section).forEach(b => b.style.display = 'block');
         }
     </script>
 </body>
