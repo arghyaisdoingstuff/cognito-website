@@ -959,8 +959,8 @@ function renderRounds(data, isLive) {
             </div>
             <div class="round-accordion-body">
                 <div class="round-accordion-body-inner">
-                    <div class="editorial-split-dossier">
-                        <div class="dossier-stream-rail">
+                    <div class="editorial-split-dossier ${items.length > 4 ? 'has-scrollable-stream' : ''}">
+                        <div class="dossier-stream-rail ${items.length > 4 ? 'stream-rail-scrollable' : ''}">
                             ${streamRowsHtml}
                         </div>
                         ${canvasHtml}
@@ -1795,6 +1795,9 @@ initMagneticButtons();
 // 8. HERO LOGO ZEN FULLSCREEN EASTER EGG
 // ──────────────────────────────────────────────────────────────
 function initHeroZenFullscreen() {
+    if (window.__heroZenInitialized) return;
+    window.__heroZenInitialized = true;
+
     const heroLogoWrap = document.querySelector('.hero-logo-wrap');
     if (!heroLogoWrap) return;
 
@@ -1810,12 +1813,16 @@ function initHeroZenFullscreen() {
 
     function setZenMode(enable) {
         window.isZenFullscreen = enable;
-        if (enable) {
-            document.body.classList.add('zen-fullscreen-mode');
-            document.documentElement.classList.add('zen-fullscreen-mode');
-        } else {
-            document.body.classList.remove('zen-fullscreen-mode');
-            document.documentElement.classList.remove('zen-fullscreen-mode');
+        document.body.classList.toggle('zen-fullscreen-mode', enable);
+        document.documentElement.classList.toggle('zen-fullscreen-mode', enable);
+
+        const navbar = document.querySelector('.navbar');
+        const heroActions = document.querySelector('.hero-actions');
+        if (navbar) {
+            navbar.style.setProperty('display', enable ? 'none' : '', 'important');
+        }
+        if (heroActions) {
+            heroActions.style.setProperty('display', enable ? 'none' : '', 'important');
         }
     }
 
@@ -1825,14 +1832,16 @@ function initHeroZenFullscreen() {
         e.preventDefault();
         e.stopPropagation();
 
-        const currentlyZen = document.body.classList.contains('zen-fullscreen-mode') 
+        const currentlyZen = window.isZenFullscreen 
+            || document.body.classList.contains('zen-fullscreen-mode') 
             || document.documentElement.classList.contains('zen-fullscreen-mode') 
             || !!getFullscreenElement();
 
+        isTransitioning = true;
+        setTimeout(() => { isTransitioning = false; }, 800);
+
         if (!currentlyZen) {
             setZenMode(true);
-            isTransitioning = true;
-            setTimeout(() => { isTransitioning = false; }, 800);
 
             const requestFs = document.documentElement.requestFullscreen 
                 || document.documentElement.webkitRequestFullscreen 
@@ -1847,8 +1856,6 @@ function initHeroZenFullscreen() {
             }
         } else {
             setZenMode(false);
-            isTransitioning = true;
-            setTimeout(() => { isTransitioning = false; }, 800);
 
             const exitFs = document.exitFullscreen 
                 || document.webkitExitFullscreen 
@@ -1877,5 +1884,3 @@ function initHeroZenFullscreen() {
         document.addEventListener(evt, onFullscreenChange);
     });
 }
-
-initHeroZenFullscreen();
