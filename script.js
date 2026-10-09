@@ -6,10 +6,14 @@
 
 // 1. SCROLL REVEAL & TYPEWRITER & LIGHTBOX & CAROUSEL
 // ==========================================================================
+let isGalleryDragging = false;
+let galleryDragDistance = 0;
+
 function initCarousel() {
     const carousel = document.getElementById('gallery-carousel');
     const prevBtn = document.querySelector('.prev-btn');
     const nextBtn = document.querySelector('.next-btn');
+    const wrapper = document.querySelector('.gallery-carousel-wrapper');
 
     if (!carousel || !prevBtn || !nextBtn) return;
 
@@ -20,67 +24,185 @@ function initCarousel() {
         carousel.appendChild(clone);
     });
 
-    let speed = 1; // Pixels per frame (baseline speed)
-    let isHovered = false;
-    let isButtonScrolling = false; // Pause continuous scroll during button smooth scroll
+    // Add progress bar if not present
+    let progressBar = wrapper ? wrapper.parentElement.querySelector('.gallery-progress-bar') : null;
+    let progressFill = null;
+    if (!progressBar && wrapper && wrapper.parentElement) {
+        progressBar = document.createElement('div');
+        progressBar.className = 'gallery-progress-bar';
+        progressBar.innerHTML = '<div class="gallery-progress-fill"></div>';
+        wrapper.insertAdjacentElement('afterend', progressBar);
+    }
+    if (progressBar) {
+        progressFill = progressBar.querySelector('.gallery-progress-fill');
+    }
+
+    let speed = 0.8; // Baseline auto-scroll
+    let isInteracting = false;
+    let isButtonScrolling = false;
     let rafId;
-    
-    // Calculate exact jump distance based on item width + gap, rather than scrollWidth / 2
+    let momentumRafId;
+    let velocity = 0;
+    let startX = 0;
+    let startScrollLeft = 0;
+    let lastX = 0;
+    let lastTime = 0;
+
     const getJumpDistance = () => items.length * (items[0].offsetWidth + 16);
 
+    const updateProgressBar = () => {
+        if (!progressFill) return;
+        const jumpDistance = getJumpDistance();
+        if (jumpDistance > 0) {
+            const ratio = (carousel.scrollLeft % jumpDistance) / jumpDistance;
+            progressFill.style.left = (ratio * 70) + '%';
+        }
+    };
+
+    const wrapScroll = () => {
+        const jumpDistance = getJumpDistance();
+        if (carousel.scrollLeft >= jumpDistance) {
+            carousel.scrollLeft -= jumpDistance;
+        } else if (carousel.scrollLeft <= 0) {
+            carousel.scrollLeft += jumpDistance;
+        }
+    };
+
     const animate = () => {
-        if (!isHovered && !isButtonScrolling) {
+        if (!isInteracting && !isButtonScrolling && Math.abs(velocity) < 0.1) {
             carousel.scrollLeft += speed;
-            
-            const jumpDistance = getJumpDistance();
-            if (carousel.scrollLeft >= jumpDistance) {
-                carousel.scrollLeft -= jumpDistance;
-            } else if (carousel.scrollLeft <= 0) {
-                carousel.scrollLeft += jumpDistance;
-            }
+            wrapScroll();
+            updateProgressBar();
         }
         rafId = requestAnimationFrame(animate);
     };
 
-    // Start the continuous animation
     rafId = requestAnimationFrame(animate);
 
-    // Pause on hover or touch
-    const wrapper = document.querySelector('.gallery-carousel-wrapper');
+    // Friction decay loop for drag release
+    const applyMomentum = () => {
+        if (Math.abs(velocity) > 0.25) {
+            carousel.scrollLeft -= velocity;
+            velocity *= 0.92; // Friction damping
+            wrapScroll();
+            updateProgressBar();
+            momentumRafId = requestAnimationFrame(applyMomentum);
+        } else {
+            velocity = 0;
+            isInteracting = false;
+            cancelAnimationFrame(momentumRafId);
+        }
+    };
+
+    // Mouse Drag Listeners
+    carousel.addEventListener('mousedown', (e) => {
+        isGalleryDragging = true;
+        isInteracting = true;
+        galleryDragDistance = 0;
+        cancelAnimationFrame(momentumRafId);
+        carousel.classList.add('is-dragging');
+        startX = e.pageX;
+        startScrollLeft = carousel.scrollLeft;
+        lastX = e.pageX;
+        lastTime = performance.now();
+        velocity = 0;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isGalleryDragging) return;
+        const x = e.pageX;
+        const walk = x - startX;
+        galleryDragDistance += Math.abs(x - lastX);
+        carousel.scrollLeft = startScrollLeft - walk;
+        wrapScroll();
+        updateProgressBar();
+
+        const now = performance.now();
+        const dt = now - lastTime;
+        if (dt > 12) {
+            velocity = (x - lastX) * 0.85;
+            lastX = x;
+            lastTime = now;
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (!isGalleryDragging) return;
+        isGalleryDragging = false;
+        carousel.classList.remove('is-dragging');
+        if (Math.abs(velocity) > 0.5) {
+            momentumRafId = requestAnimationFrame(applyMomentum);
+        } else {
+            setTimeout(() => { isInteracting = false; }, 400);
+        }
+    });
+
+    // Touch Swipe Listeners
+    carousel.addEventListener('touchstart', (e) => {
+        isInteracting = true;
+        galleryDragDistance = 0;
+        cancelAnimationFrame(momentumRafId);
+        startX = e.touches[0].pageX;
+        startScrollLeft = carousel.scrollLeft;
+        lastX = e.touches[0].pageX;
+        lastTime = performance.now();
+        velocity = 0;
+    }, { passive: true });
+
+    carousel.addEventListener('touchmove', (e) => {
+        const x = e.touches[0].pageX;
+        const walk = x - startX;
+        galleryDragDistance += Math.abs(x - lastX);
+        carousel.scrollLeft = startScrollLeft - walk;
+        wrapScroll();
+        updateProgressBar();
+
+        const now = performance.now();
+        const dt = now - lastTime;
+        if (dt > 12) {
+            velocity = (x - lastX) * 0.85;
+            lastX = x;
+            lastTime = now;
+        }
+    }, { passive: true });
+
+    carousel.addEventListener('touchend', () => {
+        if (Math.abs(velocity) > 0.5) {
+            momentumRafId = requestAnimationFrame(applyMomentum);
+        } else {
+            setTimeout(() => { isInteracting = false; }, 1000);
+        }
+    }, { passive: true });
+
     if (wrapper) {
-        wrapper.addEventListener('mouseenter', () => isHovered = true);
-        wrapper.addEventListener('mouseleave', () => isHovered = false);
-        wrapper.addEventListener('touchstart', () => isHovered = true, { passive: true });
-        wrapper.addEventListener('touchend', () => {
-            setTimeout(() => isHovered = false, 1500); // Resume shortly after touch
-        }, { passive: true });
+        wrapper.addEventListener('mouseenter', () => { if (!isGalleryDragging) isInteracting = true; });
+        wrapper.addEventListener('mouseleave', () => { if (!isGalleryDragging) isInteracting = false; });
     }
 
     const getItemWidth = () => items[0].offsetWidth + 16;
-    
     const pauseForButton = () => {
         isButtonScrolling = true;
-        setTimeout(() => isButtonScrolling = false, 600); // Pause auto-scroll while smooth scrolling
+        setTimeout(() => isButtonScrolling = false, 600);
     };
 
     prevBtn.addEventListener('click', () => {
         const jumpDistance = getJumpDistance();
-        // If we are at the very beginning, silently jump to the clones first so smooth scroll has space
         if (carousel.scrollLeft <= getItemWidth()) {
             carousel.scrollLeft += jumpDistance;
         }
         pauseForButton();
         carousel.scrollBy({ left: -getItemWidth(), behavior: 'smooth' });
+        setTimeout(updateProgressBar, 300);
     });
 
     nextBtn.addEventListener('click', () => {
         const jumpDistance = getJumpDistance();
-        // If we are near the end of the original set, silently jump to the start first
         if (carousel.scrollLeft >= jumpDistance) {
             carousel.scrollLeft -= jumpDistance;
         }
         pauseForButton();
         carousel.scrollBy({ left: getItemWidth(), behavior: 'smooth' });
+        setTimeout(updateProgressBar, 300);
     });
 }
 
@@ -93,6 +215,7 @@ function initLightbox() {
 
     // Use event delegation so cloned carousel items also trigger the lightbox
     document.addEventListener('click', (e) => {
+        if (galleryDragDistance > 8) return; // Prevent opening lightbox after dragging
         const item = e.target.closest('.gallery-item');
         if (item && document.getElementById('gallery-carousel').contains(item)) {
             const img = item.querySelector('img');
@@ -563,6 +686,13 @@ function renderBarChart(isLive) {
         }
     });
 
+    // Capture initial positions for FLIP animation
+    const firstPositions = new Map();
+    container.querySelectorAll('.bar-row').forEach(row => {
+        const key = row.getAttribute('data-team');
+        if (key) firstPositions.set(key, row.getBoundingClientRect().top);
+    });
+
     // Apply search filter
     let filtered = contingentRows;
     if (searchQuery) {
@@ -588,6 +718,7 @@ function renderBarChart(isLive) {
         const rank = row._rank;
         const score = parseFloat(row.Score) || 0;
         const pct = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
+        const teamKey = (row.Team || 'team_' + rank).replace(/\s+/g, '_');
 
         let rankClass = '';
         let fillClass = '';
@@ -596,7 +727,7 @@ function renderBarChart(isLive) {
         else if (rank === 3) { rankClass = 'rank-3'; fillClass = 'rank-3-fill'; }
 
         return `
-        <div class="bar-row" data-pct="${pct}" data-fill="${fillClass}">
+        <div class="bar-row" data-team="${teamKey}" data-pct="${pct}" data-fill="${fillClass}">
             <span class="bar-rank ${rankClass}">${rank}</span>
             <div class="bar-team-info">
                 <div class="bar-team-name">${row.Team || 'Team ' + rank}</div>
@@ -611,26 +742,182 @@ function renderBarChart(isLive) {
 
     container.innerHTML = `<div class="bar-chart-container">${rows}</div>`;
 
+    // FLIP Animation: invert and play
+    if (firstPositions.size > 0) {
+        container.querySelectorAll('.bar-row').forEach(row => {
+            const key = row.getAttribute('data-team');
+            if (key && firstPositions.has(key)) {
+                const firstTop = firstPositions.get(key);
+                const lastTop = row.getBoundingClientRect().top;
+                const deltaY = firstTop - lastTop;
+                if (deltaY !== 0) {
+                    row.style.transform = `translateY(${deltaY}px)`;
+                    row.style.transition = 'none';
+                    requestAnimationFrame(() => {
+                        row.style.transition = 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease';
+                        row.style.transform = 'translateY(0)';
+                    });
+                }
+            }
+        });
+    }
+
     // Animate bars in after a short delay
     requestAnimationFrame(() => {
         setTimeout(() => {
             container.querySelectorAll('.bar-fill').forEach((fill, i) => {
                 const row = fill.closest('.bar-row');
                 const pct = row ? row.getAttribute('data-pct') : 0;
-                fill.style.transitionDelay = `${i * 0.07}s`;
+                fill.style.transitionDelay = `${i * 0.05}s`;
                 fill.style.width = pct + '%';
             });
-        }, 120);
+        }, 80);
     });
 }
 
 // ──────────────────────────────────────────────────────────────
-// 6. INIT
+// 6. DYNAMIC MOTION & INTERACTION PRIMITIVES
+// ──────────────────────────────────────────────────────────────
+
+/**
+ * 1. Magnetic Navigation Glider
+ * Fluid sliding pill under active/hovered header nav links.
+ */
+function initNavGlider() {
+    const navLinks = document.querySelector('.nav-links');
+    if (!navLinks) return;
+
+    let glider = document.getElementById('nav-glider');
+    if (!glider) {
+        glider = document.createElement('div');
+        glider.className = 'nav-glider';
+        glider.id = 'nav-glider';
+        glider.setAttribute('aria-hidden', 'true');
+        navLinks.prepend(glider);
+    }
+
+    const links = Array.from(navLinks.querySelectorAll('a:not(.nav-cta)'));
+    if (!links.length) return;
+
+    let activeLink = links.find(l => l.classList.contains('active')) || null;
+
+    function moveGlider(targetEl) {
+        if (!targetEl || window.innerWidth <= 768) {
+            glider.style.opacity = '0';
+            return;
+        }
+        const navRect = navLinks.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        const offsetLeft = targetRect.left - navRect.left;
+        const width = targetRect.width;
+
+        glider.style.width = `${width}px`;
+        glider.style.transform = `translate(${offsetLeft}px, -50%)`;
+        glider.style.opacity = '1';
+    }
+
+    links.forEach(link => {
+        link.addEventListener('mouseenter', () => moveGlider(link));
+    });
+
+    navLinks.addEventListener('mouseleave', () => {
+        if (activeLink) {
+            moveGlider(activeLink);
+        } else {
+            glider.style.opacity = '0';
+        }
+    });
+
+    const refreshGlider = () => {
+        if (activeLink) moveGlider(activeLink);
+    };
+
+    setTimeout(refreshGlider, 120);
+    window.addEventListener('resize', refreshGlider);
+    if (document.fonts) document.fonts.ready.then(refreshGlider);
+}
+
+/**
+ * 2. Cursor-Damped Ambient Spotlight
+ * Tracks cursor inside hero section with smooth lerp physics.
+ */
+function initHeroSpotlight() {
+    const hero = document.querySelector('.hero-section');
+    if (!hero) return;
+
+    let spotlight = document.getElementById('hero-spotlight');
+    if (!spotlight) {
+        spotlight = document.createElement('div');
+        spotlight.className = 'hero-spotlight';
+        spotlight.id = 'hero-spotlight';
+        hero.prepend(spotlight);
+    }
+
+    let targetX = hero.offsetWidth / 2;
+    let targetY = hero.offsetHeight / 2;
+    let currentX = targetX;
+    let currentY = targetY;
+    let isInside = false;
+
+    hero.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        targetX = e.clientX - rect.left;
+        targetY = e.clientY - rect.top;
+        if (!isInside) {
+            isInside = true;
+            spotlight.style.opacity = '1';
+        }
+    });
+
+    hero.addEventListener('mouseleave', () => {
+        isInside = false;
+        spotlight.style.opacity = '0';
+    });
+
+    function loop() {
+        if (isInside) {
+            currentX += (targetX - currentX) * 0.08;
+            currentY += (targetY - currentY) * 0.08;
+            spotlight.style.transform = `translate3d(${currentX - 275}px, ${currentY - 275}px, 0)`;
+        }
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+}
+
+/**
+ * 3. Tactile Button Click Haptics & Shockwave Ripple
+ * Emits an expanding cyan shockwave on button clicks.
+ */
+function initButtonHaptics() {
+    document.addEventListener('pointerdown', (e) => {
+        const btn = e.target.closest('.btn, .tab-btn, .carousel-btn');
+        if (!btn) return;
+
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const shockwave = document.createElement('div');
+        shockwave.className = 'btn-shockwave';
+        shockwave.style.left = `${x}px`;
+        shockwave.style.top = `${y}px`;
+
+        btn.appendChild(shockwave);
+        setTimeout(() => { shockwave.remove(); }, 600);
+    });
+}
+
+// ──────────────────────────────────────────────────────────────
+// 7. INIT
 // ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initTypewriter();
     initCarousel();
     initLightbox();
+    initNavGlider();
+    initHeroSpotlight();
+    initButtonHaptics();
 
     // Mobile nav
     const toggle = document.querySelector('.mobile-toggle');
