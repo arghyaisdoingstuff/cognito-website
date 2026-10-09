@@ -521,14 +521,11 @@ function renderRounds(data, isLive) {
         let actions = '';
 
         if (!valid) {
-            statusBeacon = `<span class="status-dot live"></span><span>Active Simulation</span>`;
+            statusBeacon = '';
             timeInfo = '';
             const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief</a>` : '';
             const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
             actions = briefBtn + submitBtn;
-            if (!actions) {
-                actions = `<span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-dim)">Exhibits active</span>`;
-            }
         } else if (now < release) {
             const diff = release - now;
             const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
@@ -546,9 +543,6 @@ function renderRounds(data, isLive) {
             const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief</a>` : '';
             const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
             actions = briefBtn + submitBtn;
-            if (!actions) {
-                actions = `<span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-dim)">Awaiting link registration</span>`;
-            }
         } else {
             const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             statusBeacon = `<span class="status-dot closed"></span><span>Submissions Closed</span>`;
@@ -559,8 +553,8 @@ function renderRounds(data, isLive) {
         const exhibitCode = `EX // ${String(idx + 1).padStart(2, '0')}`;
         const roundTag = escapeHtml(r.Round || activeRoundFilter);
         const title = escapeHtml(r.Title || `Exhibit ${idx + 1}`);
-        const shortDesc = r.Description ? escapeHtml(r.Description) : 'Inspect dossier for operational brief and guidelines.';
-        const fullDesc = r.Description ? escapeHtml(r.Description) : 'Exhibit parameters and confidential scenario guidelines. Inspect the brief for complete submission specifications.';
+        const shortDesc = r.Description ? escapeHtml(r.Description) : '';
+        const fullDesc = r.Description ? escapeHtml(r.Description) : '';
 
         return `
         <div class="rounds-ledger-item ${isExpanded ? 'expanded' : ''} reveal">
@@ -584,52 +578,40 @@ function renderRounds(data, isLive) {
             <div class="rounds-drawer">
                 <div class="rounds-drawer-inner">
                     <div class="rounds-drawer-main">
-                        <p class="rounds-drawer-desc">${fullDesc}</p>
+                        ${fullDesc ? `<p class="rounds-drawer-desc">${fullDesc}</p>` : ''}
                         ${timeInfo ? `<div class="rounds-drawer-meta">${timeInfo}</div>` : ''}
+                        ${!fullDesc && !timeInfo && !actions ? `<p class="rounds-drawer-desc" style="color:var(--text-dim);margin-bottom:0;">Brief details pending release.</p>` : ''}
                     </div>
-                    <div class="rounds-drawer-actions">
-                        ${actions}
-                    </div>
+                    ${actions ? `<div class="rounds-drawer-actions">${actions}</div>` : ''}
                 </div>
             </div>
         </div>`;
     };
 
-    const isCaseComp = activeRoundFilter.toLowerCase() === 'case competition';
+    // Group all exhibits strictly according to the Round column
+    const grouped = {};
+    filtered.forEach(r => {
+        const roundName = (r.Round || '').trim() || 'General Exhibits';
+        if (!grouped[roundName]) grouped[roundName] = [];
+        grouped[roundName].push(r);
+    });
 
-    if (isCaseComp) {
-        html += `<div class="rounds-phase-divider reveal"><span class="r-phase-tag">CASE COMPETITION</span><h2 class="r-phase-title">Strategic Exhibits & Milestones</h2></div>`;
-        html += '<div class="rounds-ledger-stack">';
-        filtered.forEach((r, idx) => {
-            html += renderExhibitItem(r, idx, idx === 0);
+    let groupIndex = 0;
+    for (const [roundName, items] of Object.entries(grouped)) {
+        html += `
+        <div class="rounds-phase-divider reveal">
+            <span class="r-phase-tag">${escapeHtml(activeRoundFilter).toUpperCase()}</span>
+            <h2 class="r-phase-title">${escapeHtml(roundName)}</h2>
+        </div>
+        <div class="rounds-ledger-stack">`;
+
+        items.forEach((r, idx) => {
+            globalIndex++;
+            html += renderExhibitItem(r, globalIndex - 1, groupIndex === 0 && idx === 0);
         });
-        html += '</div>';
-    } else {
-        // Group exhibits by their Round name
-        const grouped = {};
-        filtered.forEach(r => {
-            const roundName = r.Round || 'General Simulations';
-            if (!grouped[roundName]) grouped[roundName] = [];
-            grouped[roundName].push(r);
-        });
 
-        let groupIndex = 0;
-        for (const [roundName, items] of Object.entries(grouped)) {
-            html += `
-            <div class="rounds-phase-divider reveal">
-                <span class="r-phase-tag">CONTINGENT SIMULATION</span>
-                <h2 class="r-phase-title">${escapeHtml(roundName)}</h2>
-            </div>
-            <div class="rounds-ledger-stack">`;
-
-            items.forEach((r, idx) => {
-                globalIndex++;
-                html += renderExhibitItem(r, globalIndex - 1, groupIndex === 0 && idx === 0);
-            });
-
-            html += `</div>`;
-            groupIndex++;
-        }
+        html += `</div>`;
+        groupIndex++;
     }
 
     container.innerHTML = html;
