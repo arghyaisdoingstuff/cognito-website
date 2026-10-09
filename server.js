@@ -17,10 +17,12 @@ const url = require('url');
 const PORT = process.env.PORT || 3000;
 const SCORES_SHEET_URL = process.env.SCORES_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=0&single=true&output=csv";
 const ROUNDS_SHEET_URL = process.env.ROUNDS_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=1586686373&single=true&output=csv";
+const TRAILER_SHEET_URL = process.env.TRAILER_CSV_URL || "";
 
 // In-memory 30s edge cache
 let scoresCache = { data: '', timestamp: 0 };
 let roundsCache = { data: '', timestamp: 0 };
+let trailerCache = { data: '', timestamp: 0 };
 const CACHE_TTL_MS = 30000;
 
 function fetchUrl(targetUrl) {
@@ -201,6 +203,47 @@ async function handleRounds(req, res) {
     }
 }
 
+async function handleTrailer(req, res) {
+    const dest = req.headers['sec-fetch-dest'];
+    const mode = req.headers['sec-fetch-mode'];
+    const accept = req.headers['accept'] || '';
+
+    if (dest === 'document' || mode === 'navigate' || accept.includes('text/html')) {
+        res.writeHead(302, { 'Location': '/index.html' });
+        res.end();
+        return;
+    }
+
+    if (!TRAILER_SHEET_URL) {
+        res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+        res.end('URL,Show\n,');
+        return;
+    }
+
+    try {
+        const now = Date.now();
+        let rawCsv = '';
+        if (trailerCache.data && (now - trailerCache.timestamp < CACHE_TTL_MS)) {
+            rawCsv = trailerCache.data;
+        } else {
+            rawCsv = await fetchUrl(TRAILER_SHEET_URL);
+            trailerCache = { data: rawCsv, timestamp: now };
+        }
+
+        res.writeHead(200, {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Cache-Control': 'public, max-age=30',
+            'Access-Control-Allow-Origin': '*',
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Disposition': 'inline'
+        });
+        res.end(rawCsv);
+    } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+        res.end('URL,Show\n,');
+    }
+}
+
 const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.css': 'text/css; charset=utf-8',
@@ -225,6 +268,9 @@ const server = http.createServer((req, res) => {
     }
     if (pathname === '/api/rounds') {
         return handleRounds(req, res);
+    }
+    if (pathname === '/api/trailer') {
+        return handleTrailer(req, res);
     }
 
     // Static file serving

@@ -422,6 +422,7 @@ function initFilterGlider() {
 
 let resolvedRoundsUrl = null;
 let resolvedScoresUrl = null;
+let resolvedTrailerUrl = null;
 
 async function fetchCsvWithFallback(primaryUrl, fallbackUrl) {
     if (primaryUrl) {
@@ -1018,15 +1019,88 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!el.textContent.trim()) el.textContent = `@${CONFIG.INSTAGRAM_HANDLE}`;
     });
 
-    // Trailer
-    const trailer = document.getElementById('trailer-iframe');
-    if (trailer && CONFIG.TRAILER_EMBED_URL) trailer.src = CONFIG.TRAILER_EMBED_URL;
-
     // Engines
     initRounds();
     initScores();
+    initTrailer();
     initScrollReveal();
 });
+
+// ──────────────────────────────────────────────────────────────
+// 5B. DYNAMIC TRAILER ENGINE (Google Sheet Controlled)
+// ──────────────────────────────────────────────────────────────
+function getYouTubeEmbedUrl(url) {
+    if (!url || typeof url !== 'string') return null;
+    const cleanUrl = url.trim();
+    // Matches youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, youtube.com/shorts/ID
+    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    const match = cleanUrl.match(regExp);
+    if (match && match[1]) {
+        return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=0&rel=0`;
+    }
+    if (/^[a-zA-Z0-9_-]{11}$/.test(cleanUrl)) {
+        return `https://www.youtube-nocookie.com/embed/${cleanUrl}?autoplay=0&rel=0`;
+    }
+    return null;
+}
+
+async function initTrailer() {
+    const section = document.getElementById('trailer-section');
+    const iframe = document.getElementById('trailer-iframe');
+    if (!section || !iframe) return;
+
+    if (!CONFIG.TRAILER_CSV_URL && !CONFIG.FALLBACK_TRAILER_CSV_URL) {
+        section.style.display = 'none';
+        return;
+    }
+
+    try {
+        const res = await fetchCsvWithFallback(
+            resolvedTrailerUrl || CONFIG.TRAILER_CSV_URL,
+            CONFIG.FALLBACK_TRAILER_CSV_URL
+        );
+
+        if (res.ok && res.text) {
+            resolvedTrailerUrl = res.url;
+            const rows = parseCSV(res.text);
+
+            if (rows.length > 0) {
+                const firstRow = rows[0];
+                const keys = Object.keys(firstRow);
+
+                // Find URL column and Show column
+                const urlKey = keys.find(k => /url|link|video|youtube|embed/i.test(k));
+                const showKey = keys.find(k => /show|active|confirm|release|publish|status/i.test(k));
+
+                let videoUrl = '';
+                let shouldShow = false;
+
+                if (urlKey && showKey) {
+                    videoUrl = (firstRow[urlKey] || '').trim();
+                    const showVal = (firstRow[showKey] || '').trim().toLowerCase();
+                    shouldShow = (showVal === 'yes' || showVal === 'y' || showVal === 'true');
+                } else if (keys.length >= 2) {
+                    videoUrl = (firstRow[keys[0]] || '').trim();
+                    const showVal = (firstRow[keys[1]] || '').trim().toLowerCase();
+                    shouldShow = (showVal === 'yes' || showVal === 'y' || showVal === 'true');
+                }
+
+                if (shouldShow && videoUrl) {
+                    const embedUrl = getYouTubeEmbedUrl(videoUrl);
+                    if (embedUrl) {
+                        iframe.src = embedUrl;
+                        section.style.display = '';
+                        initScrollReveal();
+                        return;
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+
+    // If blank or not confirmed, hide completely
+    section.style.display = 'none';
+}
 
 // ──────────────────────────────────────────────────────────────
 // 6. INTERACTIVE BACKGROUND NODES

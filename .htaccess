@@ -6,4 +6,7 @@ RewriteRule ^api/scores/?$ api/scores.php [L,QSA]
 
 # Route /api/rounds to PHP proxy
 RewriteRule ^api/rounds/?$ api/rounds.php [L,QSA]
+
+# Route /api/trailer to PHP proxy
+RewriteRule ^api/trailer/?$ api/trailer.php [L,QSA]
 </IfModule>

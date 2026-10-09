@@ -13,10 +13,12 @@ const CONFIG = {
     // Primary local endpoint (works on Cloudflare Pages, Apache+PHP, and Node.js):
     SCORES_CSV_URL: "/api/scores",
     ROUNDS_CSV_URL: "/api/rounds",
+    TRAILER_CSV_URL: "/api/trailer",
 
     // Cloudflare Edge Fallback (automatically used if hosted on a static college server):
     FALLBACK_SCORES_CSV_URL: "https://cognito-website-1nx.pages.dev/api/scores",
     FALLBACK_ROUNDS_CSV_URL: "https://cognito-website-1nx.pages.dev/api/rounds",
+    FALLBACK_TRAILER_CSV_URL: "https://cognito-website-1nx.pages.dev/api/trailer",
 
     // -------------------------------------------------------------
     // 2. Official Registration Links
