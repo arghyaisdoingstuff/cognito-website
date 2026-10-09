@@ -305,14 +305,38 @@ async function initRounds() {
 
     renderRounds(roundsData, isLive);
 
-    document.querySelectorAll('[data-round-filter]').forEach(btn => {
+    function updateFilterGlider(activeBtn) {
+        const glider = document.getElementById('filter-glider');
+        if (!glider || !activeBtn) return;
+        glider.style.width = activeBtn.offsetWidth + 'px';
+        glider.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+    }
+
+    const filterBtns = document.querySelectorAll('[data-round-filter]');
+    filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('[data-round-filter]').forEach(b => b.classList.remove('active'));
+            filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            updateFilterGlider(btn);
             activeRoundFilter = btn.getAttribute('data-round-filter');
             renderRounds(roundsData, isLive);
         });
     });
+
+    const initialActive = document.querySelector('[data-round-filter].active');
+    if (initialActive) {
+        requestAnimationFrame(() => updateFilterGlider(initialActive));
+        window.addEventListener('resize', () => {
+            const currentActive = document.querySelector('[data-round-filter].active');
+            if (currentActive) updateFilterGlider(currentActive);
+        });
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                const currentActive = document.querySelector('[data-round-filter].active');
+                if (currentActive) updateFilterGlider(currentActive);
+            });
+        }
+    }
 }
 
 function renderRounds(data, isLive) {

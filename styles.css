@@ -809,22 +809,56 @@ body::after {
 /* ==========================================================================
    ROUNDS SYSTEM
    ========================================================================== */
+.filter-tabs-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+}
 .filter-tabs {
-    display:flex; align-items:center; justify-content:center;
-    gap:8px; flex-wrap:wrap; margin-bottom:36px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(3, 11, 26, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--edge-dim);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 4px;
+}
+.filter-glider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: 0;
+    background: var(--primary);
+    border-radius: 999px;
+    box-shadow: 0 2px 16px var(--primary-glow);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 0;
 }
 .tab-btn {
-    background:var(--bg-glass); backdrop-filter:blur(8px);
-    border:1px solid var(--edge-dim); color:var(--text-secondary);
-    padding:10px 24px; font-size:0.88rem; font-weight:600;
-    font-family:var(--font-body); border-radius:999px; cursor:pointer;
-    transition: all 0.25s var(--ease-out);
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 10px 24px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.25s ease;
 }
-.tab-btn:hover { color:var(--text-primary); border-color:var(--edge); }
+.tab-btn:hover {
+    color: var(--text-primary);
+}
 .tab-btn.active {
-    background:var(--primary); color:var(--bg-void);
-    border-color:var(--primary); font-weight:700;
-    box-shadow:0 2px 16px var(--primary-glow);
+    color: var(--bg-void);
+    font-weight: 700;
 }
 .round-card { display:flex; flex-direction:column; justify-content:space-between; }
 .round-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
