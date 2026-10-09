@@ -52,12 +52,28 @@ function initCarousel() {
         }
     };
 
+    let isCarouselVisible = true;
+    if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver((entries) => {
+            const wasVisible = isCarouselVisible;
+            isCarouselVisible = entries[0].isIntersecting;
+            if (isCarouselVisible && !wasVisible) {
+                cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(animate);
+            }
+        }, { threshold: 0 });
+        const wrapper = carousel.closest('.gallery-carousel-wrapper') || carousel;
+        obs.observe(wrapper);
+    }
+
     const animate = () => {
-        if (!isHovered && !isButtonScrolling && !isDragging && Math.abs(dragVelocity) < 0.1) {
+        if (isCarouselVisible && !isHovered && !isButtonScrolling && !isDragging && Math.abs(dragVelocity) < 0.1) {
             carousel.scrollLeft += speed;
             wrapScroll();
         }
-        rafId = requestAnimationFrame(animate);
+        if (isCarouselVisible) {
+            rafId = requestAnimationFrame(animate);
+        }
     };
     rafId = requestAnimationFrame(animate);
 
@@ -217,48 +233,73 @@ function initLightbox() {
 function initTypewriter() {
     const el = document.querySelector('.typewriter-target');
     if (!el) return;
-    
-    // Clear the fallback noscript content
-    el.innerHTML = '';
-    
-    const part1 = "Welcome to ";
-    const part2 = "Reality";
-    
-    // Create cursor
-    const cursor = document.createElement('span');
-    cursor.className = 'type-cursor';
-    el.appendChild(cursor);
-    
-    let i = 0, j = 0;
-    let spanAdded = false;
-    let accentSpan;
-    
-    const type = () => {
-        if (i < part1.length) {
-            cursor.insertAdjacentText('beforebegin', part1.charAt(i));
-            i++;
-            setTimeout(type, 20);
-        } else if (j < part2.length) {
-            if (!spanAdded) {
-                accentSpan = document.createElement('span');
-                accentSpan.className = 'accent';
-                el.insertBefore(accentSpan, cursor);
-                spanAdded = true;
-            }
-            accentSpan.textContent += part2.charAt(j);
-            j++;
-            setTimeout(type, 25);
-        } else {
-            // Typing complete, hide cursor seamlessly without layout shift
-            setTimeout(() => {
-                cursor.style.animation = 'none';
-                cursor.style.opacity = '0';
-            }, 3000);
+
+    // Respect user's motion preferences
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+    }
+
+    const part1El = el.querySelector('.tw-part1');
+    const part2El = el.querySelector('.tw-part2');
+    const cursor = el.querySelector('.type-cursor');
+    if (!part1El || !part2El || !cursor) return;
+
+    const text1 = "Welcome to ";
+    const text2 = "Reality";
+
+    // Clear text content for frame-perfect reveal
+    part1El.textContent = '';
+    part2El.textContent = '';
+    cursor.style.opacity = '1';
+
+    const charMs1 = 36;
+    const charMs2 = 46;
+    const startDelay = 100;
+    const dur1 = text1.length * charMs1;
+    const dur2 = text2.length * charMs2;
+    const totalDuration = startDelay + dur1 + dur2;
+
+    let startTime = null;
+
+    function step(now) {
+        if (!startTime) startTime = now;
+        const elapsed = now - startTime;
+
+        if (elapsed < startDelay) {
+            requestAnimationFrame(step);
+            return;
         }
-    };
-    
-    // Start typing after a short delay
-    setTimeout(type, 300);
+
+        const activeElapsed = elapsed - startDelay;
+
+        // Animate Part 1 ("Welcome to ")
+        const count1 = Math.min(text1.length, Math.floor(activeElapsed / charMs1));
+        if (part1El.textContent.length !== count1) {
+            part1El.textContent = text1.slice(0, count1);
+        }
+
+        // Animate Part 2 ("Reality")
+        if (activeElapsed >= dur1) {
+            const activeElapsed2 = activeElapsed - dur1;
+            const count2 = Math.min(text2.length, Math.floor(activeElapsed2 / charMs2));
+            if (part2El.textContent.length !== count2) {
+                part2El.textContent = text2.slice(0, count2);
+            }
+        }
+
+        if (elapsed < totalDuration) {
+            requestAnimationFrame(step);
+        } else {
+            part1El.textContent = text1;
+            part2El.textContent = text2;
+            setTimeout(() => {
+                cursor.style.transition = 'opacity 0.6s ease';
+                cursor.style.opacity = '0';
+            }, 2500);
+        }
+    }
+
+    requestAnimationFrame(step);
 }
 
 function initScrollReveal() {
@@ -967,6 +1008,7 @@ function initHeroSpotlight() {
     if (!hero) return;
 
     if (window.matchMedia('(pointer: coarse)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let spotlight = document.getElementById('hero-spotlight');
     if (!spotlight) {
@@ -977,8 +1019,21 @@ function initHeroSpotlight() {
     }
 
     const radius = 300; // Half of 600px width/height
-    let targetX = hero.offsetWidth / 2;
-    let targetY = hero.offsetHeight / 2;
+    let heroWidth = hero.offsetWidth || window.innerWidth;
+    let heroHeight = hero.offsetHeight || 600;
+    let heroTop = 0;
+
+    function updateHeroMetrics() {
+        const rect = hero.getBoundingClientRect();
+        heroTop = rect.top + window.scrollY;
+        heroWidth = hero.offsetWidth;
+        heroHeight = hero.offsetHeight;
+    }
+    updateHeroMetrics();
+    window.addEventListener('resize', updateHeroMetrics, { passive: true });
+
+    let targetX = heroWidth / 2;
+    let targetY = heroHeight / 2;
     let currentX = targetX;
     let currentY = targetY;
     let targetOpacity = 0;
@@ -986,32 +1041,52 @@ function initHeroSpotlight() {
     let mouseX = -1000;
     let mouseY = -1000;
     let hasMouse = false;
+    let isHeroVisible = true;
+    let rafId = null;
 
     window.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
         hasMouse = true;
+        if (isHeroVisible && !rafId) {
+            rafId = requestAnimationFrame(loop);
+        }
     }, { passive: true });
 
     document.addEventListener('mouseleave', () => {
         hasMouse = false;
     });
 
-    function loop() {
-        if (hasMouse) {
-            const rect = hero.getBoundingClientRect();
-            targetX = mouseX - rect.left;
-            targetY = mouseY - rect.top;
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            isHeroVisible = entries[0].isIntersecting;
+            if (!isHeroVisible) {
+                targetOpacity = 0;
+                spotlight.style.opacity = '0';
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+            } else {
+                updateHeroMetrics();
+                if (!rafId) {
+                    rafId = requestAnimationFrame(loop);
+                }
+            }
+        }, { threshold: 0 });
+        observer.observe(hero);
+    }
 
-            const heroHeight = rect.height;
-            const heroWidth = rect.width;
+    function loop() {
+        if (hasMouse && isHeroVisible) {
+            const scrollY = window.scrollY;
+            const heroViewportTop = heroTop - scrollY;
+            targetX = mouseX;
+            targetY = mouseY - heroViewportTop;
 
             // Vertical fade attenuation:
-            // Full intensity in upper/mid hero, smoothly fading across the bottom border
-            // through 220px into the subsequent section
             const fadeBottomStart = heroHeight - 160;
             const fadeBottomEnd = heroHeight + 220;
-
             const fadeTopStart = 60;
             const fadeTopEnd = -80;
 
@@ -1031,11 +1106,12 @@ function initHeroSpotlight() {
             }
 
             // Viewport scroll factor (fades gracefully as hero scrolls out of view)
+            const heroViewportBottom = heroViewportTop + heroHeight;
             let scrollFactor = 1;
-            if (rect.bottom < 0 || rect.top > window.innerHeight) {
+            if (heroViewportBottom < 0 || heroViewportTop > window.innerHeight) {
                 scrollFactor = 0;
-            } else if (rect.bottom < 250) {
-                scrollFactor = Math.max(0, rect.bottom / 250);
+            } else if (heroViewportBottom < 250) {
+                scrollFactor = Math.max(0, heroViewportBottom / 250);
             }
 
             targetOpacity = Math.max(0, Math.min(1, opacityY * opacityX * scrollFactor));
@@ -1055,9 +1131,14 @@ function initHeroSpotlight() {
             spotlight.style.opacity = '0';
         }
 
-        requestAnimationFrame(loop);
+        if (isHeroVisible && (hasMouse || currentOpacity > 0.005)) {
+            rafId = requestAnimationFrame(loop);
+        } else {
+            rafId = null;
+        }
     }
-    requestAnimationFrame(loop);
+
+    rafId = requestAnimationFrame(loop);
 }
 
 /**
@@ -1232,6 +1313,8 @@ function initNodes() {
     const bgContainer = document.querySelector('.bg-canvas');
     if (!bgContainer) return;
 
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
     const canvas = document.createElement('canvas');
     canvas.id = 'node-canvas';
     canvas.style.position = 'absolute';
@@ -1246,23 +1329,25 @@ function initNodes() {
     const ctx = canvas.getContext('2d');
     let width, height;
     
-    // Scale for high-DPI displays
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPI to 1.25 to prevent fillrate choking on 4K/Retina displays
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
 
     function resize() {
         width = window.innerWidth;
         height = window.innerHeight;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.scale(dpr, dpr);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
     resize();
 
     const particles = [];
-    // Adjust number of particles based on screen width for performance
-    const numParticles = width > 768 ? 60 : 30;
-    const maxDistance = 140;
+    const numParticles = width > 768 ? 42 : 22;
+    const maxDistance = 135;
+    const maxDistanceSq = maxDistance * maxDistance;
+    const gravityDist = maxDistance * 2.2;
+    const gravityDistSq = gravityDist * gravityDist;
     
     let mouse = { x: -1000, y: -1000 };
     let touchTimeout;
@@ -1271,7 +1356,8 @@ function initNodes() {
     window.addEventListener('mousemove', (e) => {
         mouse.x = e.clientX;
         mouse.y = e.clientY;
-    });
+    }, { passive: true });
+
     window.addEventListener('mouseout', () => {
         mouse.x = -1000;
         mouse.y = -1000;
@@ -1279,26 +1365,29 @@ function initNodes() {
 
     // Mobile interaction: Touch and Scroll
     window.addEventListener('touchstart', (e) => {
-        mouse.x = e.touches[0].clientX;
-        mouse.y = e.touches[0].clientY;
-        clearTimeout(touchTimeout);
-    }, {passive: true});
+        if (e.touches[0]) {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            clearTimeout(touchTimeout);
+        }
+    }, { passive: true });
     
     window.addEventListener('touchmove', (e) => {
-        mouse.x = e.touches[0].clientX;
-        mouse.y = e.touches[0].clientY;
-        clearTimeout(touchTimeout);
-    }, {passive: true});
+        if (e.touches[0]) {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            clearTimeout(touchTimeout);
+        }
+    }, { passive: true });
     
     window.addEventListener('touchend', () => {
-        // Let the gravity linger for a moment after releasing the scroll/tap
         touchTimeout = setTimeout(() => {
             mouse.x = -1000;
             mouse.y = -1000;
-        }, 1500); 
+        }, 1200); 
     });
 
-    for(let i = 0; i < numParticles; i++) {
+    for (let i = 0; i < numParticles; i++) {
         const vx = (Math.random() - 0.5) * 0.4;
         const vy = (Math.random() - 0.5) * 0.4;
         particles.push({
@@ -1312,34 +1401,30 @@ function initNodes() {
         });
     }
 
+    let isTabVisible = !document.hidden;
+    document.addEventListener('visibilitychange', () => {
+        isTabVisible = !document.hidden;
+        if (isTabVisible) {
+            requestAnimationFrame(animate);
+        }
+    });
+
     function animate() {
+        if (!isTabVisible) return;
+
         ctx.clearRect(0, 0, width, height);
 
-        // Optional: Blueprint grid background (faint)
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.02)';
-        ctx.lineWidth = 1;
-        const gridSize = 80;
-        ctx.beginPath();
-        for (let x = (width % gridSize)/2; x < width; x += gridSize) {
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-        }
-        for (let y = (height % gridSize)/2; y < height; y += gridSize) {
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-        }
-        ctx.stroke();
-
-        particles.forEach((p, index) => {
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
             p.x += p.vx;
             p.y += p.vy;
 
             // Screen-wrap (Infinite Flow)
-            if(p.x < 0) p.x = width;
-            else if(p.x > width) p.x = 0;
+            if (p.x < 0) p.x = width;
+            else if (p.x > width) p.x = 0;
             
-            if(p.y < 0) p.y = height;
-            else if(p.y > height) p.y = 0;
+            if (p.y < 0) p.y = height;
+            else if (p.y > height) p.y = 0;
 
             // Draw node
             ctx.beginPath();
@@ -1347,43 +1432,46 @@ function initNodes() {
             ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
             ctx.fill();
 
-            // Connect nodes
-            for(let j = index + 1; j < particles.length; j++) {
+            // Connect nodes (check squared distance first to eliminate Math.sqrt calls)
+            for (let j = i + 1; j < particles.length; j++) {
                 const p2 = particles[j];
                 const dx = p.x - p2.x;
                 const dy = p.y - p2.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
+                const distSq = dx * dx + dy * dy;
 
-                if(dist < maxDistance) {
+                if (distSq < maxDistanceSq) {
+                    const dist = Math.sqrt(distSq);
                     ctx.beginPath();
                     ctx.moveTo(p.x, p.y);
                     ctx.lineTo(p2.x, p2.y);
-                    ctx.strokeStyle = `rgba(0, 240, 255, ${0.1 * (1 - dist/maxDistance)})`;
+                    ctx.strokeStyle = `rgba(0, 240, 255, ${0.1 * (1 - dist / maxDistance)})`;
                     ctx.lineWidth = 0.5;
                     ctx.stroke();
                 }
             }
 
-            // Invisible gravity well (creates interactive data terminal feel without visual snapping)
+            // Mouse gravity well
             const dxm = p.x - mouse.x;
             const dym = p.y - mouse.y;
-            const distm = Math.sqrt(dxm*dxm + dym*dym);
+            const distmSq = dxm * dxm + dym * dym;
 
-            if(distm < maxDistance * 2.5) { // Expanded radius for a gentler, wider pull
-                // Gentle pull by modifying velocity instead of snapping position
-                const force = (1 - distm / (maxDistance * 2.5)) * 0.02;
-                p.vx -= (dxm / distm) * force;
-                p.vy -= (dym / distm) * force;
+            if (distmSq < gravityDistSq) {
+                const distm = Math.sqrt(distmSq);
+                if (distm > 0.1) {
+                    const force = (1 - distm / gravityDist) * 0.02;
+                    p.vx -= (dxm / distm) * force;
+                    p.vy -= (dym / distm) * force;
+                }
             }
             
             // Gracefully return to base drifting velocity over time
             p.vx += (p.baseVx - p.vx) * 0.02;
             p.vy += (p.baseVy - p.vy) * 0.02;
-        });
+        }
 
         requestAnimationFrame(animate);
     }
-    animate();
+    requestAnimationFrame(animate);
 }
 
 // Call on load

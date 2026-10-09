@@ -66,15 +66,20 @@ body {
     z-index: -3;
     overflow: hidden;
     pointer-events: none;
+    contain: strict;
+    background-image:
+        linear-gradient(to right, rgba(0, 240, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 240, 255, 0.018) 1px, transparent 1px);
+    background-size: 80px 80px;
 }
 .bg-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
+    filter: blur(40px);
     opacity: 0;
     animation: orbCycle var(--dur, 20s) var(--delay, 0s) infinite ease-in-out;
+    transform: translate3d(0, 0, 0);
     will-change: transform, opacity;
-    transform: translateZ(0);
 }
 .bg-orb-1 {
     width: 600px; height: 600px;
@@ -108,13 +113,13 @@ body {
 }
 
 @keyframes orbCycle {
-    0%   { opacity: 0;    transform: translate(0px, 0px) scale(0.9); }
+    0%   { opacity: 0;    transform: translate3d(0px, 0px, 0) scale(0.9); }
     10%  { opacity: 1; }
-    30%  { transform: translate(40px, -30px) scale(1.05); }
-    60%  { transform: translate(-30px, 50px) scale(0.95); }
+    30%  { transform: translate3d(40px, -30px, 0) scale(1.05); }
+    60%  { transform: translate3d(-30px, 50px, 0) scale(0.95); }
     80%  { opacity: 1; }
-    90%  { transform: translate(20px, -20px) scale(1.02); }
-    100% { opacity: 0;    transform: translate(0px, 0px) scale(0.9); }
+    90%  { transform: translate3d(20px, -20px, 0) scale(1.02); }
+    100% { opacity: 0;    transform: translate3d(0px, 0px, 0) scale(0.9); }
 }
 
 /* Subtle grain */
@@ -126,8 +131,7 @@ body {
     opacity: 0.03;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     background-repeat: repeat;
-    will-change: transform, filter;
-    transform: translateZ(0);
+    transform: translate3d(0, 0, 0);
 }
 
 a { color: var(--primary); text-decoration: none; transition: color 0.2s; }
@@ -139,12 +143,14 @@ img { max-width: 100%; height: auto; display: block; }
    ========================================================================== */
 .reveal {
     opacity: 0;
-    transform: translateY(52px);
-    transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+    transform: translate3d(0, 44px, 0);
+    transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out);
+    will-change: opacity, transform;
 }
 .reveal.visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+    will-change: auto;
 }
 .reveal-delay-1 { transition-delay: 0.12s; }
 .reveal-delay-2 { transition-delay: 0.24s; }
@@ -154,37 +160,56 @@ img { max-width: 100%; height: auto; display: block; }
 
 .reveal-scale {
     opacity: 0;
-    transform: scale(0.88);
-    transition: opacity 0.85s var(--ease-out), transform 0.85s var(--ease-spring);
+    transform: scale3d(0.9, 0.9, 1);
+    transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-spring);
+    will-change: opacity, transform;
 }
-.reveal-scale.visible { opacity: 1; transform: scale(1); }
+.reveal-scale.visible {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+    will-change: auto;
+}
 
 .reveal-left {
     opacity: 0;
-    transform: translateX(-60px);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    transform: translate3d(-48px, 0, 0);
+    transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out);
+    will-change: opacity, transform;
 }
-.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-left.visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    will-change: auto;
+}
 
 .reveal-right {
     opacity: 0;
-    transform: translateX(60px);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    transform: translate3d(48px, 0, 0);
+    transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out);
+    will-change: opacity, transform;
 }
-.reveal-right.visible { opacity: 1; transform: translateX(0); }
+.reveal-right.visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    will-change: auto;
+}
 
 /* Stagger children inside a revealed container */
 .reveal-stagger > * {
     opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    transform: translate3d(0, 36px, 0);
+    transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out);
+    will-change: opacity, transform;
 }
-.reveal-stagger.visible > *:nth-child(1) { opacity:1; transform:none; transition-delay: 0.0s; }
-.reveal-stagger.visible > *:nth-child(2) { opacity:1; transform:none; transition-delay: 0.15s; }
-.reveal-stagger.visible > *:nth-child(3) { opacity:1; transform:none; transition-delay: 0.30s; }
-.reveal-stagger.visible > *:nth-child(4) { opacity:1; transform:none; transition-delay: 0.45s; }
-.reveal-stagger.visible > *:nth-child(5) { opacity:1; transform:none; transition-delay: 0.60s; }
-.reveal-stagger.visible > *:nth-child(n+6) { opacity:1; transform:none; transition-delay: 0.70s; }
+.reveal-stagger.visible > * {
+    will-change: auto;
+}
+.reveal-stagger.visible > *:nth-child(1) { opacity:1; transform:translate3d(0, 0, 0); transition-delay: 0.0s; }
+.reveal-stagger.visible > *:nth-child(2) { opacity:1; transform:translate3d(0, 0, 0); transition-delay: 0.12s; }
+.reveal-stagger.visible > *:nth-child(3) { opacity:1; transform:translate3d(0, 0, 0); transition-delay: 0.24s; }
+.reveal-stagger.visible > *:nth-child(4) { opacity:1; transform:translate3d(0, 0, 0); transition-delay: 0.36s; }
+.reveal-stagger.visible > *:nth-child(5) { opacity:1; transform:translate3d(0, 0, 0); transition-delay: 0.48s; }
+.reveal-stagger.visible > *:nth-child(n+6) { opacity:1; transform:translate3d(0, 0, 0); transition-delay: 0.56s; }
 
 /* ==========================================================================
    PAGE TRANSITION
@@ -358,25 +383,20 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 2;
 }
 
-/* Global scanline sweep – persistent atmospheric texture across all pages */
+/* Global scanline texture – static hardware-accelerated overlay (zero CPU repaint cost) */
 body::after {
     content: '';
     position: fixed;
     inset: 0;
-    background: linear-gradient(
+    background: repeating-linear-gradient(
         to bottom,
-        transparent 0%,
-        rgba(0, 229, 255, 0.015) 50%,
-        transparent 100%
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 229, 255, 0.012) 3px,
+        rgba(0, 229, 255, 0.012) 4px
     );
-    background-size: 100% 4px;
-    animation: scanlines 8s linear infinite;
     pointer-events: none;
     z-index: 99;
-}
-@keyframes scanlines {
-    0%   { background-position: 0 0; }
-    100% { background-position: 0 200px; }
 }
 
 .hero-inner { position:relative; z-index:1; }
@@ -409,6 +429,7 @@ body::after {
     margin-bottom: 20px;
     text-transform: uppercase;
     color: var(--text-primary);
+    min-height: 1.1em;
 }
 .hero-title .accent {
     background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
@@ -419,12 +440,12 @@ body::after {
 
 .type-cursor {
     display: inline-block;
-    width: 0.1em;
-    height: 1.1em;
+    width: 0.08em;
+    height: 0.9em;
     background-color: var(--primary);
-    vertical-align: middle;
-    margin-left: 0.05em;
-    animation: blink-cursor 1s step-end infinite;
+    vertical-align: -0.05em;
+    margin-left: 0.06em;
+    animation: blink-cursor 0.9s step-end infinite;
 }
 @keyframes blink-cursor {
     0%, 100% { opacity: 1; }
