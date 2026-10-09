@@ -43,9 +43,9 @@ export async function onRequest(context) {
         }
 
         const rawCsv = await response.text();
-        const lines = rawCsv.trim().split(/\r?\n/);
+        const rows = parseCSVRecords(rawCsv);
         
-        if (lines.length <= 1) {
+        if (rows.length <= 1) {
             return new Response(rawCsv, {
                 headers: {
                     "Content-Type": "text/csv; charset=utf-8",
@@ -57,8 +57,7 @@ export async function onRequest(context) {
         }
 
         // Parse header row to locate "Score" column index
-        const headerLine = lines[0];
-        const headers = parseCSVLine(headerLine);
+        const headers = rows[0];
         const scoreIndex = headers.findIndex(h => {
             const clean = h.trim().toLowerCase();
             return clean === 'score' || clean === 'points' || clean === 'total';
@@ -76,30 +75,28 @@ export async function onRequest(context) {
             });
         }
 
-        // Parse all rows
-        const rows = [];
         let maxScore = 0;
-
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i];
-            if (!line.trim()) continue;
-            const cols = parseCSVLine(line);
+        for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i];
             const num = parseFloat(cols[scoreIndex]) || 0;
             if (num > maxScore) maxScore = num;
-            rows.push(cols);
         }
 
         // Scrub absolute scores: convert raw scores to relative percentage (0.0 to 100.0)
         // This preserves the exact rank and relative bar lengths while physically deleting the absolute points!
-        const sanitizedLines = [formatCSVRow(headers)];
-        for (const cols of rows) {
-            const rawScore = parseFloat(cols[scoreIndex]) || 0;
-            const relativePct = maxScore > 0 ? ((rawScore / maxScore) * 100).toFixed(1) : "0.0";
+        const sanitizedRows = [headers];
+        for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i];
+            const rawScore = parseFloat(cols[scoreIndex]);
+            const score = isNaN(rawScore) ? 0 : rawScore;
+            const relativePct = maxScore > 0 ? Math.max(0, Math.min(100, (score / maxScore * 100))).toFixed(1) : "0.0";
             cols[scoreIndex] = relativePct;
-            sanitizedLines.push(formatCSVRow(cols));
+            sanitizedRows.push(cols);
         }
 
-        return new Response(sanitizedLines.join('\n'), {
+        const sanitizedCsv = sanitizedRows.map(formatCSVRow).join('\r\n');
+
+        return new Response(sanitizedCsv, {
             headers: {
                 "Content-Type": "text/csv; charset=utf-8",
                 "Cache-Control": "public, max-age=30, s-maxage=30",
@@ -113,37 +110,54 @@ export async function onRequest(context) {
     }
 }
 
-// Robust RFC-4180 CSV line parser
-function parseCSVLine(line) {
-    const result = [];
-    let insideQuote = false;
-    let entry = '';
-    
-    for (let i = 0; i < line.length; i++) {
-        const c = line[i];
+// Robust RFC-4180 multiline CSV record parser
+function parseCSVRecords(text) {
+    if (!text || !text.trim()) return [];
+    const rows = [];
+    let currentRow = [];
+    let token = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const n = text[i + 1];
+
         if (c === '"') {
-            if (insideQuote && line[i + 1] === '"') {
-                entry += '"';
+            if (inQuotes && n === '"') {
+                token += '"';
                 i++;
             } else {
-                insideQuote = !insideQuote;
+                inQuotes = !inQuotes;
             }
-        } else if (c === ',' && !insideQuote) {
-            result.push(entry);
-            entry = '';
+        } else if (c === ',' && !inQuotes) {
+            currentRow.push(token);
+            token = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+            if (c === '\r' && n === '\n') i++;
+            currentRow.push(token);
+            token = '';
+            if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+                rows.push(currentRow);
+            }
+            currentRow = [];
         } else {
-            entry += c;
+            token += c;
         }
     }
-    result.push(entry);
-    return result;
+    if (token || currentRow.length) {
+        currentRow.push(token);
+        if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+            rows.push(currentRow);
+        }
+    }
+    return rows;
 }
 
 // RFC-4180 CSV line formatter
 function formatCSVRow(cols) {
     return cols.map(val => {
         const str = String(val ?? '');
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
             return `"${str.replace(/"/g, '""')}"`;
         }
         return str;

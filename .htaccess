@@ -10,3 +10,32 @@ RewriteRule ^api/rounds/?$ api/rounds.php [L,QSA]
 # Route /api/trailer to PHP proxy
 RewriteRule ^api/trailer/?$ api/trailer.php [L,QSA]
 </IfModule>
+
+# ----------------------------------------------------------------------
+# Security Headers
+# ----------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Header always set Content-Security-Policy "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https:;"
+</IfModule>
+
+# ----------------------------------------------------------------------
+# Block Sensitive & Hidden Files (.git, .env, .htaccess, markdown docs)
+# ----------------------------------------------------------------------
+<FilesMatch "^\.|\.(env|git|log|bak|config|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ----------------------------------------------------------------------
+# Disable Directory Browsing
+# ----------------------------------------------------------------------
+Options -Indexes

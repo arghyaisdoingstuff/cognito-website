@@ -14,6 +14,8 @@ function initCarousel() {
     const nextBtn = document.querySelector('.next-btn');
 
     if (!carousel || !prevBtn || !nextBtn) return;
+    if (carousel.__carouselInitialized) return;
+    carousel.__carouselInitialized = true;
 
     // Clone all items to create a seamless infinite scroll
     const items = Array.from(carousel.children);
@@ -501,6 +503,13 @@ function initFilterGlider() {
         if (glider && currentActive) updateGlider(glider, currentActive);
         syncDayGlider();
     });
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            const currentActive = document.querySelector('[data-round-filter].active');
+            if (glider && currentActive) updateGlider(glider, currentActive);
+            syncDayGlider();
+        }
+    });
     if (document.fonts) {
         document.fonts.ready.then(() => {
             const currentActive = document.querySelector('[data-round-filter].active');
@@ -577,6 +586,26 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+/**
+ * Strict URL and protocol sanitizer.
+ * Guarantees that only safe protocols (http, https, mailto, tel, or anchor/relative paths)
+ * can be rendered into href attributes, preventing javascript: or data: XSS injections.
+ */
+function sanitizeUrl(url) {
+    if (!url || typeof url !== 'string') return '#';
+    const trimmed = url.trim();
+    if (!trimmed) return '#';
+    // Allow relative anchor hashes or relative paths
+    if (trimmed.startsWith('#') || trimmed.startsWith('/') || trimmed.startsWith('./')) {
+        return escapeHtml(trimmed);
+    }
+    // Strict protocol verification
+    if (/^(https?|mailto|tel):/i.test(trimmed)) {
+        return escapeHtml(trimmed);
+    }
+    return '#';
+}
+
 function toggleRoundAccordion(headerEl) {
     const group = headerEl.closest('.round-accordion-group');
     if (!group) return;
@@ -586,17 +615,31 @@ function toggleRoundAccordion(headerEl) {
 }
 
 /**
+ * Creates a Date object anchored to Indian Standard Time (IST / UTC+05:30).
+ * Ensures all participants worldwide experience rounds unlock and deadlines hit
+ * at the exact same physical moment, regardless of user device timezone.
+ */
+function createISTDate(year, monthIndex, day, hours = 0, minutes = 0, seconds = 0) {
+    const IST_OFFSET_MS = 19800000; // 5 hours 30 minutes in milliseconds
+    const utcMs = Date.UTC(year, monthIndex, day, hours, minutes, seconds) - IST_OFFSET_MS;
+    return new Date(utcMs);
+}
+
+/**
  * Robust date & time parser supporting:
  * - DD/MM/YYYY HH:mm (with optional AM/PM)
  * - DD-MM-YYYY HH:mm
  * - YYYY-MM-DD HH:mm (or ISO 8601 with T)
  * - "15 Dec 2026 15:30" / "15 December 2026 3:30 PM"
  * - Separate Date + Time combinations
+ * - Automatically anchors to Indian Standard Time (IST) if no timezone is specified
  */
 function parseFlexibleDate(dateInput, timeInput = '') {
     if (!dateInput && !timeInput) return new Date(NaN);
     let str = `${dateInput || ''} ${timeInput || ''}`.trim();
     if (!str) return new Date(NaN);
+
+    const hasExplicitTz = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(str);
 
     // 1. ISO format: YYYY-MM-DD or YYYY/MM/DD with optional time and AM/PM
     const isoMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?)?/i);
@@ -610,8 +653,11 @@ function parseFlexibleDate(dateInput, timeInput = '') {
         const ampm = isoMatch[7] ? isoMatch[7].toLowerCase() : null;
         if (ampm === 'pm' && hours < 12) hours += 12;
         if (ampm === 'am' && hours === 12) hours = 0;
-        const d = new Date(year, month - 1, day, hours, minutes, seconds);
-        if (!isNaN(d.getTime())) return d;
+        if (hasExplicitTz) {
+            const nativeD = new Date(str.replace(/-/g, '/'));
+            if (!isNaN(nativeD.getTime())) return nativeD;
+        }
+        return createISTDate(year, month - 1, day, hours, minutes, seconds);
     }
 
     // 2. Standard Indian / European format: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
@@ -631,8 +677,11 @@ function parseFlexibleDate(dateInput, timeInput = '') {
         const ampm = dmyMatch[7] ? dmyMatch[7].toLowerCase() : null;
         if (ampm === 'pm' && hours < 12) hours += 12;
         if (ampm === 'am' && hours === 12) hours = 0;
-        const d = new Date(year, month - 1, day, hours, minutes, seconds);
-        if (!isNaN(d.getTime())) return d;
+        if (hasExplicitTz) {
+            const nativeD = new Date(str.replace(/-/g, '/'));
+            if (!isNaN(nativeD.getTime())) return nativeD;
+        }
+        return createISTDate(year, month - 1, day, hours, minutes, seconds);
     }
 
     // 3. Textual month format: "15 Dec 2026 15:30", "15 December 2026 3:30 PM"
@@ -650,8 +699,11 @@ function parseFlexibleDate(dateInput, timeInput = '') {
             const ampm = textMonthMatch[7] ? textMonthMatch[7].toLowerCase() : null;
             if (ampm === 'pm' && hours < 12) hours += 12;
             if (ampm === 'am' && hours === 12) hours = 0;
-            const d = new Date(year, monthIdx, day, hours, minutes, seconds);
-            if (!isNaN(d.getTime())) return d;
+            if (hasExplicitTz) {
+                const nativeD = new Date(str.replace(/-/g, '/'));
+                if (!isNaN(nativeD.getTime())) return nativeD;
+            }
+            return createISTDate(year, monthIdx, day, hours, minutes, seconds);
         }
     }
 
@@ -847,10 +899,11 @@ function renderRounds(data, isLive) {
 
         let roundSubmitBtnHtml = '';
         if (roundSubmitLink) {
+            const safeSubmitUrl = sanitizeUrl(roundSubmitLink);
             if (isRoundLocked) {
                 roundSubmitBtnHtml = `<button class="round-submit-btn disabled" disabled onclick="event.stopPropagation();" title="Submissions open upon round release">Round Locked</button>`;
-            } else {
-                roundSubmitBtnHtml = `<a href="${roundSubmitLink}" target="_blank" rel="noopener noreferrer" class="round-submit-btn" onclick="event.stopPropagation();">Submit Round →</a>`;
+            } else if (safeSubmitUrl !== '#') {
+                roundSubmitBtnHtml = `<a href="${safeSubmitUrl}" target="_blank" rel="noopener noreferrer" class="round-submit-btn" onclick="event.stopPropagation();">Submit Round →</a>`;
             }
         }
 
@@ -878,7 +931,8 @@ function renderRounds(data, isLive) {
                 dotClass = 'locked';
             } else {
                 // Exhibit is unlocked! Deadlines belong strictly to the round header
-                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
+                const safeBriefUrl = r.BriefLink ? sanitizeUrl(r.BriefLink) : '#';
+                actions = (r.BriefLink && safeBriefUrl !== '#') ? `<a href="${safeBriefUrl}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
 
                 if (hasValidRoundDeadline && now > roundDeadline) {
                     statusLabel = 'Concluded';
@@ -914,6 +968,7 @@ function renderRounds(data, isLive) {
                  data-ex-idx="${i}" 
                  tabindex="0"
                  role="button"
+                 aria-selected="${i === 0 ? 'true' : 'false'}"
                  onclick="switchRoundExhibit(${currentRoundIdx}, ${i}, this)"
                  onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchRoundExhibit(${currentRoundIdx}, ${i}, this);}">
                 <div class="stream-row-header">
@@ -977,9 +1032,13 @@ function renderRounds(data, isLive) {
 window.switchRoundExhibit = function(roundIdx, exIdx, rowEl) {
     const parentRail = rowEl.closest('.dossier-stream-rail');
     if (parentRail) {
-        parentRail.querySelectorAll('.stream-row').forEach(r => r.classList.remove('active'));
+        parentRail.querySelectorAll('.stream-row').forEach(r => {
+            r.classList.remove('active');
+            r.setAttribute('aria-selected', 'false');
+        });
     }
     rowEl.classList.add('active');
+    rowEl.setAttribute('aria-selected', 'true');
 
     const items = window.roundsDossierRegistry ? window.roundsDossierRegistry[roundIdx] : null;
     if (!items || !items[exIdx]) return;
@@ -1031,11 +1090,15 @@ async function initScores() {
 
     renderBarChart(isLive);
 
+    let searchDebounceTimer = null;
     const search = document.getElementById('scores-search');
     if (search) {
         search.addEventListener('input', e => {
-            searchQuery = e.target.value.toLowerCase().trim();
-            renderBarChart(isLive);
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                searchQuery = e.target.value.toLowerCase().trim();
+                renderBarChart(isLive);
+            }, 80);
         });
     }
 
@@ -1078,6 +1141,12 @@ function renderBarChart(isLive) {
         }
     });
 
+    // Cancel active FLIP transitions and clear transforms before measuring positions
+    container.querySelectorAll('.horizon-ledger-row').forEach(row => {
+        row.style.transition = 'none';
+        row.style.transform = 'none';
+    });
+
     // Capture initial positions for FLIP animation
     const firstPositions = new Map();
     container.querySelectorAll('.horizon-ledger-row, .bar-row').forEach(row => {
@@ -1114,13 +1183,15 @@ function renderBarChart(isLive) {
     }
 
     // Compute max score for bar width proportions (use overall max, not just filtered max)
-    const maxScore = Math.max(0, ...contingentRows.map(r => parseFloat(r.Score) || 0));
+    const rawMax = Math.max(0, ...contingentRows.map(r => parseFloat(r.Score) || 0));
+    const maxScore = isFinite(rawMax) && rawMax > 0 ? rawMax : 0;
 
     const rows = filtered.map((row) => {
         const rank = row._rank;
-        const score = parseFloat(row.Score) || 0;
-        const pct = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
-        const teamKey = (row.Team || 'team_' + rank).replace(/\s+/g, '_');
+        const rawScore = parseFloat(row.Score);
+        const score = isNaN(rawScore) ? 0 : rawScore;
+        const pct = maxScore > 0 ? Math.max(0, Math.min(100, (score / maxScore * 100))).toFixed(1) : "0.0";
+        const teamKey = escapeHtml((row.Team || 'team_' + rank).replace(/\s+/g, '_'));
 
         let rankClass = 'rank-general';
         let fillClass = '';
@@ -1462,14 +1533,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Bind config links
-    document.querySelectorAll('.link-case').forEach(el => { el.href = CONFIG.CASE_COMPETITION_LINK; });
-    document.querySelectorAll('.link-quiz').forEach(el => { el.href = CONFIG.CONTINGENT_QUIZ_LINK; });
+    document.querySelectorAll('.link-case').forEach(el => {
+        el.href = sanitizeUrl(CONFIG.CASE_COMPETITION_LINK);
+        el.setAttribute('rel', 'noopener noreferrer');
+    });
+    document.querySelectorAll('.link-quiz').forEach(el => {
+        el.href = sanitizeUrl(CONFIG.CONTINGENT_QUIZ_LINK);
+        el.setAttribute('rel', 'noopener noreferrer');
+    });
     document.querySelectorAll('.contact-email-link').forEach(el => {
         el.href = `mailto:${CONFIG.CONTACT_EMAIL}`;
         if (!el.textContent.trim()) el.textContent = CONFIG.CONTACT_EMAIL;
     });
     document.querySelectorAll('.instagram-link').forEach(el => {
-        el.href = CONFIG.INSTAGRAM_URL;
+        el.href = sanitizeUrl(CONFIG.INSTAGRAM_URL);
+        el.setAttribute('rel', 'noopener noreferrer');
         if (!el.textContent.trim()) el.textContent = `@${CONFIG.INSTAGRAM_HANDLE}`;
     });
 
@@ -1504,14 +1582,33 @@ checkRegistrationDeadline();
 function getYouTubeEmbedUrl(url) {
     if (!url || typeof url !== 'string') return null;
     const cleanUrl = url.trim();
-    // Matches youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, youtube.com/shorts/ID
-    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-    const match = cleanUrl.match(regExp);
-    if (match && match[1]) {
-        return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=0&rel=0`;
-    }
+    // Fast path: direct 11-character video ID
     if (/^[a-zA-Z0-9_-]{11}$/.test(cleanUrl)) {
         return `https://www.youtube-nocookie.com/embed/${cleanUrl}?autoplay=0&rel=0`;
+    }
+    try {
+        const parsed = new URL(cleanUrl);
+        const host = parsed.hostname.toLowerCase();
+        let videoId = null;
+        if (host === 'youtu.be') {
+            videoId = parsed.pathname.slice(1).split(/[?#&/]/)[0];
+        } else if (host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+            if (parsed.searchParams.has('v')) {
+                videoId = parsed.searchParams.get('v');
+            } else {
+                const match = parsed.pathname.match(/\/(?:embed|shorts|v)\/([a-zA-Z0-9_-]{11})/i);
+                if (match) videoId = match[1];
+            }
+        }
+        if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+            return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0`;
+        }
+    } catch (_) {
+        const regExp = /(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+        const match = cleanUrl.match(regExp);
+        if (match && match[1] && /^[a-zA-Z0-9_-]{11}$/.test(match[1])) {
+            return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=0&rel=0`;
+        }
     }
     return null;
 }

@@ -42,9 +42,9 @@ export async function onRequest(context) {
         }
 
         const rawCsv = await response.text();
-        const lines = rawCsv.trim().split(/\r?\n/);
+        const rows = parseCSVRecords(rawCsv);
         
-        if (lines.length <= 1) {
+        if (rows.length <= 1) {
             return new Response(rawCsv, {
                 headers: {
                     "Content-Type": "text/csv; charset=utf-8",
@@ -56,28 +56,26 @@ export async function onRequest(context) {
         }
 
         // Parse header row to locate "Show" column index
-        const headerLine = lines[0];
-        const headers = parseCSVLine(headerLine).map(h => h.trim().toLowerCase());
-        const showIndex = headers.indexOf('show');
+        const headers = rows[0];
+        const showIndex = headers.findIndex(h => h.trim().toLowerCase() === 'show');
 
-        // Filter lines strictly on the server so draft rounds are never sent
-        const sanitizedLines = [headerLine];
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i];
-            if (!line.trim()) continue;
-            
+        // Filter rows strictly on the server so draft rounds are never sent
+        const sanitizedRows = [headers];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
             if (showIndex !== -1) {
-                const cols = parseCSVLine(line);
-                const showVal = (cols[showIndex] || '').trim().toLowerCase();
+                const showVal = (row[showIndex] || '').trim().toLowerCase();
                 // If not explicitly "yes" or "y", drop it on the server!
                 if (showVal !== 'yes' && showVal !== 'y') {
                     continue;
                 }
             }
-            sanitizedLines.push(line);
+            sanitizedRows.push(row);
         }
 
-        return new Response(sanitizedLines.join('\n'), {
+        const sanitizedCsv = sanitizedRows.map(formatCSVRow).join('\r\n');
+
+        return new Response(sanitizedCsv, {
             headers: {
                 "Content-Type": "text/csv; charset=utf-8",
                 "Cache-Control": "public, max-age=30, s-maxage=30",
@@ -91,28 +89,56 @@ export async function onRequest(context) {
     }
 }
 
-// Robust RFC-4180 CSV line parser handling quoted commas
-function parseCSVLine(line) {
-    const result = [];
-    let insideQuote = false;
-    let entry = '';
-    
-    for (let i = 0; i < line.length; i++) {
-        const c = line[i];
+// Robust RFC-4180 multiline CSV record parser
+function parseCSVRecords(text) {
+    if (!text || !text.trim()) return [];
+    const rows = [];
+    let currentRow = [];
+    let token = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const n = text[i + 1];
+
         if (c === '"') {
-            if (insideQuote && line[i + 1] === '"') {
-                entry += '"';
+            if (inQuotes && n === '"') {
+                token += '"';
                 i++;
             } else {
-                insideQuote = !insideQuote;
+                inQuotes = !inQuotes;
             }
-        } else if (c === ',' && !insideQuote) {
-            result.push(entry);
-            entry = '';
+        } else if (c === ',' && !inQuotes) {
+            currentRow.push(token);
+            token = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+            if (c === '\r' && n === '\n') i++;
+            currentRow.push(token);
+            token = '';
+            if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+                rows.push(currentRow);
+            }
+            currentRow = [];
         } else {
-            entry += c;
+            token += c;
         }
     }
-    result.push(entry);
-    return result;
+    if (token || currentRow.length) {
+        currentRow.push(token);
+        if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+            rows.push(currentRow);
+        }
+    }
+    return rows;
+}
+
+// RFC-4180 CSV row formatter
+function formatCSVRow(cols) {
+    return cols.map(val => {
+        const str = String(val ?? '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    }).join(',');
 }

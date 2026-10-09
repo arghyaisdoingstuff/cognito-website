@@ -41,33 +41,52 @@ function fetchUrl(targetUrl) {
     });
 }
 
-function parseCSVLine(line) {
-    const result = [];
-    let insideQuote = false;
-    let entry = '';
-    for (let i = 0; i < line.length; i++) {
-        const c = line[i];
+function parseCSVRecords(text) {
+    if (!text || !text.trim()) return [];
+    const rows = [];
+    let currentRow = [];
+    let token = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const n = text[i + 1];
+
         if (c === '"') {
-            if (insideQuote && line[i + 1] === '"') {
-                entry += '"'; i++;
+            if (inQuotes && n === '"') {
+                token += '"';
+                i++;
             } else {
-                insideQuote = !insideQuote;
+                inQuotes = !inQuotes;
             }
-        } else if (c === ',' && !insideQuote) {
-            result.push(entry);
-            entry = '';
+        } else if (c === ',' && !inQuotes) {
+            currentRow.push(token);
+            token = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+            if (c === '\r' && n === '\n') i++;
+            currentRow.push(token);
+            token = '';
+            if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+                rows.push(currentRow);
+            }
+            currentRow = [];
         } else {
-            entry += c;
+            token += c;
         }
     }
-    result.push(entry);
-    return result;
+    if (token || currentRow.length) {
+        currentRow.push(token);
+        if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+            rows.push(currentRow);
+        }
+    }
+    return rows;
 }
 
 function formatCSVRow(cols) {
     return cols.map(val => {
         const str = String(val ?? '');
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
             return `"${str.replace(/"/g, '""')}"`;
         }
         return str;
@@ -96,14 +115,14 @@ async function handleScores(req, res) {
             scoresCache = { data: rawCsv, timestamp: now };
         }
 
-        const lines = rawCsv.trim().split(/\r?\n/);
-        if (lines.length <= 1) {
+        const rows = parseCSVRecords(rawCsv);
+        if (rows.length <= 1) {
             res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
             res.end(rawCsv);
             return;
         }
 
-        const headers = parseCSVLine(lines[0]);
+        const headers = rows[0];
         const scoreIndex = headers.findIndex(h => {
             const clean = h.trim().toLowerCase();
             return clean === 'score' || clean === 'points' || clean === 'total';
@@ -115,22 +134,21 @@ async function handleScores(req, res) {
             return;
         }
 
-        const rows = [];
         let maxScore = 0;
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const cols = parseCSVLine(lines[i]);
+        for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i];
             const num = parseFloat(cols[scoreIndex]) || 0;
             if (num > maxScore) maxScore = num;
-            rows.push(cols);
         }
 
-        const sanitizedLines = [formatCSVRow(headers)];
-        for (const cols of rows) {
-            const raw = parseFloat(cols[scoreIndex]) || 0;
-            const pct = maxScore > 0 ? ((raw / maxScore) * 100).toFixed(1) : "0.0";
+        const sanitizedRows = [headers];
+        for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i];
+            const raw = parseFloat(cols[scoreIndex]);
+            const score = isNaN(raw) ? 0 : raw;
+            const pct = maxScore > 0 ? Math.max(0, Math.min(100, (score / maxScore * 100))).toFixed(1) : "0.0";
             cols[scoreIndex] = pct;
-            sanitizedLines.push(formatCSVRow(cols));
+            sanitizedRows.push(cols);
         }
 
         res.writeHead(200, {
@@ -140,7 +158,7 @@ async function handleScores(req, res) {
             'X-Content-Type-Options': 'nosniff',
             'Content-Disposition': 'inline'
         });
-        res.end(sanitizedLines.join('\n'));
+        res.end(sanitizedRows.map(formatCSVRow).join('\r\n'));
     } catch (err) {
         res.writeHead(502, { 'Content-Type': 'text/plain' });
         res.end('Service unavailable');
@@ -168,25 +186,24 @@ async function handleRounds(req, res) {
             roundsCache = { data: rawCsv, timestamp: now };
         }
 
-        const lines = rawCsv.trim().split(/\r?\n/);
-        if (lines.length <= 1) {
+        const rows = parseCSVRecords(rawCsv);
+        if (rows.length <= 1) {
             res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
             res.end(rawCsv);
             return;
         }
 
-        const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
-        const showIndex = headers.indexOf('show');
+        const headers = rows[0];
+        const showIndex = headers.findIndex(h => h.trim().toLowerCase() === 'show');
 
-        const sanitizedLines = [lines[0]];
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
+        const sanitizedRows = [headers];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
             if (showIndex !== -1) {
-                const cols = parseCSVLine(lines[i]);
-                const showVal = (cols[showIndex] || '').trim().toLowerCase();
+                const showVal = (row[showIndex] || '').trim().toLowerCase();
                 if (showVal !== 'yes' && showVal !== 'y') continue;
             }
-            sanitizedLines.push(lines[i]);
+            sanitizedRows.push(row);
         }
 
         res.writeHead(200, {
@@ -196,7 +213,7 @@ async function handleRounds(req, res) {
             'X-Content-Type-Options': 'nosniff',
             'Content-Disposition': 'inline'
         });
-        res.end(sanitizedLines.join('\n'));
+        res.end(sanitizedRows.map(formatCSVRow).join('\r\n'));
     } catch (err) {
         res.writeHead(502, { 'Content-Type': 'text/plain' });
         res.end('Service unavailable');
@@ -256,12 +273,21 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon',
     '.woff2': 'font/woff2',
     '.woff': 'font/woff',
-    '.ttf': 'font/ttf'
+    '.ttf': 'font/ttf',
+    '.webp': 'image/webp'
+};
+
+const SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Content-Security-Policy': "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https:;"
 };
 
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url);
-    const pathname = parsedUrl.pathname;
+    const pathname = parsedUrl.pathname || '/';
 
     if (pathname === '/api/scores') {
         return handleScores(req, res);
@@ -273,9 +299,25 @@ const server = http.createServer((req, res) => {
         return handleTrailer(req, res);
     }
 
-    // Static file serving
-    let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+    // Static file serving with directory traversal protection
+    const normalizedPath = path.normalize(pathname === '/' ? '/index.html' : pathname);
+    let filePath = path.resolve(__dirname, '.' + normalizedPath);
     
+    // Directory traversal guard: must stay inside workspace root
+    if (!filePath.startsWith(__dirname)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+        res.end('403 Forbidden');
+        return;
+    }
+
+    // Block hidden files, server scripts, and sensitive files
+    const baseName = path.basename(filePath);
+    if (baseName.startsWith('.') || baseName === 'server.js' || filePath.endsWith('.php')) {
+        res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
+        res.end('403 Forbidden');
+        return;
+    }
+
     // Check if path is a directory or missing .html
     if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
         filePath = path.join(filePath, 'index.html');
@@ -285,13 +327,13 @@ const server = http.createServer((req, res) => {
 
     fs.readFile(filePath, (err, data) => {
         if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/html' });
+            res.writeHead(404, { 'Content-Type': 'text/html', ...SECURITY_HEADERS });
             res.end('<h1>404 Not Found</h1>');
             return;
         }
         const ext = path.extname(filePath).toLowerCase();
         const mime = MIME_TYPES[ext] || 'application/octet-stream';
-        res.writeHead(200, { 'Content-Type': mime });
+        res.writeHead(200, { 'Content-Type': mime, ...SECURITY_HEADERS });
         res.end(data);
     });
 });

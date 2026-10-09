@@ -55,9 +55,20 @@ if (!$rawCsv) {
     exit;
 }
 
-// 3. Absolute Score Scrubber
-$lines = preg_split('/\r\n|\r|\n/', trim($rawCsv));
-if (count($lines) <= 1) {
+// 3. Absolute Score Scrubber using multiline-safe stream
+$stream = fopen('php://temp', 'r+');
+fwrite($stream, $rawCsv);
+rewind($stream);
+
+$rows = [];
+while (($row = fgetcsv($stream)) !== false) {
+    if (!empty($row) && !(count($row) === 1 && $row[0] === null)) {
+        $rows[] = $row;
+    }
+}
+fclose($stream);
+
+if (count($rows) <= 1) {
     header("Content-Type: text/csv; charset=utf-8");
     header("Cache-Control: public, max-age=30");
     header("Access-Control-Allow-Origin: *");
@@ -66,7 +77,6 @@ if (count($lines) <= 1) {
     exit;
 }
 
-$rows = array_map('str_getcsv', $lines);
 $headers = $rows[0];
 $scoreIndex = -1;
 
@@ -88,7 +98,8 @@ if ($scoreIndex !== -1) {
 
     for ($i = 1; $i < count($rows); $i++) {
         $val = floatval($rows[$i][$scoreIndex] ?? 0);
-        $pct = $maxScore > 0 ? number_format(($val / $maxScore) * 100, 1, '.', '') : "0.0";
+        $clampedVal = max(0.0, $val);
+        $pct = $maxScore > 0 ? number_format(min(100.0, ($clampedVal / $maxScore) * 100), 1, '.', '') : "0.0";
         $rows[$i][$scoreIndex] = $pct;
     }
 }
