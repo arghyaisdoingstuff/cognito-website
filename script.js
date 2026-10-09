@@ -1001,7 +1001,7 @@ window.switchRoundExhibit = function(roundIdx, exIdx, rowEl) {
     canvas.style.animation = 'canvasFade 0.28s var(--ease-out)';
 
     if (window.innerWidth <= 860) {
-        canvas.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        rowEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
 };
 
