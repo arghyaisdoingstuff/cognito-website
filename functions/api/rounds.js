@@ -9,7 +9,7 @@
  * 3. 30-second edge cache preventing Google Sheets rate-limiting.
  */
 
-const DEFAULT_ROUNDS_URL = "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Rounds";
+const DEFAULT_ROUNDS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=1586686373&single=true&output=csv";
 
 export async function onRequest(context) {
     // If someone pastes the URL directly into their browser, redirect to the webpage

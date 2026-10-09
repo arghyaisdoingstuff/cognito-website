@@ -21,7 +21,7 @@ if ($secFetchDest === 'document' || $secFetchMode === 'navigate' || strpos($acce
     exit;
 }
 
-$sheetUrl = getenv('SCORES_CSV_URL') ?: "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Scores";
+$sheetUrl = getenv('SCORES_CSV_URL') ?: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=0&single=true&output=csv";
 
 // 2. 30-second local temp cache
 $cacheFile = sys_get_temp_dir() . '/cognito_scores_cache.csv';
