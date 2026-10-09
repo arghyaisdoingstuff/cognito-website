@@ -67,6 +67,8 @@ body {
     overflow: hidden;
     pointer-events: none;
     contain: strict;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
     background-image:
         linear-gradient(to right, rgba(0, 240, 255, 0.018) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(0, 240, 255, 0.018) 1px, transparent 1px);
@@ -76,10 +78,11 @@ body {
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
-    opacity: 0.58;
-    filter: blur(55px);
+    opacity: 0.52;
+    filter: blur(24px);
     transform: translate3d(0, 0, 0);
     will-change: transform;
+    backface-visibility: hidden;
 }
 .bg-orb-1 {
     width: 820px; height: 820px;
@@ -408,31 +411,21 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 2;
 }
 
-/* Global scanline sweep – GPU-accelerated continuous drift (zero CPU repaint cost) */
+/* Global scanline texture – static hardware-accelerated overlay (zero repaint cost) */
 body::after {
     content: '';
     position: fixed;
-    top: -12px;
-    left: 0;
-    width: 100vw;
-    height: calc(100vh + 24px);
+    inset: 0;
     background: repeating-linear-gradient(
         to bottom,
         transparent 0px,
         transparent 3px,
-        rgba(0, 229, 255, 0.016) 3px,
-        rgba(0, 229, 255, 0.016) 4px
+        rgba(0, 229, 255, 0.015) 3px,
+        rgba(0, 229, 255, 0.015) 4px
     );
     pointer-events: none;
     z-index: 99;
     transform: translate3d(0, 0, 0);
-    will-change: transform;
-    animation: scanlineDrift 0.45s linear infinite;
-}
-
-@keyframes scanlineDrift {
-    0%   { transform: translate3d(0, 0, 0); }
-    100% { transform: translate3d(0, 8px, 0); }
 }
 
 .hero-inner { position:relative; z-index:1; }
@@ -533,27 +526,9 @@ body.zen-fullscreen-mode .hero-actions,
     margin-bottom: 60px;
 }
 
-/* Scroll cue arrow */
+/* Scroll cue arrow (hidden) */
 .scroll-cue {
-    position: absolute;
-    bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    animation: scrollBounce 2.5s ease-in-out infinite;
-    z-index: 1;
-}
-.scroll-cue svg { width:20px; height:20px; stroke:var(--text-dim); }
-@keyframes scrollBounce {
-    0%,100% { opacity:0.4; transform: translateX(-50%) translateY(0); }
-    50%     { opacity:1; transform: translateX(-50%) translateY(8px); }
+    display: none !important;
 }
 
 
@@ -2124,7 +2099,7 @@ body.zen-fullscreen-mode .hero-actions,
 }
 .horizon-ledger-header {
     display: grid;
-    grid-template-columns: 80px 1.4fr 1.6fr;
+    grid-template-columns: 60px 250px 1fr;
     padding: 14px 24px;
     font-family: var(--font-mono);
     font-size: 0.78rem;
@@ -2136,7 +2111,7 @@ body.zen-fullscreen-mode .hero-actions,
 }
 .horizon-ledger-row {
     display: grid;
-    grid-template-columns: 80px 1.4fr 1.6fr;
+    grid-template-columns: 60px 250px 1fr;
     padding: 22px 24px;
     align-items: center;
     position: relative;
@@ -2170,7 +2145,8 @@ body.zen-fullscreen-mode .hero-actions,
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding-right: 20px;
+    padding-right: 14px;
+    min-width: 0;
 }
 .horizon-team-name {
     font-family: var(--font-display);
@@ -2190,6 +2166,7 @@ body.zen-fullscreen-mode .hero-actions,
     align-items: center;
     gap: 16px;
     position: relative;
+    width: 100%;
 }
 .relative-gauge-groove {
     flex: 1;
@@ -2224,9 +2201,12 @@ body.zen-fullscreen-mode .hero-actions,
 
 @media (max-width: 768px) {
     .horizon-ledger-header, .horizon-ledger-row {
-        grid-template-columns: 46px 1.2fr 1fr;
+        grid-template-columns: 44px 130px 1fr;
         padding: 16px 12px;
         gap: 10px;
+    }
+    .horizon-team-block {
+        padding-right: 6px;
     }
     .horizon-relative-track {
         display: flex;

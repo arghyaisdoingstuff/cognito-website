@@ -1316,8 +1316,17 @@ function initHeroSpotlight() {
         }
     }, { passive: true });
 
+    window.addEventListener('scroll', () => {
+        if (isHeroVisible && hasMouse && !rafId) {
+            rafId = requestAnimationFrame(loop);
+        }
+    }, { passive: true });
+
     document.addEventListener('mouseleave', () => {
         hasMouse = false;
+        if (isHeroVisible && !rafId) {
+            rafId = requestAnimationFrame(loop);
+        }
     });
 
     if ('IntersectionObserver' in window) {
@@ -1387,6 +1396,10 @@ function initHeroSpotlight() {
         currentY += (targetY - currentY) * 0.08;
         currentOpacity += (targetOpacity - currentOpacity) * 0.08;
 
+        const deltaX = Math.abs(targetX - currentX);
+        const deltaY = Math.abs(targetY - currentY);
+        const deltaOp = Math.abs(targetOpacity - currentOpacity);
+
         if (currentOpacity > 0.005) {
             spotlight.style.opacity = currentOpacity.toFixed(3);
             spotlight.style.transform = `translate3d(${currentX - radius}px, ${currentY - radius}px, 0)`;
@@ -1394,7 +1407,8 @@ function initHeroSpotlight() {
             spotlight.style.opacity = '0';
         }
 
-        if (isHeroVisible && (hasMouse || currentOpacity > 0.005)) {
+        const isConverged = deltaX < 0.15 && deltaY < 0.15 && deltaOp < 0.002;
+        if (isHeroVisible && !isConverged && (hasMouse || currentOpacity > 0.005)) {
             rafId = requestAnimationFrame(loop);
         } else {
             rafId = null;
@@ -1625,10 +1639,11 @@ function initNodes() {
     resize();
 
     const particles = [];
-    const numParticles = width > 768 ? 42 : 22;
-    const maxDistance = 135;
+    const numParticles = width > 768 ? 30 : 16;
+    const maxDistance = 130;
     const maxDistanceSq = maxDistance * maxDistance;
-    const gravityDist = maxDistance * 2.2;
+    const halfDistanceSq = (maxDistance * 0.52) * (maxDistance * 0.52);
+    const gravityDist = maxDistance * 2.0;
     const gravityDistSq = gravityDist * gravityDist;
     
     let mouse = { x: -1000, y: -1000 };
@@ -1696,6 +1711,10 @@ function initNodes() {
 
         ctx.clearRect(0, 0, width, height);
 
+        const closeLines = [];
+        const farLines = [];
+
+        // 1. Update particle physics
         for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
             p.x += p.vx;
@@ -1708,13 +1727,7 @@ function initNodes() {
             if (p.y < 0) p.y = height;
             else if (p.y > height) p.y = 0;
 
-            // Draw node
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
-            ctx.fill();
-
-            // Connect nodes (check squared distance first to eliminate Math.sqrt calls)
+            // Collect edge connections (test squared distance first)
             for (let j = i + 1; j < particles.length; j++) {
                 const p2 = particles[j];
                 const dx = p.x - p2.x;
@@ -1722,13 +1735,11 @@ function initNodes() {
                 const distSq = dx * dx + dy * dy;
 
                 if (distSq < maxDistanceSq) {
-                    const dist = Math.sqrt(distSq);
-                    ctx.beginPath();
-                    ctx.moveTo(p.x, p.y);
-                    ctx.lineTo(p2.x, p2.y);
-                    ctx.strokeStyle = `rgba(0, 240, 255, ${0.1 * (1 - dist / maxDistance)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
+                    if (distSq < halfDistanceSq) {
+                        closeLines.push(p.x, p.y, p2.x, p2.y);
+                    } else {
+                        farLines.push(p.x, p.y, p2.x, p2.y);
+                    }
                 }
             }
 
@@ -1753,6 +1764,38 @@ function initNodes() {
             p.vy += (p.baseVy - p.vy) * 0.02;
         }
 
+        // 2. Batch draw connecting lines with only 2 stroke flushes
+        ctx.lineWidth = 0.5;
+        if (closeLines.length > 0) {
+            ctx.beginPath();
+            for (let k = 0; k < closeLines.length; k += 4) {
+                ctx.moveTo(closeLines[k], closeLines[k + 1]);
+                ctx.lineTo(closeLines[k + 2], closeLines[k + 3]);
+            }
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.085)';
+            ctx.stroke();
+        }
+
+        if (farLines.length > 0) {
+            ctx.beginPath();
+            for (let k = 0; k < farLines.length; k += 4) {
+                ctx.moveTo(farLines[k], farLines[k + 1]);
+                ctx.lineTo(farLines[k + 2], farLines[k + 3]);
+            }
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.035)';
+            ctx.stroke();
+        }
+
+        // 3. Batch draw node dots with a single fill call
+        ctx.beginPath();
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            ctx.moveTo(p.x + p.radius, p.y);
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        }
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.42)';
+        ctx.fill();
+
         requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
@@ -1769,20 +1812,26 @@ function initMagneticButtons() {
     const magneticElements = document.querySelectorAll('.btn, .hero-logo-wrap');
     
     magneticElements.forEach(btn => {
-        // We only want the magnetic pull on desktop/mouse devices
+        let rect = null;
+
+        btn.addEventListener('mouseenter', () => {
+            rect = btn.getBoundingClientRect();
+        });
+
         btn.addEventListener('mousemove', (e) => {
-            const rect = btn.getBoundingClientRect();
+            if (!rect) rect = btn.getBoundingClientRect();
             const h = rect.width / 2;
             const v = rect.height / 2;
             const x = e.clientX - rect.left - h;
             const y = e.clientY - rect.top - v;
             
-            // The pull factor (reduced from 30% to 15% for a more gentle, subtle effect)
-            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+            // The pull factor (gentle, subtle effect with translate3d)
+            btn.style.transform = `translate3d(${x * 0.15}px, ${y * 0.15}px, 0)`;
             btn.style.transition = 'transform 0.1s ease-out';
         });
 
         btn.addEventListener('mouseleave', () => {
+            rect = null;
             btn.style.transform = '';
             btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // snappy bounce back
         });
