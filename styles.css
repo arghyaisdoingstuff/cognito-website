@@ -330,22 +330,21 @@ img { max-width: 100%; height: auto; display: block; }
     justify-content: center;
     text-align: center;
     padding: 80px 24px 60px;
-    overflow: hidden;
+    overflow: visible;
 }
 .hero-spotlight {
     position: absolute;
     top: 0;
     left: 0;
-    width: 550px;
-    height: 550px;
+    width: 600px;
+    height: 600px;
     pointer-events: none;
-    background: radial-gradient(circle, rgba(0, 229, 255, 0.13) 0%, rgba(59, 130, 246, 0.04) 40%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.14) 0%, rgba(59, 130, 246, 0.04) 45%, transparent 70%);
     mix-blend-mode: screen;
     z-index: 1;
     border-radius: 50%;
-    will-change: transform;
+    will-change: transform, opacity;
     opacity: 0;
-    transition: opacity 0.5s ease;
 }
 .hero-inner {
     position: relative;

@@ -699,11 +699,14 @@ function initNavGlider() {
 
 /**
  * 2. Cursor-Damped Ambient Spotlight
- * Tracks cursor inside hero section with smooth lerp physics.
+ * Tracks cursor inside hero section with continuous lerp physics and a
+ * seamless, distance-attenuated fade out as the cursor or viewport moves past the hero.
  */
 function initHeroSpotlight() {
     const hero = document.querySelector('.hero-section');
     if (!hero) return;
+
+    if (window.matchMedia('(pointer: coarse)').matches) return;
 
     let spotlight = document.getElementById('hero-spotlight');
     if (!spotlight) {
@@ -713,33 +716,85 @@ function initHeroSpotlight() {
         hero.prepend(spotlight);
     }
 
+    const radius = 300; // Half of 600px width/height
     let targetX = hero.offsetWidth / 2;
     let targetY = hero.offsetHeight / 2;
     let currentX = targetX;
     let currentY = targetY;
-    let isInside = false;
+    let targetOpacity = 0;
+    let currentOpacity = 0;
+    let mouseX = -1000;
+    let mouseY = -1000;
+    let hasMouse = false;
 
-    hero.addEventListener('mousemove', (e) => {
-        const rect = hero.getBoundingClientRect();
-        targetX = e.clientX - rect.left;
-        targetY = e.clientY - rect.top;
-        if (!isInside) {
-            isInside = true;
-            spotlight.style.opacity = '1';
-        }
-    });
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        hasMouse = true;
+    }, { passive: true });
 
-    hero.addEventListener('mouseleave', () => {
-        isInside = false;
-        spotlight.style.opacity = '0';
+    document.addEventListener('mouseleave', () => {
+        hasMouse = false;
     });
 
     function loop() {
-        if (isInside) {
-            currentX += (targetX - currentX) * 0.08;
-            currentY += (targetY - currentY) * 0.08;
-            spotlight.style.transform = `translate3d(${currentX - 275}px, ${currentY - 275}px, 0)`;
+        if (hasMouse) {
+            const rect = hero.getBoundingClientRect();
+            targetX = mouseX - rect.left;
+            targetY = mouseY - rect.top;
+
+            const heroHeight = rect.height;
+            const heroWidth = rect.width;
+
+            // Vertical fade attenuation:
+            // Full intensity in upper/mid hero, smoothly fading across the bottom border
+            // through 220px into the subsequent section
+            const fadeBottomStart = heroHeight - 160;
+            const fadeBottomEnd = heroHeight + 220;
+
+            const fadeTopStart = 60;
+            const fadeTopEnd = -80;
+
+            let opacityY = 1;
+            if (targetY > fadeBottomStart) {
+                opacityY = 1 - (targetY - fadeBottomStart) / (fadeBottomEnd - fadeBottomStart);
+            } else if (targetY < fadeTopStart) {
+                opacityY = (targetY - fadeTopEnd) / (fadeTopStart - fadeTopEnd);
+            }
+
+            // Horizontal edge softening
+            let opacityX = 1;
+            if (targetX < 40) {
+                opacityX = Math.max(0, (targetX + 80) / 120);
+            } else if (targetX > heroWidth - 40) {
+                opacityX = Math.max(0, (heroWidth + 80 - targetX) / 120);
+            }
+
+            // Viewport scroll factor (fades gracefully as hero scrolls out of view)
+            let scrollFactor = 1;
+            if (rect.bottom < 0 || rect.top > window.innerHeight) {
+                scrollFactor = 0;
+            } else if (rect.bottom < 250) {
+                scrollFactor = Math.max(0, rect.bottom / 250);
+            }
+
+            targetOpacity = Math.max(0, Math.min(1, opacityY * opacityX * scrollFactor));
+        } else {
+            targetOpacity = 0;
         }
+
+        // Smooth physics-based lerp for both position and opacity
+        currentX += (targetX - currentX) * 0.08;
+        currentY += (targetY - currentY) * 0.08;
+        currentOpacity += (targetOpacity - currentOpacity) * 0.08;
+
+        if (currentOpacity > 0.005) {
+            spotlight.style.opacity = currentOpacity.toFixed(3);
+            spotlight.style.transform = `translate3d(${currentX - radius}px, ${currentY - radius}px, 0)`;
+        } else if (spotlight.style.opacity !== '0') {
+            spotlight.style.opacity = '0';
+        }
+
         requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
