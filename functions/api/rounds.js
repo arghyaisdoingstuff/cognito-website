@@ -12,6 +12,15 @@
 const DEFAULT_ROUNDS_URL = "https://docs.google.com/spreadsheets/d/1azc0SMZvecocJ1xZ4-Dg90e6_GePsANTaV6Cvm2mj4U/gviz/tq?tqx=out:csv&sheet=Rounds";
 
 export async function onRequest(context) {
+    // If someone pastes the URL directly into their browser, redirect to the webpage
+    const secFetchDest = context.request.headers.get("Sec-Fetch-Dest");
+    const secFetchMode = context.request.headers.get("Sec-Fetch-Mode");
+    const acceptHeader = context.request.headers.get("Accept") || "";
+
+    if (secFetchDest === "document" || secFetchMode === "navigate" || acceptHeader.includes("text/html")) {
+        return Response.redirect(new URL("/rounds.html", context.request.url).toString(), 302);
+    }
+
     const targetUrl = (context.env && context.env.ROUNDS_CSV_URL) ? context.env.ROUNDS_CSV_URL : DEFAULT_ROUNDS_URL;
 
     try {
@@ -40,7 +49,8 @@ export async function onRequest(context) {
                 headers: {
                     "Content-Type": "text/csv; charset=utf-8",
                     "Cache-Control": "public, max-age=30, s-maxage=30",
-                    "Access-Control-Allow-Origin": "*"
+                    "Access-Control-Allow-Origin": "*",
+                    "Content-Disposition": "inline"
                 }
             });
         }
@@ -72,7 +82,8 @@ export async function onRequest(context) {
                 "Content-Type": "text/csv; charset=utf-8",
                 "Cache-Control": "public, max-age=30, s-maxage=30",
                 "Access-Control-Allow-Origin": "*",
-                "X-Content-Type-Options": "nosniff"
+                "X-Content-Type-Options": "nosniff",
+                "Content-Disposition": "inline"
             }
         });
     } catch (err) {
