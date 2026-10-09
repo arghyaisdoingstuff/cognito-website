@@ -683,16 +683,26 @@ function extractRowDateTime(row, targetType, contextItems = []) {
         }
     }
 
+    // If target is deadline and no deadline date or generic date was found, fallback to ReleaseDate
+    if (!dateVal && targetType === 'deadline') {
+        const relDateKey = Object.keys(row).find(k => /release.*date|date.*release/i.test(k));
+        if (relDateKey) {
+            dateVal = String(row[relDateKey] || '').trim();
+        }
+    }
+
     // Fallback date from context items if not specified on this row
     if (!dateVal && Array.isArray(contextItems) && contextItems.length > 0) {
         const itemWithDate = contextItems.find(it => {
             const dk = Object.keys(it).find(k => new RegExp(`${targetType}.*date|date.*${targetType}`, 'i').test(k))
-                || Object.keys(it).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k));
+                || Object.keys(it).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k))
+                || (targetType === 'deadline' ? Object.keys(it).find(k => /release.*date|date.*release/i.test(k)) : null);
             return dk && String(it[dk] || '').trim();
         });
         if (itemWithDate) {
             const dk = Object.keys(itemWithDate).find(k => new RegExp(`${targetType}.*date|date.*${targetType}`, 'i').test(k))
-                || Object.keys(itemWithDate).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k));
+                || Object.keys(itemWithDate).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k))
+                || (targetType === 'deadline' ? Object.keys(itemWithDate).find(k => /release.*date|date.*release/i.test(k)) : null);
             dateVal = String(itemWithDate[dk] || '').trim();
         }
     }

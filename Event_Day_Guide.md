@@ -35,12 +35,12 @@ As soon as you type the score, the website calculates the max score, ranks the t
 To unlock cases and update countdowns, open the **Rounds** tab in your Google Sheet.
 
 ### Required Columns (Row 1):
-`Event` | `Day` | `Date` | `Round` | `DeadlineDate` | `DeadlineTime` | `SubmitLink` | `Title` | `Description` | `ReleaseTime` | `BriefLink` | `Show`
+`Event` | `Day` | `ReleaseDate` | `Round` | `DeadlineDate` | `DeadlineTime` | `SubmitLink` | `Title` | `Description` | `ReleaseTime` | `BriefLink` | `Show`
 
 ### How to add/edit rounds:
 * **Event:** `Case Competition` or `Contingent`.
 * **Day:** `1`, `2`, or `3` (for Contingent events).
-* **Date:** The date in standard `DD/MM/YYYY` format (e.g. `15/12/2026`).
+* **ReleaseDate:** The release date in standard `DD/MM/YYYY` format (e.g. `15/12/2026`). Also acts as deadline date if `DeadlineDate` is omitted.
 * **Round:** Round name (e.g. `Round 1 - The Qualifier`). Multiple exhibits under the same round name are grouped together.
 * **DeadlineDate & DeadlineTime:** Submission deadline for the round (e.g. `15/12/2026` and `15:30` or `3:30 PM`). Common to all exhibits in the round.
 * **ReleaseTime:** Time when this specific exhibit unseals (e.g. `09:30` or `09:30 AM`).

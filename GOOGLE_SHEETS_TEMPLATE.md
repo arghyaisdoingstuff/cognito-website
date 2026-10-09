@@ -32,14 +32,14 @@ Rename the first tab to **`Scores`**. Create the following exact column headers 
 
 Create a second tab named **`Rounds`**. Create the following exact column headers in row 1:
 
-| Event | Day | Date | Round | DeadlineDate | DeadlineTime | SubmitLink | Title | Description | ReleaseTime | BriefLink | Show |
+| Event | Day | ReleaseDate | Round | DeadlineDate | DeadlineTime | SubmitLink | Title | Description | ReleaseTime | BriefLink | Show |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Contingent | 1 | 15/12/2026 | Round 1 - The Qualifier | 15/12/2026 | 15:30 | https://forms.gle/... | Corporate Genesis | Market entry simulation | 09:30 | https://drive.google.com/... | Yes |
 | Contingent | 1 | 15/12/2026 | Round 1 - The Qualifier | 15/12/2026 | 15:30 | https://forms.gle/... | Arbitrage Shock | Liquidity distress event | 11:30 | https://drive.google.com/... | Yes |
 | Case Competition | | 15/11/2026 | Round 1 - Prelims | 25/11/2026 | 23:59 | https://forms.gle/... | Valuation Dilemma | Portfolio risk analysis | 10:00 | https://drive.google.com/... | Yes |
 
 ### Column Notes:
-- **`Date`**: The festival/release date in `DD/MM/YYYY` format (e.g., `15/12/2026`).
+- **`ReleaseDate`**: The unseal/release date in `DD/MM/YYYY` format (e.g., `15/12/2026`). If `DeadlineDate` is left empty, the deadline automatically uses this release date.
 - **`Day`**: For Contingent, enter `1`, `2`, or `3` to match the Day filter tabs on the website.
 - **`Round`**: The round name. All exhibits sharing the same `Round` name are automatically grouped into an accordion menu.
 - **`DeadlineDate` & `DeadlineTime`**: Submission deadline for the round (common to all exhibits in this round). Use `DD/MM/YYYY` for date and `HH:mm` (or `hh:mm AM/PM`) for time.
