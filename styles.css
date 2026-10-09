@@ -75,51 +75,76 @@ body {
 .bg-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(40px);
-    opacity: 0;
-    animation: orbCycle var(--dur, 20s) var(--delay, 0s) infinite ease-in-out;
+    pointer-events: none;
+    opacity: 0.58;
+    filter: blur(55px);
     transform: translate3d(0, 0, 0);
-    will-change: transform, opacity;
+    will-change: transform;
 }
 .bg-orb-1 {
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(0,100,220,0.35) 0%, transparent 70%);
+    width: 820px; height: 820px;
+    background: radial-gradient(circle, rgba(0, 100, 240, 0.20) 0%, rgba(0, 140, 255, 0.10) 44%, rgba(0, 229, 255, 0.02) 68%, transparent 76%);
     top: -15%; left: -10%;
-    --dur: 22s; --delay: 0s;
+    animation: orbDrift1 26s ease-in-out infinite;
 }
 .bg-orb-2 {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(0,229,255,0.25) 0%, transparent 70%);
-    top: 55%; right: -8%;
-    --dur: 26s; --delay: -8s;
+    width: 740px; height: 740px;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.16) 0%, rgba(28, 100, 242, 0.08) 44%, transparent 74%);
+    top: 48%; right: -8%;
+    animation: orbDrift2 30s ease-in-out infinite;
 }
 .bg-orb-3 {
-    width: 700px; height: 700px;
-    background: radial-gradient(circle, rgba(28,100,242,0.25) 0%, transparent 70%);
-    top: 25%; left: 35%;
-    --dur: 19s; --delay: -4s;
+    width: 900px; height: 900px;
+    background: radial-gradient(circle, rgba(28, 100, 242, 0.15) 0%, rgba(0, 180, 255, 0.06) 48%, transparent 76%);
+    top: 12%; left: 26%;
+    animation: orbDrift3 34s ease-in-out infinite;
 }
 .bg-orb-4 {
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(0,229,255,0.20) 0%, transparent 70%);
-    top: -5%; right: 20%;
-    --dur: 30s; --delay: -14s;
+    width: 640px; height: 640px;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.14) 0%, rgba(0, 80, 200, 0.05) 50%, transparent 72%);
+    top: -6%; right: 16%;
+    animation: orbDrift4 28s ease-in-out infinite;
 }
 .bg-orb-5 {
-    width: 450px; height: 450px;
-    background: radial-gradient(circle, rgba(0,60,180,0.30) 0%, transparent 70%);
-    bottom: 0; left: 20%;
-    --dur: 24s; --delay: -10s;
+    width: 680px; height: 680px;
+    background: radial-gradient(circle, rgba(0, 80, 220, 0.18) 0%, rgba(0, 229, 255, 0.07) 46%, transparent 74%);
+    bottom: -5%; left: 12%;
+    animation: orbDrift5 32s ease-in-out infinite;
 }
 
-@keyframes orbCycle {
-    0%   { opacity: 0;    transform: translate3d(0px, 0px, 0) scale(0.9); }
-    10%  { opacity: 1; }
-    30%  { transform: translate3d(40px, -30px, 0) scale(1.05); }
-    60%  { transform: translate3d(-30px, 50px, 0) scale(0.95); }
-    80%  { opacity: 1; }
-    90%  { transform: translate3d(20px, -20px, 0) scale(1.02); }
-    100% { opacity: 0;    transform: translate3d(0px, 0px, 0) scale(0.9); }
+@keyframes orbDrift1 {
+    0%   { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+    35%  { transform: translate3d(190px, 110px, 0) scale3d(1.03, 1.03, 1); }
+    70%  { transform: translate3d(70px, 200px, 0) scale3d(0.98, 0.98, 1); }
+    100% { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+}
+
+@keyframes orbDrift2 {
+    0%   { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+    38%  { transform: translate3d(-210px, -140px, 0) scale3d(1.02, 1.02, 1); }
+    72%  { transform: translate3d(-90px, 110px, 0) scale3d(0.98, 0.98, 1); }
+    100% { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+}
+
+@keyframes orbDrift3 {
+    0%   { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+    42%  { transform: translate3d(-170px, 170px, 0) scale3d(1.03, 1.03, 1); }
+    78%  { transform: translate3d(150px, -90px, 0) scale3d(0.99, 0.99, 1); }
+    100% { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+}
+
+@keyframes orbDrift4 {
+    0%   { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+    40%  { transform: translate3d(130px, -80px, 0) scale3d(0.98, 0.98, 1); }
+    75%  { transform: translate3d(-140px, 130px, 0) scale3d(1.02, 1.02, 1); }
+    100% { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+}
+
+@keyframes orbDrift5 {
+    0%   { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
+    36%  { transform: translate3d(180px, -120px, 0) scale3d(1.02, 1.02, 1); }
+    70%  { transform: translate3d(-110px, -50px, 0) scale3d(0.98, 0.98, 1); }
+    100% { transform: translate3d(0px, 0px, 0) scale3d(1, 1, 1); }
 }
 
 /* Subtle grain */
@@ -371,7 +396,7 @@ img { max-width: 100%; height: auto; display: block; }
     width: 600px;
     height: 600px;
     pointer-events: none;
-    background: radial-gradient(circle, rgba(0, 229, 255, 0.14) 0%, rgba(59, 130, 246, 0.04) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, rgba(59, 130, 246, 0.02) 45%, transparent 70%);
     mix-blend-mode: screen;
     z-index: 1;
     border-radius: 50%;
@@ -383,20 +408,31 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 2;
 }
 
-/* Global scanline texture – static hardware-accelerated overlay (zero CPU repaint cost) */
+/* Global scanline sweep – GPU-accelerated continuous drift (zero CPU repaint cost) */
 body::after {
     content: '';
     position: fixed;
-    inset: 0;
+    top: -12px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh + 24px);
     background: repeating-linear-gradient(
         to bottom,
         transparent 0px,
         transparent 3px,
-        rgba(0, 229, 255, 0.012) 3px,
-        rgba(0, 229, 255, 0.012) 4px
+        rgba(0, 229, 255, 0.016) 3px,
+        rgba(0, 229, 255, 0.016) 4px
     );
     pointer-events: none;
     z-index: 99;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    animation: scanlineDrift 0.45s linear infinite;
+}
+
+@keyframes scanlineDrift {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, 8px, 0); }
 }
 
 .hero-inner { position:relative; z-index:1; }

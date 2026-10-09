@@ -1114,7 +1114,7 @@ function initHeroSpotlight() {
                 scrollFactor = Math.max(0, heroViewportBottom / 250);
             }
 
-            targetOpacity = Math.max(0, Math.min(1, opacityY * opacityX * scrollFactor));
+            targetOpacity = Math.max(0, Math.min(1, opacityY * opacityX * scrollFactor)) * 0.7;
         } else {
             targetOpacity = 0;
         }
