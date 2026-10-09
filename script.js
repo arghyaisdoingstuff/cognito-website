@@ -6,14 +6,10 @@
 
 // 1. SCROLL REVEAL & TYPEWRITER & LIGHTBOX & CAROUSEL
 // ==========================================================================
-let isGalleryDragging = false;
-let galleryDragDistance = 0;
-
 function initCarousel() {
     const carousel = document.getElementById('gallery-carousel');
     const prevBtn = document.querySelector('.prev-btn');
     const nextBtn = document.querySelector('.next-btn');
-    const wrapper = document.querySelector('.gallery-carousel-wrapper');
 
     if (!carousel || !prevBtn || !nextBtn) return;
 
@@ -24,185 +20,67 @@ function initCarousel() {
         carousel.appendChild(clone);
     });
 
-    // Add progress bar if not present
-    let progressBar = wrapper ? wrapper.parentElement.querySelector('.gallery-progress-bar') : null;
-    let progressFill = null;
-    if (!progressBar && wrapper && wrapper.parentElement) {
-        progressBar = document.createElement('div');
-        progressBar.className = 'gallery-progress-bar';
-        progressBar.innerHTML = '<div class="gallery-progress-fill"></div>';
-        wrapper.insertAdjacentElement('afterend', progressBar);
-    }
-    if (progressBar) {
-        progressFill = progressBar.querySelector('.gallery-progress-fill');
-    }
-
-    let speed = 0.8; // Baseline auto-scroll
-    let isInteracting = false;
-    let isButtonScrolling = false;
+    let speed = 1; // Pixels per frame (baseline speed)
+    let isHovered = false;
+    let isButtonScrolling = false; // Pause continuous scroll during button smooth scroll
     let rafId;
-    let momentumRafId;
-    let velocity = 0;
-    let startX = 0;
-    let startScrollLeft = 0;
-    let lastX = 0;
-    let lastTime = 0;
-
+    
+    // Calculate exact jump distance based on item width + gap, rather than scrollWidth / 2
     const getJumpDistance = () => items.length * (items[0].offsetWidth + 16);
 
-    const updateProgressBar = () => {
-        if (!progressFill) return;
-        const jumpDistance = getJumpDistance();
-        if (jumpDistance > 0) {
-            const ratio = (carousel.scrollLeft % jumpDistance) / jumpDistance;
-            progressFill.style.left = (ratio * 70) + '%';
-        }
-    };
-
-    const wrapScroll = () => {
-        const jumpDistance = getJumpDistance();
-        if (carousel.scrollLeft >= jumpDistance) {
-            carousel.scrollLeft -= jumpDistance;
-        } else if (carousel.scrollLeft <= 0) {
-            carousel.scrollLeft += jumpDistance;
-        }
-    };
-
     const animate = () => {
-        if (!isInteracting && !isButtonScrolling && Math.abs(velocity) < 0.1) {
+        if (!isHovered && !isButtonScrolling) {
             carousel.scrollLeft += speed;
-            wrapScroll();
-            updateProgressBar();
+            
+            const jumpDistance = getJumpDistance();
+            if (carousel.scrollLeft >= jumpDistance) {
+                carousel.scrollLeft -= jumpDistance;
+            } else if (carousel.scrollLeft <= 0) {
+                carousel.scrollLeft += jumpDistance;
+            }
         }
         rafId = requestAnimationFrame(animate);
     };
 
+    // Start the continuous animation
     rafId = requestAnimationFrame(animate);
 
-    // Friction decay loop for drag release
-    const applyMomentum = () => {
-        if (Math.abs(velocity) > 0.25) {
-            carousel.scrollLeft -= velocity;
-            velocity *= 0.92; // Friction damping
-            wrapScroll();
-            updateProgressBar();
-            momentumRafId = requestAnimationFrame(applyMomentum);
-        } else {
-            velocity = 0;
-            isInteracting = false;
-            cancelAnimationFrame(momentumRafId);
-        }
-    };
-
-    // Mouse Drag Listeners
-    carousel.addEventListener('mousedown', (e) => {
-        isGalleryDragging = true;
-        isInteracting = true;
-        galleryDragDistance = 0;
-        cancelAnimationFrame(momentumRafId);
-        carousel.classList.add('is-dragging');
-        startX = e.pageX;
-        startScrollLeft = carousel.scrollLeft;
-        lastX = e.pageX;
-        lastTime = performance.now();
-        velocity = 0;
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (!isGalleryDragging) return;
-        const x = e.pageX;
-        const walk = x - startX;
-        galleryDragDistance += Math.abs(x - lastX);
-        carousel.scrollLeft = startScrollLeft - walk;
-        wrapScroll();
-        updateProgressBar();
-
-        const now = performance.now();
-        const dt = now - lastTime;
-        if (dt > 12) {
-            velocity = (x - lastX) * 0.85;
-            lastX = x;
-            lastTime = now;
-        }
-    });
-
-    window.addEventListener('mouseup', () => {
-        if (!isGalleryDragging) return;
-        isGalleryDragging = false;
-        carousel.classList.remove('is-dragging');
-        if (Math.abs(velocity) > 0.5) {
-            momentumRafId = requestAnimationFrame(applyMomentum);
-        } else {
-            setTimeout(() => { isInteracting = false; }, 400);
-        }
-    });
-
-    // Touch Swipe Listeners
-    carousel.addEventListener('touchstart', (e) => {
-        isInteracting = true;
-        galleryDragDistance = 0;
-        cancelAnimationFrame(momentumRafId);
-        startX = e.touches[0].pageX;
-        startScrollLeft = carousel.scrollLeft;
-        lastX = e.touches[0].pageX;
-        lastTime = performance.now();
-        velocity = 0;
-    }, { passive: true });
-
-    carousel.addEventListener('touchmove', (e) => {
-        const x = e.touches[0].pageX;
-        const walk = x - startX;
-        galleryDragDistance += Math.abs(x - lastX);
-        carousel.scrollLeft = startScrollLeft - walk;
-        wrapScroll();
-        updateProgressBar();
-
-        const now = performance.now();
-        const dt = now - lastTime;
-        if (dt > 12) {
-            velocity = (x - lastX) * 0.85;
-            lastX = x;
-            lastTime = now;
-        }
-    }, { passive: true });
-
-    carousel.addEventListener('touchend', () => {
-        if (Math.abs(velocity) > 0.5) {
-            momentumRafId = requestAnimationFrame(applyMomentum);
-        } else {
-            setTimeout(() => { isInteracting = false; }, 1000);
-        }
-    }, { passive: true });
-
+    // Pause on hover or touch
+    const wrapper = document.querySelector('.gallery-carousel-wrapper');
     if (wrapper) {
-        wrapper.addEventListener('mouseenter', () => { if (!isGalleryDragging) isInteracting = true; });
-        wrapper.addEventListener('mouseleave', () => { if (!isGalleryDragging) isInteracting = false; });
+        wrapper.addEventListener('mouseenter', () => isHovered = true);
+        wrapper.addEventListener('mouseleave', () => isHovered = false);
+        wrapper.addEventListener('touchstart', () => isHovered = true, { passive: true });
+        wrapper.addEventListener('touchend', () => {
+            setTimeout(() => isHovered = false, 1500); // Resume shortly after touch
+        }, { passive: true });
     }
 
     const getItemWidth = () => items[0].offsetWidth + 16;
+    
     const pauseForButton = () => {
         isButtonScrolling = true;
-        setTimeout(() => isButtonScrolling = false, 600);
+        setTimeout(() => isButtonScrolling = false, 600); // Pause auto-scroll while smooth scrolling
     };
 
     prevBtn.addEventListener('click', () => {
         const jumpDistance = getJumpDistance();
+        // If we are at the very beginning, silently jump to the clones first so smooth scroll has space
         if (carousel.scrollLeft <= getItemWidth()) {
             carousel.scrollLeft += jumpDistance;
         }
         pauseForButton();
         carousel.scrollBy({ left: -getItemWidth(), behavior: 'smooth' });
-        setTimeout(updateProgressBar, 300);
     });
 
     nextBtn.addEventListener('click', () => {
         const jumpDistance = getJumpDistance();
+        // If we are near the end of the original set, silently jump to the start first
         if (carousel.scrollLeft >= jumpDistance) {
             carousel.scrollLeft -= jumpDistance;
         }
         pauseForButton();
         carousel.scrollBy({ left: getItemWidth(), behavior: 'smooth' });
-        setTimeout(updateProgressBar, 300);
     });
 }
 
@@ -215,7 +93,6 @@ function initLightbox() {
 
     // Use event delegation so cloned carousel items also trigger the lightbox
     document.addEventListener('click', (e) => {
-        if (galleryDragDistance > 8) return; // Prevent opening lightbox after dragging
         const item = e.target.closest('.gallery-item');
         if (item && document.getElementById('gallery-carousel').contains(item)) {
             const img = item.querySelector('img');
@@ -430,38 +307,15 @@ async function initRounds() {
 
     renderRounds(roundsData, isLive);
 
-    function updateFilterGlider(activeBtn) {
-        const glider = document.getElementById('filter-glider');
-        if (!glider || !activeBtn) return;
-        glider.style.width = activeBtn.offsetWidth + 'px';
-        glider.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
-    }
-
     const filterBtns = document.querySelectorAll('[data-round-filter]');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            updateFilterGlider(btn);
             activeRoundFilter = btn.getAttribute('data-round-filter');
             renderRounds(roundsData, isLive);
         });
     });
-
-    const initialActive = document.querySelector('[data-round-filter].active');
-    if (initialActive) {
-        requestAnimationFrame(() => updateFilterGlider(initialActive));
-        window.addEventListener('resize', () => {
-            const currentActive = document.querySelector('[data-round-filter].active');
-            if (currentActive) updateFilterGlider(currentActive);
-        });
-        if (document.fonts) {
-            document.fonts.ready.then(() => {
-                const currentActive = document.querySelector('[data-round-filter].active');
-                if (currentActive) updateFilterGlider(currentActive);
-            });
-        }
-    }
 }
 
 function renderRounds(data, isLive) {
@@ -897,7 +751,7 @@ function initHeroSpotlight() {
  */
 function initButtonHaptics() {
     document.addEventListener('pointerdown', (e) => {
-        const btn = e.target.closest('.btn, .tab-btn, .carousel-btn');
+        const btn = e.target.closest('.btn, .carousel-btn');
         if (!btn) return;
 
         const rect = btn.getBoundingClientRect();
