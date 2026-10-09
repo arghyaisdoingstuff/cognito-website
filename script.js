@@ -477,6 +477,16 @@ async function initRounds() {
     renderRounds(roundsData, isLive);
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function renderRounds(data, isLive) {
     const container = document.getElementById('rounds-container');
     if (!container) return;
@@ -487,151 +497,142 @@ function renderRounds(data, isLive) {
     });
 
     if (!filtered.length) {
-        container.innerHTML = `<div class="card text-center" style="grid-column:1/-1;padding:40px;"><h3>Stay Tuned!</h3><p>Round details and schedules for this category will be revealed soon.</p></div>`;
+        container.innerHTML = `
+            <div class="rounds-empty-docket text-center reveal">
+                <span class="r-empty-code">STATUS // PENDING</span>
+                <h3 class="r-empty-title">Simulation Docket Under Seal</h3>
+                <p class="r-empty-desc">Briefs, schedules, and submission parameters for this division will be unsealed according to the festival schedule.</p>
+            </div>`;
+        initScrollReveal();
         return;
     }
 
     const now = new Date();
     let html = '';
-    let animDelay = 1;
+    let globalIndex = 0;
+
+    const renderExhibitItem = (r, idx, isExpanded) => {
+        const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
+        const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
+        const valid = !isNaN(release) && !isNaN(deadline);
+
+        let statusBeacon = '';
+        let timeInfo = '';
+        let actions = '';
+
+        if (!valid) {
+            statusBeacon = `<span class="status-dot live"></span><span>Active Simulation</span>`;
+            timeInfo = '';
+            const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief</a>` : '';
+            const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
+            actions = briefBtn + submitBtn;
+            if (!actions) {
+                actions = `<span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-dim)">Exhibits active</span>`;
+            }
+        } else if (now < release) {
+            const diff = release - now;
+            const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
+            const countdownStr = (d > 0 ? d + 'd ' : '') + h + 'h';
+            const releaseFormatted = release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            statusBeacon = `<span class="status-dot locked"></span><span>Unlocks ${releaseFormatted}</span>`;
+            timeInfo = `<span class="r-meta-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="r-countdown-tag">T-minus ${countdownStr}</span>`;
+            actions = `<button class="btn-action-secondary" disabled style="opacity:0.5;cursor:not-allowed">Locked until Release</button>`;
+        } else if (now <= deadline) {
+            const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            statusBeacon = `<span class="status-dot live"></span><span>Accepting Submissions</span>`;
+            timeInfo = `<span class="r-meta-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span>`;
+
+            const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief</a>` : '';
+            const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
+            actions = briefBtn + submitBtn;
+            if (!actions) {
+                actions = `<span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-dim)">Awaiting link registration</span>`;
+            }
+        } else {
+            const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            statusBeacon = `<span class="status-dot closed"></span><span>Submissions Closed</span>`;
+            timeInfo = `<span class="r-meta-item"><strong>Concluded:</strong> ${deadlineFormatted}</span>`;
+            actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Archived Brief</a>` : `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Concluded</button>`;
+        }
+
+        const exhibitCode = `EX // ${String(idx + 1).padStart(2, '0')}`;
+        const roundTag = escapeHtml(r.Round || activeRoundFilter);
+        const title = escapeHtml(r.Title || `Exhibit ${idx + 1}`);
+        const shortDesc = r.Description ? escapeHtml(r.Description) : 'Inspect dossier for operational brief and guidelines.';
+        const fullDesc = r.Description ? escapeHtml(r.Description) : 'Exhibit parameters and confidential scenario guidelines. Inspect the brief for complete submission specifications.';
+
+        return `
+        <div class="rounds-ledger-item ${isExpanded ? 'expanded' : ''} reveal">
+            <div class="rounds-ledger-header" onclick="this.parentElement.classList.toggle('expanded')" tabindex="0" role="button" aria-expanded="${isExpanded ? 'true' : 'false'}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.parentElement.classList.toggle('expanded');}">
+                <span class="r-code">${exhibitCode}</span>
+                <div class="r-title-group">
+                    <span class="r-round-name">${roundTag}</span>
+                    <h3 class="r-exhibit-heading">${title}</h3>
+                </div>
+                <span class="r-desc-brief">${shortDesc}</span>
+                <div class="r-status">
+                    ${statusBeacon}
+                </div>
+                <div class="r-toggle-action">
+                    <span>Dossier</span>
+                    <svg class="r-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="rounds-drawer">
+                <div class="rounds-drawer-inner">
+                    <div class="rounds-drawer-main">
+                        <p class="rounds-drawer-desc">${fullDesc}</p>
+                        ${timeInfo ? `<div class="rounds-drawer-meta">${timeInfo}</div>` : ''}
+                    </div>
+                    <div class="rounds-drawer-actions">
+                        ${actions}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    };
 
     const isCaseComp = activeRoundFilter.toLowerCase() === 'case competition';
 
     if (isCaseComp) {
-        // Flat timeline for Case Competition without accordions
-        html += '<div class="timeline-track" style="margin-top:20px;">';
-        filtered.forEach(r => {
-            const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
-            const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
-            const valid = !isNaN(release) && !isNaN(deadline);
-            let badge = '', timeInfo = '', actions = '';
-            let isActive = false;
-
-            if (!valid) {
-                badge = ``;
-                timeInfo = ``;
-                actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
-            } else if (now < release) {
-                const diff = release - now;
-                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
-                badge = `<span class="status-badge locked">🔒 Unlocks Soon</span>`;
-                timeInfo = `<span><strong>Unlocks:</strong> ${release.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span><br><span style="color:var(--text-dim)">Countdown: ${d > 0 ? d + 'd ' : ''}${h}h</span>`;
-                actions = `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;width:100%">Locked until Release</button>`;
-            } else if (now <= deadline) {
-                isActive = true;
-                badge = `<span class="status-badge live">🟢 Accepting Submissions</span>`;
-                timeInfo = `<span><strong>Deadline:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`;
-                actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline">Brief</a><a href="${r.SubmitLink}" target="_blank" class="btn btn-cyan">Submit</a>`;
-            } else {
-                badge = `<span class="status-badge closed">🔴 Closed</span>`;
-                timeInfo = `<span><strong>Closed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`;
-                actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
-            }
-
-            const displayTitle = r.Round ? `${r.Round}: ${r.Title || 'Exhibit'}` : (r.Title || 'Exhibit');
-
-            html += `
-            <div class="timeline-node reveal reveal-delay-${(animDelay % 4) + 1}">
-                <div class="timeline-marker ${isActive ? 'active' : ''}"></div>
-                <div class="timeline-card card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
-                        <h3 class="timeline-title">${displayTitle}</h3>
-                        ${badge}
-                    </div>
-                    <p class="timeline-desc">${r.Description || ''}</p>
-                    <div class="timeline-footer">
-                        <div style="font-size:0.85rem">${timeInfo}</div>
-                        <div class="timeline-actions">${actions}</div>
-                    </div>
-                </div>
-            </div>`;
-            animDelay++;
+        html += `<div class="rounds-phase-divider reveal"><span class="r-phase-tag">CASE COMPETITION</span><h2 class="r-phase-title">Strategic Exhibits & Milestones</h2></div>`;
+        html += '<div class="rounds-ledger-stack">';
+        filtered.forEach((r, idx) => {
+            html += renderExhibitItem(r, idx, idx === 0);
         });
         html += '</div>';
     } else {
-        // Group exhibits by their Round name for Accordions (Contingent, etc.)
+        // Group exhibits by their Round name
         const grouped = {};
         filtered.forEach(r => {
-            const roundName = r.Round || 'General';
+            const roundName = r.Round || 'General Simulations';
             if (!grouped[roundName]) grouped[roundName] = [];
             grouped[roundName].push(r);
         });
 
+        let groupIndex = 0;
         for (const [roundName, items] of Object.entries(grouped)) {
             html += `
-            <div class="accordion-item reveal reveal-delay-${(animDelay % 4) + 1}">
-                <div class="accordion-header">
-                    <h2 class="accordion-title">${roundName}</h2>
-                    <svg class="accordion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-                <div class="accordion-content">
-                    <div class="accordion-inner">
-                        <div class="timeline-track">
-            `;
-            
-            items.forEach((r) => {
-                const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
-                const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
-                const valid = !isNaN(release) && !isNaN(deadline);
-                let badge = '', timeInfo = '', actions = '';
-                let isActive = false;
+            <div class="rounds-phase-divider reveal">
+                <span class="r-phase-tag">CONTINGENT SIMULATION</span>
+                <h2 class="r-phase-title">${escapeHtml(roundName)}</h2>
+            </div>
+            <div class="rounds-ledger-stack">`;
 
-                if (!valid) {
-                    badge = ``;
-                    timeInfo = ``;
-                    actions = `<a href="${r.BriefLink||'#'}" target="_blank" class="btn btn-outline">Read Brief</a><a href="${r.SubmitLink||'#'}" target="_blank" class="btn btn-cyan">Submit</a>`;
-                } else if (now < release) {
-                    const diff = release - now;
-                    const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
-                    badge = `<span class="status-badge locked">🔒 Unlocks Soon</span>`;
-                    timeInfo = `<span><strong>Unlocks:</strong> ${release.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span><br><span style="color:var(--text-dim)">Countdown: ${d > 0 ? d + 'd ' : ''}${h}h</span>`;
-                    actions = `<button class="btn btn-secondary" disabled style="opacity:0.5;cursor:not-allowed;width:100%">Locked until Release</button>`;
-                } else if (now <= deadline) {
-                    isActive = true;
-                    badge = `<span class="status-badge live">🟢 Accepting Submissions</span>`;
-                    timeInfo = `<span><strong>Deadline:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`;
-                    actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline">Brief</a><a href="${r.SubmitLink}" target="_blank" class="btn btn-cyan">Submit</a>`;
-                } else {
-                    badge = `<span class="status-badge closed">🔴 Closed</span>`;
-                    timeInfo = `<span><strong>Closed:</strong> ${deadline.toLocaleString('en-IN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>`;
-                    actions = `<a href="${r.BriefLink}" target="_blank" class="btn btn-outline" style="width:100%">View Brief</a>`;
-                }
-
-                html += `
-                <div class="timeline-node">
-                    <div class="timeline-marker ${isActive ? 'active' : ''}"></div>
-                    <div class="timeline-card card">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px">
-                            <h3 class="timeline-title">${r.Title || 'Exhibit'}</h3>
-                            ${badge}
-                        </div>
-                        <p class="timeline-desc">${r.Description || ''}</p>
-                        <div class="timeline-footer">
-                            <div style="font-size:0.85rem">${timeInfo}</div>
-                            <div class="timeline-actions">${actions}</div>
-                        </div>
-                    </div>
-                </div>`;
+            items.forEach((r, idx) => {
+                globalIndex++;
+                html += renderExhibitItem(r, globalIndex - 1, groupIndex === 0 && idx === 0);
             });
-            
-            html += `
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-            animDelay++;
+
+            html += `</div>`;
+            groupIndex++;
         }
     }
 
     container.innerHTML = html;
-    
-    // Attach Accordion Listeners
-    document.querySelectorAll('.accordion-header').forEach(header => {
-        header.addEventListener('click', () => {
-            const item = header.parentElement;
-            item.classList.toggle('expanded');
-        });
-    });
     initScrollReveal();
 }
 
