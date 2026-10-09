@@ -1195,12 +1195,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!el.textContent.trim()) el.textContent = `@${CONFIG.INSTAGRAM_HANDLE}`;
     });
 
+    // Check registration deadline for hero action buttons
+    checkRegistrationDeadline();
+
     // Engines
     initRounds();
     initScores();
     initTrailer();
     initScrollReveal();
 });
+
+// ──────────────────────────────────────────────────────────────
+// 5A. REGISTRATION DEADLINE ENGINE
+// ──────────────────────────────────────────────────────────────
+function checkRegistrationDeadline() {
+    const cutoffStr = (typeof CONFIG !== 'undefined' && CONFIG.REGISTRATION_CUTOFF_DATE)
+        ? CONFIG.REGISTRATION_CUTOFF_DATE
+        : "2026-12-10T23:59:59+05:30";
+    const cutoff = new Date(cutoffStr);
+    if (!isNaN(cutoff.getTime()) && new Date() > cutoff) {
+        const heroActions = document.querySelector('.hero-actions');
+        if (heroActions) heroActions.style.display = 'none';
+    }
+}
+checkRegistrationDeadline();
 
 // ──────────────────────────────────────────────────────────────
 // 5B. DYNAMIC TRAILER ENGINE (Google Sheet Controlled)

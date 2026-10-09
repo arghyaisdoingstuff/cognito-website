@@ -20,6 +20,7 @@
     
     <link rel="icon" type="image/png" href="assets/cognito-textless.png">
     <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
 </head>
 <body>
 
@@ -77,6 +78,18 @@
                 Register: Contingent &amp; Quiz
             </a>
         </div>
+        <script>
+            (function() {
+                const cutoffStr = (typeof CONFIG !== 'undefined' && CONFIG.REGISTRATION_CUTOFF_DATE)
+                    ? CONFIG.REGISTRATION_CUTOFF_DATE
+                    : "2026-12-10T23:59:59+05:30";
+                const cutoff = new Date(cutoffStr);
+                if (!isNaN(cutoff.getTime()) && new Date() > cutoff) {
+                    const ha = document.querySelector('.hero-actions');
+                    if (ha) ha.style.display = 'none';
+                }
+            })();
+        </script>
     </div>
 
     <!-- Scroll cue -->
@@ -263,7 +276,6 @@
     <img class="lightbox-content" id="lightbox-img">
 </div>
 
-<script src="config.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

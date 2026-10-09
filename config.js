@@ -32,6 +32,7 @@ const CONFIG = {
     EVENT_DATES: "December 15, 16 & 17, 2026",
     REGISTRATION_DEADLINE_CASE: "23 November 2026",
     REGISTRATION_DEADLINE_CONTINGENT: "10 December 2026",
+    REGISTRATION_CUTOFF_DATE: "2026-12-10T23:59:59+05:30",
 
     // -------------------------------------------------------------
     // 4. Contact & Socials
