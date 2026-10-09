@@ -7,9 +7,8 @@
 // 1. Intercept direct browser address bar navigations and redirect to homepage
 $secFetchDest = $_SERVER['HTTP_SEC_FETCH_DEST'] ?? '';
 $secFetchMode = $_SERVER['HTTP_SEC_MODE'] ?? '';
-$acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
 
-if ($secFetchDest === 'document' || $secFetchMode === 'navigate' || strpos($acceptHeader, 'text/html') !== false) {
+if ($secFetchDest === 'document' || $secFetchMode === 'navigate') {
     header('Location: ../index.html', true, 302);
     exit;
 }
@@ -51,9 +50,10 @@ if (!$rawCsv) {
 }
 
 if (!$rawCsv) {
-    header("Content-Type: text/csv; charset=utf-8");
-    header("Access-Control-Allow-Origin: *");
-    echo "URL,Show\n,";
+    http_response_code(502);
+    header("Content-Type: text/plain; charset=utf-8");
+    header("Cache-Control: no-cache, no-store");
+    echo "Trailer data temporarily unavailable.";
     exit;
 }
 

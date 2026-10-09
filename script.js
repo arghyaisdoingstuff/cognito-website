@@ -425,12 +425,13 @@ let resolvedScoresUrl = null;
 let resolvedTrailerUrl = null;
 
 async function fetchCsvWithFallback(primaryUrl, fallbackUrl) {
+    const fetchHeaders = { 'Accept': 'text/csv, text/plain; q=0.9, */*; q=0.8' };
     if (primaryUrl) {
         try {
-            const res = await fetch(primaryUrl);
+            const res = await fetch(primaryUrl, { headers: fetchHeaders });
             if (res.ok) {
                 const text = await res.text();
-                // Ensure response is valid CSV and not an HTML 404 error page
+                // Ensure response is valid CSV and not an HTML error page
                 if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
                     return { ok: true, text, url: primaryUrl };
                 }
@@ -440,7 +441,7 @@ async function fetchCsvWithFallback(primaryUrl, fallbackUrl) {
 
     if (fallbackUrl) {
         try {
-            const res = await fetch(fallbackUrl);
+            const res = await fetch(fallbackUrl, { headers: fetchHeaders });
             if (res.ok) {
                 const text = await res.text();
                 if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
@@ -1054,6 +1055,22 @@ async function initTrailer() {
         return;
     }
 
+    // 1. Instant optimistic restore from session cache so page reload never drops or flickers
+    let wasCached = false;
+    try {
+        const cachedUrl = sessionStorage.getItem('cognito_trailer_embed');
+        if (cachedUrl) {
+            const cachedEmbed = getYouTubeEmbedUrl(cachedUrl);
+            if (cachedEmbed) {
+                iframe.src = cachedEmbed;
+                section.style.display = '';
+                section.querySelectorAll('.reveal, .reveal-scale').forEach(el => el.classList.add('visible'));
+                wasCached = true;
+            }
+        }
+    } catch (e) {}
+
+    // 2. Fetch latest live sheet status in background
     try {
         const res = await fetchCsvWithFallback(
             resolvedTrailerUrl || CONFIG.TRAILER_CSV_URL,
@@ -1088,18 +1105,30 @@ async function initTrailer() {
                 if (shouldShow && videoUrl) {
                     const embedUrl = getYouTubeEmbedUrl(videoUrl);
                     if (embedUrl) {
-                        iframe.src = embedUrl;
+                        try { sessionStorage.setItem('cognito_trailer_embed', videoUrl); } catch (e) {}
+                        if (iframe.src !== embedUrl) {
+                            iframe.src = embedUrl;
+                        }
                         section.style.display = '';
+                        section.querySelectorAll('.reveal, .reveal-scale').forEach(el => el.classList.add('visible'));
                         initScrollReveal();
                         return;
                     }
+                } else {
+                    // Explicitly unconfirmed or blank in the Google Sheet
+                    try { sessionStorage.removeItem('cognito_trailer_embed'); } catch (e) {}
+                    section.style.display = 'none';
+                    iframe.src = '';
+                    return;
                 }
             }
         }
     } catch (e) {}
 
-    // If blank or not confirmed, hide completely
-    section.style.display = 'none';
+    // If there was no valid cache and fetch failed or returned empty
+    if (!wasCached) {
+        section.style.display = 'none';
+    }
 }
 
 // ──────────────────────────────────────────────────────────────

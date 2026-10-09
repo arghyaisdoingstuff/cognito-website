@@ -8,12 +8,11 @@
 const DEFAULT_TRAILER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=265950681&single=true&output=csv";
 
 export async function onRequest(context) {
-    // 1. Direct browser navigation -> redirect to homepage
+    // 1. Direct browser navigation in address bar -> redirect to homepage
     const secFetchDest = context.request.headers.get("Sec-Fetch-Dest");
     const secFetchMode = context.request.headers.get("Sec-Fetch-Mode");
-    const acceptHeader = context.request.headers.get("Accept") || "";
 
-    if (secFetchDest === "document" || secFetchMode === "navigate" || acceptHeader.includes("text/html")) {
+    if (secFetchDest === "document" || secFetchMode === "navigate") {
         return Response.redirect(new URL("/index.html", context.request.url).toString(), 302);
     }
 
@@ -35,6 +34,7 @@ export async function onRequest(context) {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CognitoCloudflareProxy/2.0"
             },
+            redirect: "follow",
             cf: {
                 cacheTtl: 30,
                 cacheEverything: true
@@ -42,10 +42,11 @@ export async function onRequest(context) {
         });
 
         if (!response.ok) {
-            return new Response("URL,Show\n,", {
+            return new Response("Trailer data temporarily unavailable.", {
+                status: response.status,
                 headers: {
-                    "Content-Type": "text/csv; charset=utf-8",
-                    "Access-Control-Allow-Origin": "*"
+                    "Content-Type": "text/plain; charset=utf-8",
+                    "Cache-Control": "no-store, no-cache, max-age=0"
                 }
             });
         }
@@ -61,10 +62,11 @@ export async function onRequest(context) {
             }
         });
     } catch (err) {
-        return new Response("URL,Show\n,", {
+        return new Response("Service unavailable", {
+            status: 502,
             headers: {
-                "Content-Type": "text/csv; charset=utf-8",
-                "Access-Control-Allow-Origin": "*"
+                "Content-Type": "text/plain; charset=utf-8",
+                "Cache-Control": "no-store, no-cache, max-age=0"
             }
         });
     }
