@@ -863,7 +863,7 @@ function renderRounds(data, isLive) {
 
             let timeInfo = '';
             let actions = '';
-            let statusLabel = 'Accepting Submissions';
+            let statusLabel = 'Live';
             let dotClass = 'live';
 
             if (hasValidRelease && now < release) {
@@ -877,39 +877,25 @@ function renderRounds(data, isLive) {
                 statusLabel = 'Unlocks in ' + countdownStr;
                 dotClass = 'locked';
             } else {
-                // Exhibit is unlocked!
+                // Exhibit is unlocked! Deadlines belong strictly to the round header
                 actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
 
-                if (hasValidRoundDeadline) {
-                    const deadlineFormatted = roundDeadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    if (now <= roundDeadline) {
-                        const diff = roundDeadline - now;
-                        const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
-                        const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
-                        timeInfo = `<span class="meta-strip-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag deadline-countdown-tag">Deadline in ${countdownStr}</span>`;
-                        statusLabel = 'Deadline in ' + countdownStr;
-                        dotClass = 'live';
-                    } else {
-                        // Past deadline: brief stays active and unlocked
-                        timeInfo = `<span class="meta-strip-item"><strong>Concluded:</strong> ${deadlineFormatted}</span> <span class="meta-countdown-tag closed-tag">Concluded</span>`;
-                        statusLabel = 'Concluded';
-                        dotClass = 'closed';
-                    }
+                if (hasValidRoundDeadline && now > roundDeadline) {
+                    statusLabel = 'Concluded';
+                    dotClass = 'closed';
                 } else {
-                    timeInfo = hasValidRelease ? `<span class="meta-strip-item"><strong>Released:</strong> ${releaseFormatted}</span>` : '';
-                    statusLabel = 'Open';
+                    statusLabel = 'Live';
                     dotClass = 'live';
                 }
+                timeInfo = hasValidRelease ? `<span class="meta-strip-item"><strong>Released:</strong> ${releaseFormatted}</span>` : '';
             }
 
-            const exhibitCode = `EXHIBIT // ${String(idxNum).padStart(2, '0')}`;
             const roundTag = escapeHtml(r.Round || activeRoundFilter);
             const title = escapeHtml(r.Title || `Exhibit ${idxNum}`);
-            const fullDesc = r.Description ? escapeHtml(r.Description) : 'Simulation brief and analytical parameters for this exhibit will be unsealed according to schedule.';
+            const fullDesc = r.Description ? escapeHtml(r.Description).trim() : '';
 
             return {
                 idx: idxNum,
-                code: exhibitCode,
                 roundTag: roundTag,
                 title: title,
                 desc: fullDesc,
@@ -931,12 +917,11 @@ function renderRounds(data, isLive) {
                  onclick="switchRoundExhibit(${currentRoundIdx}, ${i}, this)"
                  onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchRoundExhibit(${currentRoundIdx}, ${i}, this);}">
                 <div class="stream-row-header">
-                    <span class="stream-row-idx">${item.code}</span>
+                    <h3 class="stream-row-title">${item.title}</h3>
                     <div class="stream-row-beacon" style="${item.dotClass === 'live' ? 'color:var(--accent-green)' : item.dotClass === 'locked' ? 'color:var(--accent-amber)' : 'color:var(--text-dim)'}">
                         <span class="dot ${item.dotClass}"></span> ${item.statusLabel}
                     </div>
                 </div>
-                <div class="stream-row-title">${item.title}</div>
             </div>
         `).join('');
 
@@ -945,7 +930,7 @@ function renderRounds(data, isLive) {
             <div class="dossier-canvas" id="dossier-canvas-${currentRoundIdx}">
                 <span class="canvas-tag">${initialItem.roundTag}</span>
                 <h2 class="canvas-title">${initialItem.title}</h2>
-                <p class="canvas-text">${initialItem.desc}</p>
+                ${initialItem.desc ? `<p class="canvas-text">${initialItem.desc}</p>` : ''}
                 ${initialItem.timeInfo ? `<div class="canvas-meta-strip">${initialItem.timeInfo}</div>` : ''}
                 ${initialItem.actions ? `<div class="canvas-actions">${initialItem.actions}</div>` : ''}
             </div>
@@ -1006,7 +991,7 @@ window.switchRoundExhibit = function(roundIdx, exIdx, rowEl) {
     canvas.innerHTML = `
         <span class="canvas-tag">${item.roundTag}</span>
         <h2 class="canvas-title">${item.title}</h2>
-        <p class="canvas-text">${item.desc}</p>
+        ${item.desc ? `<p class="canvas-text">${item.desc}</p>` : ''}
         ${item.timeInfo ? `<div class="canvas-meta-strip">${item.timeInfo}</div>` : ''}
         ${item.actions ? `<div class="canvas-actions">${item.actions}</div>` : ''}
     `;
