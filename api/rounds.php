@@ -42,7 +42,7 @@ if (!$rawCsv) {
     $fetched = @file_get_contents($sheetUrl, false, $ctx);
     if ($fetched !== false && strlen(trim($fetched)) > 0) {
         $rawCsv = $fetched;
-        @file_put_contents($cacheFile, $rawCsv);
+        @file_put_contents($cacheFile, $rawCsv, LOCK_EX);
     } elseif (file_exists($cacheFile)) {
         $rawCsv = @file_get_contents($cacheFile);
     }
