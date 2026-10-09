@@ -35,23 +35,22 @@ As soon as you type the score, the website calculates the max score, ranks the t
 To unlock cases and update countdowns, open the **Rounds** tab in your Google Sheet.
 
 ### Required Columns (Row 1):
-`Event` | `Round` | `Title` | `Description` | `Release` | `Deadline` | `BriefLink` | `SubmitLink` | `Show`
+`Event` | `Day` | `Date` | `Round` | `DeadlineDate` | `DeadlineTime` | `SubmitLink` | `Title` | `Description` | `ReleaseTime` | `BriefLink` | `Show`
 
 ### How to add/edit rounds:
 * **Event:** `Case Competition` or `Contingent`.
-* **Round:** e.g., `Round 1` or `Grand Finale`.
-* **Title:** e.g., `The Valuation Dilemma`.
-* **Description:** A short 1-2 sentence description.
-* **Release & Deadline (CRITICAL):** Must be exactly `YYYY-MM-DD HH:MM` (24-hour time).
-  * *Example:* `2026-12-15 09:30`
-  * The website uses these exact times to run the live countdowns. If a round hasn't hit its Release time yet, the button will be locked. At the exact minute of Release, it turns green and opens. At Deadline, it turns red and closes.
-* **BriefLink:** A Google Drive link to the case PDF.
-* **SubmitLink:** A Google Form link to collect their solutions.
-* **Show:** Type `Yes` to display it on the website. Type `No` if you want to hide it temporarily.
+* **Day:** `1`, `2`, or `3` (for Contingent events).
+* **Date:** The date in standard `DD/MM/YYYY` format (e.g. `15/12/2026`).
+* **Round:** Round name (e.g. `Round 1 - The Qualifier`). Multiple exhibits under the same round name are grouped together.
+* **DeadlineDate & DeadlineTime:** Submission deadline for the round (e.g. `15/12/2026` and `15:30` or `3:30 PM`). Common to all exhibits in the round.
+* **ReleaseTime:** Time when this specific exhibit unseals (e.g. `09:30` or `09:30 AM`).
+* **SubmitLink:** Google Form link for participants to collect their submissions.
+* **BriefLink:** A Google Drive link to the case brief PDF.
+* **Show:** Type `Yes` to display it on the website. Type `No` to hide.
 
 ---
 
 ## 4. Troubleshooting
 * **A team is missing from the leaderboard:** Ensure their `Event` column says exactly `Contingent` and their `Score` is a valid number.
-* **Rounds buttons are stuck on "Locked":** Check your `Release` column formatting. It must be `YYYY-MM-DD HH:MM`. (e.g. `2026-12-15 14:00` for 2:00 PM).
-* **Changes aren't showing up:** Wait 3 minutes and refresh the page. Google Sheets CSV publishing is not instant.
+* **Rounds buttons are stuck on "Locked":** Check your `Date` and `ReleaseTime` column formatting. Use `DD/MM/YYYY` for date (e.g. `15/12/2026`) and `HH:MM` for time (e.g. `09:30`).
+* **Changes aren't showing up:** Wait 1 to 3 minutes and refresh the page. Google Sheets CSV publishing is not instant.

@@ -585,6 +585,147 @@ function toggleRoundAccordion(headerEl) {
     headerEl.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 }
 
+/**
+ * Robust date & time parser supporting:
+ * - DD/MM/YYYY HH:mm (with optional AM/PM)
+ * - DD-MM-YYYY HH:mm
+ * - YYYY-MM-DD HH:mm (or ISO 8601 with T)
+ * - "15 Dec 2026 15:30" / "15 December 2026 3:30 PM"
+ * - Separate Date + Time combinations
+ */
+function parseFlexibleDate(dateInput, timeInput = '') {
+    if (!dateInput && !timeInput) return new Date(NaN);
+    let str = `${dateInput || ''} ${timeInput || ''}`.trim();
+    if (!str) return new Date(NaN);
+
+    // 1. ISO format: YYYY-MM-DD or YYYY/MM/DD with optional time and AM/PM
+    const isoMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?)?/i);
+    if (isoMatch) {
+        const year = parseInt(isoMatch[1], 10);
+        const month = parseInt(isoMatch[2], 10);
+        const day = parseInt(isoMatch[3], 10);
+        let hours = isoMatch[4] ? parseInt(isoMatch[4], 10) : 0;
+        const minutes = isoMatch[5] ? parseInt(isoMatch[5], 10) : 0;
+        const seconds = isoMatch[6] ? parseInt(isoMatch[6], 10) : 0;
+        const ampm = isoMatch[7] ? isoMatch[7].toLowerCase() : null;
+        if (ampm === 'pm' && hours < 12) hours += 12;
+        if (ampm === 'am' && hours === 12) hours = 0;
+        const d = new Date(year, month - 1, day, hours, minutes, seconds);
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    // 2. Standard Indian / European format: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})(?:[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?)?/i);
+    if (dmyMatch) {
+        let day = parseInt(dmyMatch[1], 10);
+        let month = parseInt(dmyMatch[2], 10);
+        const year = parseInt(dmyMatch[3], 10);
+        if (month > 12 && day <= 12) {
+            const temp = day;
+            day = month;
+            month = temp;
+        }
+        let hours = dmyMatch[4] ? parseInt(dmyMatch[4], 10) : 0;
+        const minutes = dmyMatch[5] ? parseInt(dmyMatch[5], 10) : 0;
+        const seconds = dmyMatch[6] ? parseInt(dmyMatch[6], 10) : 0;
+        const ampm = dmyMatch[7] ? dmyMatch[7].toLowerCase() : null;
+        if (ampm === 'pm' && hours < 12) hours += 12;
+        if (ampm === 'am' && hours === 12) hours = 0;
+        const d = new Date(year, month - 1, day, hours, minutes, seconds);
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    // 3. Textual month format: "15 Dec 2026 15:30", "15 December 2026 3:30 PM"
+    const textMonthMatch = str.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})(?:[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?)?/i);
+    if (textMonthMatch) {
+        const day = parseInt(textMonthMatch[1], 10);
+        const monthName = textMonthMatch[2].toLowerCase().slice(0, 3);
+        const year = parseInt(textMonthMatch[3], 10);
+        const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+        const monthIdx = months.indexOf(monthName);
+        if (monthIdx !== -1) {
+            let hours = textMonthMatch[4] ? parseInt(textMonthMatch[4], 10) : 0;
+            const minutes = textMonthMatch[5] ? parseInt(textMonthMatch[5], 10) : 0;
+            const seconds = textMonthMatch[6] ? parseInt(textMonthMatch[6], 10) : 0;
+            const ampm = textMonthMatch[7] ? textMonthMatch[7].toLowerCase() : null;
+            if (ampm === 'pm' && hours < 12) hours += 12;
+            if (ampm === 'am' && hours === 12) hours = 0;
+            const d = new Date(year, monthIdx, day, hours, minutes, seconds);
+            if (!isNaN(d.getTime())) return d;
+        }
+    }
+
+    // 4. Fallback native
+    return new Date(str.replace(/-/g, '/'));
+}
+
+/**
+ * Extracts a Date object from a row for either 'deadline' or 'release'.
+ * Handles:
+ * - Separate Date + ReleaseTime / DeadlineTime columns (e.g. Date: 15/12/2026, ReleaseTime: 09:30)
+ * - Distinct DeadlineDate + DeadlineTime (for cases spanning multiple days)
+ * - Single combined columns (e.g. Release: 15/12/2026 09:30, RoundDeadline: 15/12/2026 15:30)
+ */
+function extractRowDateTime(row, targetType, contextItems = []) {
+    if (!row) return new Date(NaN);
+
+    // 1. Check for specific target date column: e.g. DeadlineDate, RoundDeadlineDate, ReleaseDate
+    const targetDateKey = Object.keys(row).find(k => 
+        new RegExp(`${targetType}.*date|date.*${targetType}`, 'i').test(k)
+    );
+    let dateVal = targetDateKey ? String(row[targetDateKey] || '').trim() : '';
+
+    // If no specific target date, check generic Date / EventDate / RoundDate
+    if (!dateVal) {
+        const genericDateKey = Object.keys(row).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k));
+        if (genericDateKey) {
+            dateVal = String(row[genericDateKey] || '').trim();
+        }
+    }
+
+    // Fallback date from context items if not specified on this row
+    if (!dateVal && Array.isArray(contextItems) && contextItems.length > 0) {
+        const itemWithDate = contextItems.find(it => {
+            const dk = Object.keys(it).find(k => new RegExp(`${targetType}.*date|date.*${targetType}`, 'i').test(k))
+                || Object.keys(it).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k));
+            return dk && String(it[dk] || '').trim();
+        });
+        if (itemWithDate) {
+            const dk = Object.keys(itemWithDate).find(k => new RegExp(`${targetType}.*date|date.*${targetType}`, 'i').test(k))
+                || Object.keys(itemWithDate).find(k => /date/i.test(k) && !/deadline/i.test(k) && !/release/i.test(k));
+            dateVal = String(itemWithDate[dk] || '').trim();
+        }
+    }
+
+    // 2. Check for specific target time column: e.g. ReleaseTime, DeadlineTime, Time
+    const targetTimeKey = Object.keys(row).find(k => 
+        new RegExp(`${targetType}.*time|time.*${targetType}`, 'i').test(k)
+    );
+    let timeVal = targetTimeKey ? String(row[targetTimeKey] || '').trim() : '';
+
+    // 3. Check direct column matching targetType (e.g. Deadline, RoundDeadline, Release)
+    const directKey = Object.keys(row).find(k => 
+        new RegExp(`^${targetType}$|round.*${targetType}`, 'i').test(k) && !/link/i.test(k)
+    ) || Object.keys(row).find(k => new RegExp(targetType, 'i').test(k) && !/link/i.test(k) && !/date/i.test(k) && !/time/i.test(k));
+    const directVal = directKey ? String(row[directKey] || '').trim() : '';
+
+    // If directVal already looks like a full date (has slash, hyphen, or spaces)
+    if (directVal && (directVal.includes('/') || directVal.includes('-') || directVal.includes(' '))) {
+        return parseFlexibleDate(directVal);
+    }
+
+    // If separate Date and Time are provided
+    if (dateVal && (timeVal || directVal)) {
+        return parseFlexibleDate(dateVal, timeVal || directVal);
+    }
+
+    if (directVal) {
+        return parseFlexibleDate(directVal);
+    }
+
+    return new Date(NaN);
+}
+
 function renderRounds(data, isLive) {
     const container = document.getElementById('rounds-container');
     if (!container) return;
@@ -657,14 +798,15 @@ function renderRounds(data, isLive) {
         roundIndex++;
         const currentRoundIdx = roundIndex;
 
-        // Common round deadline: check if any row in items has Deadline / RoundDeadline
-        const deadlineItem = items.find(it => {
-            const k = Object.keys(it).find(key => /deadline/i.test(key));
-            return k && it[k] && it[k].trim();
-        });
-        const deadlineKey = deadlineItem ? Object.keys(deadlineItem).find(k => /deadline/i.test(k)) : null;
-        const roundDeadlineStr = (deadlineItem && deadlineKey) ? deadlineItem[deadlineKey].trim() : '';
-        const roundDeadline = new Date(roundDeadlineStr ? roundDeadlineStr.replace(/-/g, '/') : '');
+        // Common round deadline: check if any row in items has Deadline / RoundDeadline (or combined with Date)
+        let roundDeadline = new Date(NaN);
+        for (const it of items) {
+            const d = extractRowDateTime(it, 'deadline', items);
+            if (!isNaN(d.getTime())) {
+                roundDeadline = d;
+                break;
+            }
+        }
         const hasValidRoundDeadline = !isNaN(roundDeadline.getTime());
 
         // Common round submit link: check if any row in items has SubmitLink / RoundSubmitLink
@@ -676,16 +818,8 @@ function renderRounds(data, isLive) {
         const roundSubmitLink = (submitItem && submitKey) ? submitItem[submitKey].trim() : '';
 
         // Check if all exhibits with release dates are still in the future
-        const exhibitsWithRelease = items.filter(it => {
-            const relKey = Object.keys(it).find(key => /release/i.test(key));
-            const rel = relKey && it[relKey] ? new Date(it[relKey].replace(/-/g, '/')) : NaN;
-            return !isNaN(rel.getTime());
-        });
-        const isRoundLocked = exhibitsWithRelease.length > 0 && exhibitsWithRelease.every(it => {
-            const relKey = Object.keys(it).find(key => /release/i.test(key));
-            const rel = new Date(it[relKey].replace(/-/g, '/'));
-            return now < rel;
-        });
+        const exhibitsWithRelease = items.map(it => extractRowDateTime(it, 'release', items)).filter(d => !isNaN(d.getTime()));
+        const isRoundLocked = exhibitsWithRelease.length > 0 && exhibitsWithRelease.every(rel => now < rel);
 
         // Round countdown badge for the round masthead
         let roundCountdownTag = '';
@@ -713,7 +847,7 @@ function renderRounds(data, isLive) {
         const preparedItems = items.map((r) => {
             globalIndex++;
             const idxNum = globalIndex;
-            const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
+            const release = extractRowDateTime(r, 'release', items);
             const hasValidRelease = !isNaN(release.getTime());
             const releaseFormatted = hasValidRelease ? release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 

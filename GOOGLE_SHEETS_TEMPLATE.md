@@ -32,18 +32,20 @@ Rename the first tab to **`Scores`**. Create the following exact column headers 
 
 Create a second tab named **`Rounds`**. Create the following exact column headers in row 1:
 
-| Event | Round | Title | Description | Release | Deadline | BriefLink | SubmitLink | Show |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Case Competition | Round 1 | The Valuation Dilemma | Analyze portfolio risk for sovereign fund | 2026-11-15 10:00 | 2026-11-25 23:59 | https://drive.google.com/your-pdf-link | https://forms.gle/your-form-link | Yes |
-| Contingent | Prelims | Market Entry Simulation | Full contingent speed case | 2026-12-15 09:30 | 2026-12-15 14:00 | https://drive.google.com/your-pdf-link | https://forms.gle/your-form-link | Yes |
+| Event | Day | Date | Round | DeadlineDate | DeadlineTime | SubmitLink | Title | Description | ReleaseTime | BriefLink | Show |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Contingent | 1 | 15/12/2026 | Round 1 - The Qualifier | 15/12/2026 | 15:30 | https://forms.gle/... | Corporate Genesis | Market entry simulation | 09:30 | https://drive.google.com/... | Yes |
+| Contingent | 1 | 15/12/2026 | Round 1 - The Qualifier | 15/12/2026 | 15:30 | https://forms.gle/... | Arbitrage Shock | Liquidity distress event | 11:30 | https://drive.google.com/... | Yes |
+| Case Competition | | 15/11/2026 | Round 1 - Prelims | 25/11/2026 | 23:59 | https://forms.gle/... | Valuation Dilemma | Portfolio risk analysis | 10:00 | https://drive.google.com/... | Yes |
 
 ### Column Notes:
-- **`Release` & `Deadline`**: Write in `YYYY-MM-DD HH:mm` format in Indian Standard Time (IST).
-  - Before `Release` time: The card displays **Locked 🔒** with a countdown timer.
-  - Between `Release` and `Deadline`: The card unlocks and shows **"Read Case Brief"** and **"Submit Solution"** buttons!
-  - After `Deadline`: The card changes to **Closed 🔴** and hides the submission button.
-- **`BriefLink`**: Google Drive shareable link to the round problem statement PDF (set to *"Anyone with the link can view"*).
-- **`SubmitLink`**: Google Form link for participants to upload their deck/solution.
+- **`Date`**: The festival/release date in `DD/MM/YYYY` format (e.g., `15/12/2026`).
+- **`Day`**: For Contingent, enter `1`, `2`, or `3` to match the Day filter tabs on the website.
+- **`Round`**: The round name. All exhibits sharing the same `Round` name are automatically grouped into an accordion menu.
+- **`DeadlineDate` & `DeadlineTime`**: Submission deadline for the round (common to all exhibits in this round). Use `DD/MM/YYYY` for date and `HH:mm` (or `hh:mm AM/PM`) for time.
+- **`ReleaseTime`**: When this specific exhibit unlocks (`HH:mm` or `hh:mm AM/PM`).
+- **`SubmitLink`**: Google Form link for participants to submit their solution for the round.
+- **`BriefLink`**: Google Drive shareable link to the problem dossier PDF (*"Anyone with the link can view"*).
 - **`Show`**: Put `Yes` to display, or `No` to hide.
 
 ---
