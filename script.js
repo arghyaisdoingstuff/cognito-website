@@ -641,68 +641,9 @@ function renderRounds(data, isLive) {
     const now = new Date();
     let html = '';
     let globalIndex = 0;
+    let roundIndex = 0;
 
-    const renderExhibitItem = (r, idx) => {
-        const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
-        const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
-        const valid = !isNaN(release) && !isNaN(deadline);
-
-        let statusBeacon = '';
-        let timeInfo = '';
-        let actions = '';
-
-        if (!valid) {
-            statusBeacon = '';
-            timeInfo = '';
-            const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief</a>` : '';
-            const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
-            actions = briefBtn + submitBtn;
-        } else if (now < release) {
-            const diff = release - now;
-            const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
-            const countdownStr = (d > 0 ? d + 'd ' : '') + h + 'h';
-            const releaseFormatted = release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-            statusBeacon = `<span class="status-dot locked"></span><span>Unlocks ${releaseFormatted}</span>`;
-            timeInfo = `<span class="r-meta-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="r-countdown-tag">T-minus ${countdownStr}</span>`;
-            actions = `<button class="btn-action-secondary" disabled style="opacity:0.5;cursor:not-allowed">Locked until Release</button>`;
-        } else if (now <= deadline) {
-            const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            statusBeacon = `<span class="status-dot live"></span><span>Accepting Submissions</span>`;
-            timeInfo = `<span class="r-meta-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span>`;
-
-            const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief</a>` : '';
-            const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
-            actions = briefBtn + submitBtn;
-        } else {
-            const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            statusBeacon = `<span class="status-dot closed"></span><span>Submissions Closed</span>`;
-            timeInfo = `<span class="r-meta-item"><strong>Concluded:</strong> ${deadlineFormatted}</span>`;
-            actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Archived Brief</a>` : `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Concluded</button>`;
-        }
-
-        const exhibitCode = `EX // ${String(idx + 1).padStart(2, '0')}`;
-        const roundTag = escapeHtml(r.Round || activeRoundFilter);
-        const title = escapeHtml(r.Title || `Exhibit ${idx + 1}`);
-        const fullDesc = r.Description ? escapeHtml(r.Description) : '';
-
-        return `
-        <div class="exhibit-card reveal">
-            <div class="exhibit-card-header">
-                <div class="exhibit-header-left">
-                    <span class="exhibit-code">${exhibitCode}</span>
-                    <h3 class="exhibit-title">${title}</h3>
-                </div>
-                ${statusBeacon ? `<div class="exhibit-status">${statusBeacon}</div>` : ''}
-            </div>
-            ${fullDesc ? `<p class="exhibit-desc">${fullDesc}</p>` : (!timeInfo && !actions ? `<p class="exhibit-desc" style="color:var(--text-dim);margin:0;">Brief details pending release.</p>` : '')}
-            ${(timeInfo || actions) ? `
-            <div class="exhibit-footer">
-                <div class="exhibit-meta">${timeInfo}</div>
-                ${actions ? `<div class="exhibit-actions">${actions}</div>` : ''}
-            </div>` : ''}
-        </div>`;
-    };
+    window.roundsDossierRegistry = window.roundsDossierRegistry || {};
 
     // Group all exhibits strictly according to the Round column
     const grouped = {};
@@ -713,12 +654,102 @@ function renderRounds(data, isLive) {
     });
 
     for (const [roundName, items] of Object.entries(grouped)) {
-        let itemsHtml = '';
+        roundIndex++;
+        const currentRoundIdx = roundIndex;
 
-        items.forEach((r, idx) => {
+        const preparedItems = items.map((r) => {
             globalIndex++;
-            itemsHtml += renderExhibitItem(r, globalIndex - 1);
+            const idxNum = globalIndex;
+            const release = new Date(r.Release ? r.Release.replace(/-/g, '/') : '');
+            const deadline = new Date(r.Deadline ? r.Deadline.replace(/-/g, '/') : '');
+            const valid = !isNaN(release) && !isNaN(deadline);
+
+            let timeInfo = '';
+            let actions = '';
+            let statusLabel = 'Accepting Submissions';
+            let dotClass = 'live';
+
+            if (!valid) {
+                const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
+                const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
+                actions = submitBtn + briefBtn;
+                statusLabel = 'Open';
+                dotClass = 'live';
+            } else if (now < release) {
+                const diff = release - now;
+                const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24);
+                const countdownStr = (d > 0 ? d + 'd ' : '') + h + 'h';
+                const releaseFormatted = release.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                timeInfo = `<span class="meta-strip-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="meta-countdown-tag">T-minus ${countdownStr}</span>`;
+                actions = `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Locked until Release</button>`;
+                statusLabel = 'Unlocks ' + releaseFormatted;
+                dotClass = 'locked';
+            } else if (now <= deadline) {
+                const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                timeInfo = `<span class="meta-strip-item"><strong>Submission Deadline:</strong> ${deadlineFormatted}</span>`;
+
+                const briefBtn = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Read Brief ↗</a>` : '';
+                const submitBtn = r.SubmitLink ? `<a href="${r.SubmitLink}" target="_blank" rel="noopener noreferrer" class="btn-action-primary">Submit Solution →</a>` : '';
+                actions = submitBtn + briefBtn;
+                statusLabel = 'Live';
+                dotClass = 'live';
+            } else {
+                const deadlineFormatted = deadline.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                timeInfo = `<span class="meta-strip-item"><strong>Concluded:</strong> ${deadlineFormatted}</span>`;
+                actions = r.BriefLink ? `<a href="${r.BriefLink}" target="_blank" rel="noopener noreferrer" class="btn-action-secondary">Archived Brief ↗</a>` : `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Concluded</button>`;
+                statusLabel = 'Closed';
+                dotClass = 'closed';
+            }
+
+            const exhibitCode = `EXHIBIT // ${String(idxNum).padStart(2, '0')}`;
+            const roundTag = escapeHtml(r.Round || activeRoundFilter);
+            const title = escapeHtml(r.Title || `Exhibit ${idxNum}`);
+            const fullDesc = r.Description ? escapeHtml(r.Description) : 'Simulation brief and analytical parameters for this exhibit will be unsealed according to schedule.';
+
+            return {
+                idx: idxNum,
+                code: exhibitCode,
+                roundTag: roundTag,
+                title: title,
+                desc: fullDesc,
+                statusLabel: statusLabel,
+                dotClass: dotClass,
+                timeInfo: timeInfo,
+                actions: actions
+            };
         });
+
+        window.roundsDossierRegistry[currentRoundIdx] = preparedItems;
+
+        const streamRowsHtml = preparedItems.map((item, i) => `
+            <div class="stream-row ${i === 0 ? 'active' : ''}" 
+                 data-round-idx="${currentRoundIdx}" 
+                 data-ex-idx="${i}" 
+                 tabindex="0"
+                 role="button"
+                 onclick="switchRoundExhibit(${currentRoundIdx}, ${i}, this)"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchRoundExhibit(${currentRoundIdx}, ${i}, this);}">
+                <div class="stream-row-header">
+                    <span class="stream-row-idx">${item.code}</span>
+                    <div class="stream-row-beacon" style="${item.dotClass === 'live' ? 'color:var(--accent-green)' : item.dotClass === 'locked' ? 'color:var(--accent-amber)' : 'color:var(--text-dim)'}">
+                        <span class="dot ${item.dotClass}"></span> ${item.statusLabel}
+                    </div>
+                </div>
+                <div class="stream-row-title">${item.title}</div>
+            </div>
+        `).join('');
+
+        const initialItem = preparedItems[0];
+        const canvasHtml = `
+            <div class="dossier-canvas" id="dossier-canvas-${currentRoundIdx}">
+                <span class="canvas-tag">${initialItem.roundTag}</span>
+                <h2 class="canvas-title">${initialItem.title}</h2>
+                <p class="canvas-text">${initialItem.desc}</p>
+                ${initialItem.timeInfo ? `<div class="canvas-meta-strip">${initialItem.timeInfo}</div>` : ''}
+                ${initialItem.actions ? `<div class="canvas-actions">${initialItem.actions}</div>` : ''}
+            </div>
+        `;
 
         const safeRound = escapeHtml(roundName);
         const countText = `${items.length} Exhibit${items.length === 1 ? '' : 's'}`;
@@ -739,8 +770,11 @@ function renderRounds(data, isLive) {
             </div>
             <div class="round-accordion-body">
                 <div class="round-accordion-body-inner">
-                    <div class="round-exhibits-list">
-                        ${itemsHtml}
+                    <div class="editorial-split-dossier">
+                        <div class="dossier-stream-rail">
+                            ${streamRowsHtml}
+                        </div>
+                        ${canvasHtml}
                     </div>
                 </div>
             </div>
@@ -750,6 +784,37 @@ function renderRounds(data, isLive) {
     container.innerHTML = html;
     initScrollReveal();
 }
+
+window.switchRoundExhibit = function(roundIdx, exIdx, rowEl) {
+    const parentRail = rowEl.closest('.dossier-stream-rail');
+    if (parentRail) {
+        parentRail.querySelectorAll('.stream-row').forEach(r => r.classList.remove('active'));
+    }
+    rowEl.classList.add('active');
+
+    const items = window.roundsDossierRegistry ? window.roundsDossierRegistry[roundIdx] : null;
+    if (!items || !items[exIdx]) return;
+    const item = items[exIdx];
+
+    const canvas = document.getElementById('dossier-canvas-' + roundIdx);
+    if (!canvas) return;
+
+    canvas.innerHTML = `
+        <span class="canvas-tag">${item.roundTag}</span>
+        <h2 class="canvas-title">${item.title}</h2>
+        <p class="canvas-text">${item.desc}</p>
+        ${item.timeInfo ? `<div class="canvas-meta-strip">${item.timeInfo}</div>` : ''}
+        ${item.actions ? `<div class="canvas-actions">${item.actions}</div>` : ''}
+    `;
+
+    canvas.style.animation = 'none';
+    canvas.offsetHeight;
+    canvas.style.animation = 'canvasFade 0.28s var(--ease-out)';
+
+    if (window.innerWidth <= 860) {
+        canvas.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
 
 // ──────────────────────────────────────────────────────────────
 // 5. BAR CHART LEADERBOARD (Contingent only)
@@ -826,7 +891,7 @@ function renderBarChart(isLive) {
 
     // Capture initial positions for FLIP animation
     const firstPositions = new Map();
-    container.querySelectorAll('.bar-row').forEach(row => {
+    container.querySelectorAll('.horizon-ledger-row, .bar-row').forEach(row => {
         const key = row.getAttribute('data-team');
         if (key) firstPositions.set(key, row.getBoundingClientRect().top);
     });
@@ -842,9 +907,19 @@ function renderBarChart(isLive) {
 
     if (!filtered.length) {
         if (searchQuery) {
-            container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>No teams found matching "${searchQuery}".</h3><p style="margin-top:8px">Please check your spelling and try again.</p></div>`;
+            container.innerHTML = `
+                <div class="rounds-empty-docket text-center reveal">
+                    <span class="r-empty-code">QUERY // ZERO MATCHES</span>
+                    <h3 class="r-empty-title">No contingents found matching "${escapeHtml(searchQuery)}"</h3>
+                    <p class="r-empty-desc">Check spelling or search by institutional affiliation.</p>
+                </div>`;
         } else {
-            container.innerHTML = `<div class="card text-center" style="padding:50px"><h3>Stay Tuned!</h3><p style="margin-top:8px">The leaderboards will be updated live as soon as the first rounds conclude.</p></div>`;
+            container.innerHTML = `
+                <div class="rounds-empty-docket text-center reveal">
+                    <span class="r-empty-code">STANDINGS // PENDING RELEASE</span>
+                    <h3 class="r-empty-title">Relative Horizon Ledger Under Seal</h3>
+                    <p class="r-empty-desc">The live contingent spectrum will activate once the opening round evaluation concludes.</p>
+                </div>`;
         }
         return;
     }
@@ -858,31 +933,58 @@ function renderBarChart(isLive) {
         const pct = maxScore > 0 ? (score / maxScore * 100).toFixed(1) : 0;
         const teamKey = (row.Team || 'team_' + rank).replace(/\s+/g, '_');
 
-        let rankClass = '';
+        let rankClass = 'rank-general';
         let fillClass = '';
-        if (rank === 1) { rankClass = 'rank-1'; fillClass = 'rank-1-fill'; }
-        else if (rank === 2) { rankClass = 'rank-2'; fillClass = 'rank-2-fill'; }
-        else if (rank === 3) { rankClass = 'rank-3'; fillClass = 'rank-3-fill'; }
+        let tagText = 'Qualified';
+        let tagClass = '';
+        if (rank === 1) { 
+            rankClass = 'rank-gold'; 
+            fillClass = 'rank-gold-fill'; 
+            tagText = 'Leader // Pace';
+            tagClass = 'tag-lead';
+        } else if (rank === 2) { 
+            rankClass = 'rank-silver'; 
+            fillClass = 'rank-silver-fill'; 
+            tagText = 'Contender';
+        } else if (rank === 3) { 
+            rankClass = 'rank-bronze'; 
+            fillClass = 'rank-bronze-fill'; 
+            tagText = 'Contender';
+        } else if (parseFloat(pct) < 65) {
+            tagText = 'In Contention';
+        }
+
+        const rankDisplay = String(rank).padStart(2, '0');
 
         return `
-        <div class="bar-row" data-team="${teamKey}" data-pct="${pct}" data-fill="${fillClass}">
-            <span class="bar-rank ${rankClass}">${rank}</span>
-            <div class="bar-team-info">
-                <div class="bar-team-name">${row.Team || 'Team ' + rank}</div>
-                <div class="bar-college">${row.College || ''}</div>
+        <div class="horizon-ledger-row" data-team="${teamKey}" data-pct="${pct}">
+            <div class="horizon-rank-num ${rankClass}">${rankDisplay}</div>
+            <div class="horizon-team-block">
+                <div class="horizon-team-name">${escapeHtml(row.Team || 'Team ' + rank)}</div>
+                <div class="horizon-team-college">${escapeHtml(row.College || '')}</div>
             </div>
-            <div class="bar-track">
-                <div class="bar-fill ${fillClass}" style="width:0%"></div>
+            <div class="horizon-relative-track">
+                <div class="relative-gauge-groove">
+                    <div class="relative-gauge-fill ${fillClass}" style="width:0%"></div>
+                </div>
+                <span class="relative-spectrum-tag ${tagClass}">${tagText}</span>
             </div>
-        </div>
-        ${rank < filtered.length ? '<div class="bar-divider"></div>' : ''}`;
+        </div>`;
     }).join('');
 
-    container.innerHTML = `<div class="bar-chart-container">${rows}</div>`;
+    container.innerHTML = `
+    <div class="relative-horizon-ledger">
+        <div class="horizon-ledger-header">
+            <div>Rank</div>
+            <div>Contingent / Institution</div>
+            <div>Relative Standings Spectrum</div>
+        </div>
+        ${rows}
+    </div>`;
 
     // FLIP Animation: invert and play
     if (firstPositions.size > 0) {
-        container.querySelectorAll('.bar-row').forEach(row => {
+        container.querySelectorAll('.horizon-ledger-row').forEach(row => {
             const key = row.getAttribute('data-team');
             if (key && firstPositions.has(key)) {
                 const firstTop = firstPositions.get(key);
@@ -900,13 +1002,13 @@ function renderBarChart(isLive) {
         });
     }
 
-    // Animate bars in after a short delay
+    // Animate relative gauge bars in after a short delay
     requestAnimationFrame(() => {
         setTimeout(() => {
-            container.querySelectorAll('.bar-fill').forEach((fill, i) => {
-                const row = fill.closest('.bar-row');
+            container.querySelectorAll('.relative-gauge-fill').forEach((fill, i) => {
+                const row = fill.closest('.horizon-ledger-row');
                 const pct = row ? row.getAttribute('data-pct') : 0;
-                fill.style.transitionDelay = `${i * 0.05}s`;
+                fill.style.transitionDelay = `${i * 0.04}s`;
                 fill.style.width = pct + '%';
             });
         }, 80);

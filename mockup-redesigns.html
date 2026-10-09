@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito 2026 - Bespoke Editorial Redesigns (Refined)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #010409;
+            --bg-deep: #030B1A;
+            --bg-surface: #071428;
+            --bg-glass: rgba(8, 22, 48, 0.55);
+            --bg-glass-hover: rgba(12, 30, 64, 0.72);
+
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.35);
+            --primary-ghost: rgba(0, 229, 255, 0.06);
+            --secondary: #1c64f2;
+            --secondary-glow: rgba(28, 100, 242, 0.25);
+
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-gold: #ffd700;
+            --accent-silver: #cbd5e1;
+            --accent-bronze: #cd7f32;
+
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-dim: #64748b;
+
+            --edge: rgba(0, 229, 255, 0.15);
+            --edge-dim: rgba(255, 255, 255, 0.07);
+
+            --font-display: 'Space Grotesk', system-ui, sans-serif;
+            --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.65;
+            overflow-x: hidden;
+            position: relative;
+            padding-bottom: 90px;
+        }
+
+        /* Ambient Background Orbs */
+        .bg-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+            opacity: 0.55;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.22;
+            animation: orbFloat 28s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 750px; height: 750px; background: radial-gradient(circle, #00e5ff 0%, transparent 70%); top: -180px; left: -120px; }
+        .orb-2 { width: 850px; height: 850px; background: radial-gradient(circle, #1c64f2 0%, transparent 70%); bottom: -200px; right: -150px; animation-duration: 34s; }
+        .orb-3 { width: 500px; height: 500px; background: radial-gradient(circle, #0ea5e9 0%, transparent 70%); top: 40%; left: 35%; animation-duration: 22s; }
+        @keyframes orbFloat {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(50px, -40px, 0) scale(1.08); }
+        }
+
+        /* GPU Phosphor Scanlines (matching live site) */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -12px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh + 24px);
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 3px,
+                rgba(0, 229, 255, 0.016) 3px,
+                rgba(0, 229, 255, 0.016) 4px
+            );
+            pointer-events: none;
+            z-index: 99;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+            animation: scanlineDrift 0.45s linear infinite;
+        }
+        @keyframes scanlineDrift {
+            0%   { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(0, 8px, 0); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Sticky Navigation Bar */
+        .mockup-nav {
+            position: sticky;
+            top: 0;
+            background: rgba(1, 4, 9, 0.88);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--edge-dim);
+            z-index: 100;
+            padding: 16px 0;
+        }
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .mockup-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-pill {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--primary);
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid var(--edge);
+            padding: 4px 10px;
+            border-radius: 999px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .brand-title {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .mockup-categories {
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid var(--edge-dim);
+        }
+        .cat-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 8px 18px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.25s var(--ease-out);
+            letter-spacing: 0.5px;
+        }
+        .cat-btn:hover {
+            color: #fff;
+        }
+        .cat-btn.active {
+            background: var(--primary);
+            color: #010409;
+            font-weight: 700;
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.35);
+        }
+
+        /* Section Wrappers */
+        .mockup-section {
+            display: none;
+            padding: 40px 0 60px;
+            animation: fadeIn 0.4s var(--ease-out);
+        }
+        .mockup-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-masthead {
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--edge-dim);
+        }
+        .section-tag {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 4vw, 3.2rem);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 780px;
+            line-height: 1.7;
+        }
+
+        /* Buttons */
+        .btn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 999px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 0.92rem;
+            text-decoration: none;
+            transition: all 0.3s var(--ease-out);
+            cursor: pointer;
+        }
+        .btn-cyan {
+            background: var(--primary);
+            color: #010409;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 24px rgba(0, 229, 255, 0.28);
+        }
+        .btn-cyan:hover {
+            box-shadow: 0 0 34px rgba(0, 229, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--edge-dim);
+        }
+        .btn-ghost:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(0, 229, 255, 0.04);
+            transform: translateY(-2px);
+        }
+
+        /* Label Banners */
+        .option-banner {
+            margin: 40px 0 24px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .option-badge {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--primary);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .option-name {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .option-meta {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--text-dim);
+        }
+
+        /* =============================================================
+           1. EXHIBITS: DIRECTION 1 (LOCKED IN)
+           ============================================================= */
+        .editorial-split-dossier {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 0;
+            border-top: 1px solid var(--edge-dim);
+            border-bottom: 1px solid var(--edge-dim);
+            margin: 30px 0 60px;
+            min-height: 480px;
+        }
+
+        .dossier-stream-rail {
+            border-right: 1px solid var(--edge-dim);
+            display: flex;
+            flex-direction: column;
+            padding: 8px 0;
+        }
+
+        .stream-row {
+            padding: 24px 28px;
+            cursor: pointer;
+            transition: all 0.28s var(--ease-out);
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .stream-row:last-child {
+            border-bottom: none;
+        }
+        .stream-row:hover {
+            background: linear-gradient(90deg, rgba(0, 229, 255, 0.04) 0%, transparent 100%);
+        }
+        .stream-row.active {
+            background: linear-gradient(90deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%);
+        }
+        .stream-row.active::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--primary);
+            box-shadow: 0 0 16px var(--primary);
+        }
+
+        .stream-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stream-row-idx {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .stream-row.active .stream-row-idx {
+            color: var(--primary);
+        }
+        .stream-row-beacon {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+        .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .dot.live { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+        .dot.locked { background: var(--accent-amber); }
+
+        .stream-row-title {
+            font-family: var(--font-display);
+            font-size: 1.18rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .dossier-canvas {
+            padding: 44px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.015) 0%, transparent 60%);
+        }
+        .canvas-tag {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--primary);
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+        .canvas-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 18px;
+            line-height: 1.25;
+            letter-spacing: -0.3px;
+        }
+        .canvas-text {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.85;
+            max-width: 680px;
+            border-left: 2px solid var(--primary);
+            padding-left: 24px;
+            margin-bottom: 30px;
+        }
+        .canvas-meta-strip {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--edge-dim);
+            flex-wrap: wrap;
+        }
+        .meta-strip-item {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+        .meta-strip-item strong {
+            color: var(--text-primary);
+        }
+        .meta-countdown-tag {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--primary);
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid var(--edge);
+            padding: 3px 10px;
+            border-radius: 999px;
+            letter-spacing: 1px;
+        }
+        .canvas-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        /* =============================================================
+           2. SPONSORS & PARTNERS (STRICTLY ORIGINAL TEXT ONLY)
+           ============================================================= */
+
+        /* Option S-1: The Editorial Monograph Spread (Modeled on About row architecture) */
+        .editorial-partner-spread {
+            margin: 20px 0 60px;
+            padding: 50px 0;
+            border-top: 1px solid var(--edge-dim);
+            border-bottom: 1px solid var(--edge-dim);
+            position: relative;
+        }
+        .partner-spread-inner {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 40px;
+            align-items: center;
+        }
+        .partner-spread-narrative {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 780px;
+        }
+        .partner-spread-tag {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .partner-spread-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 3.2vw, 2.75rem);
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        .partner-spread-desc {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            border-left: 2px solid var(--primary);
+            padding-left: 22px;
+            margin-top: 4px;
+        }
+        .partner-spread-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        /* Option S-2: The Asymmetric Minimalist Split (Modeled on Contact masthead) */
+        .asymmetric-partner-split {
+            margin: 20px 0 60px;
+            padding: 50px 0;
+            border-top: 1px solid var(--edge-dim);
+            border-bottom: 1px solid var(--edge-dim);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .split-col-left {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .split-num-idx {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+        .split-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.1rem, 3.4vw, 2.85rem);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.18;
+            letter-spacing: -0.5px;
+        }
+        .split-col-right {
+            border-left: 1px solid var(--edge-dim);
+            padding-left: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .split-desc {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.85;
+        }
+        .split-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        /* Option S-3: The Open Typographic Horizon (Ultra-Clean Floating Center) */
+        .horizon-partner-center {
+            margin: 20px 0 60px;
+            padding: 60px 24px;
+            border-top: 1px solid var(--edge-dim);
+            border-bottom: 1px solid var(--edge-dim);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .horizon-center-tag {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .horizon-center-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 3.6vw, 3rem);
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 18px;
+            max-width: 820px;
+        }
+        .horizon-center-desc {
+            color: var(--text-secondary);
+            font-size: 1.08rem;
+            line-height: 1.85;
+            max-width: 720px;
+            margin-bottom: 32px;
+        }
+        .horizon-center-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* =============================================================
+           3. LEADERBOARD (STRICTLY NO NUMERIC SCORES - ONLY RELATIVE VALUES)
+           ============================================================= */
+
+        /* Option L-1: The Horizon Rails (Pure Relative Horizon - Direct Cardless Monograph) */
+        .relative-horizon-ledger {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            border-top: 1px solid var(--edge-dim);
+            border-bottom: 1px solid var(--edge-dim);
+            margin: 20px 0 60px;
+        }
+        .horizon-ledger-header {
+            display: grid;
+            grid-template-columns: 80px 1.4fr 1.6fr;
+            padding: 12px 24px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--edge-dim);
+        }
+        .horizon-ledger-row {
+            display: grid;
+            grid-template-columns: 80px 1.4fr 1.6fr;
+            padding: 22px 24px;
+            align-items: center;
+            position: relative;
+            transition: background 0.28s var(--ease-out);
+        }
+        .horizon-ledger-row::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 24px; right: 24px; height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--edge-dim) 15%, var(--edge-dim) 85%, transparent 100%);
+        }
+        .horizon-ledger-row:last-child::after { display: none; }
+        .horizon-ledger-row:hover {
+            background: linear-gradient(90deg, rgba(0, 229, 255, 0.035) 0%, rgba(28, 100, 242, 0.015) 60%, transparent 100%);
+        }
+
+        .horizon-rank-num {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+            user-select: none;
+        }
+        .rank-gold { color: var(--accent-gold); text-shadow: 0 0 18px rgba(255, 215, 0, 0.35); }
+        .rank-silver { color: var(--accent-silver); text-shadow: 0 0 14px rgba(203, 213, 225, 0.3); }
+        .rank-bronze { color: var(--accent-bronze); text-shadow: 0 0 14px rgba(205, 127, 50, 0.3); }
+        .rank-general { font-family: var(--font-mono); font-size: 1rem; color: var(--text-dim); font-weight: 500; }
+
+        .horizon-team-block {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-right: 20px;
+        }
+        .horizon-team-name {
+            font-family: var(--font-display);
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+        .horizon-team-college {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        .horizon-relative-track {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+        }
+        .relative-gauge-groove {
+            flex: 1;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+        .relative-gauge-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);
+            box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
+            transition: width 1.2s var(--ease-out);
+        }
+        .rank-gold-fill { background: linear-gradient(90deg, #d97706 0%, #ffd700 100%); box-shadow: 0 0 16px rgba(255, 215, 0, 0.45); }
+        .rank-silver-fill { background: linear-gradient(90deg, #64748b 0%, #cbd5e1 100%); box-shadow: 0 0 14px rgba(203, 213, 225, 0.35); }
+        .rank-bronze-fill { background: linear-gradient(90deg, #92400e 0%, #cd7f32 100%); box-shadow: 0 0 14px rgba(205, 127, 50, 0.35); }
+
+        .relative-spectrum-tag {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            min-width: 88px;
+            text-align: right;
+        }
+        .tag-lead { color: var(--accent-gold); font-weight: 600; }
+
+        /* Option L-2: The Dual-Tier Visual Spectrum (Podium Masthead + Relative Gauge Ledger) */
+        .podium-masthead-spread {
+            display: grid;
+            grid-template-columns: 1fr 1.15fr 1fr;
+            gap: 0;
+            border-top: 1px solid var(--edge-dim);
+            border-bottom: 1px solid var(--edge-dim);
+            margin: 20px 0 30px;
+            padding: 40px 0;
+        }
+        .podium-masthead-col {
+            padding: 0 36px;
+            border-left: 1px solid var(--edge-dim);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+        }
+        .podium-masthead-col:first-child {
+            padding-left: 0;
+            border-left: none;
+        }
+        .podium-giant-rank {
+            font-family: var(--font-display);
+            font-size: clamp(3.2rem, 5vw, 4.8rem);
+            font-weight: 700;
+            line-height: 0.88;
+            margin-bottom: 8px;
+            user-select: none;
+        }
+        .col-1 .podium-giant-rank { color: var(--accent-gold); text-shadow: 0 0 28px rgba(255, 215, 0, 0.35); }
+        .col-2 .podium-giant-rank { color: var(--accent-silver); text-shadow: 0 0 20px rgba(203, 213, 225, 0.3); }
+        .col-3 .podium-giant-rank { color: var(--accent-bronze); text-shadow: 0 0 20px rgba(205, 127, 50, 0.3); }
+
+        .podium-team-title {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+            line-height: 1.25;
+        }
+        .podium-team-sub {
+            font-size: 0.84rem;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+        }
+        .podium-relative-beacon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .editorial-split-dossier { grid-template-columns: 1fr; }
+            .dossier-stream-rail { border-right: none; border-bottom: 1px solid var(--edge-dim); }
+            .partner-spread-inner { grid-template-columns: 1fr; }
+            .asymmetric-partner-split { grid-template-columns: 1fr; gap: 30px; }
+            .split-col-right { border-left: none; padding-left: 0; border-top: 1px solid var(--edge-dim); padding-top: 24px; }
+            .podium-masthead-spread { grid-template-columns: 1fr; gap: 30px; }
+            .podium-masthead-col { border-left: none; padding: 0; }
+            .horizon-ledger-header, .horizon-ledger-row { grid-template-columns: 50px 1.2fr 1fr; padding: 16px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-canvas">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<!-- Sticky Category Switcher -->
+<header class="mockup-nav">
+    <div class="container nav-inner">
+        <div class="mockup-brand">
+            <span class="brand-pill">Bespoke Suite</span>
+            <span class="brand-title">Cognito 2026 Evolution</span>
+        </div>
+        <div class="mockup-categories">
+            <button class="cat-btn active" onclick="switchSection('exhibits')">01. Exhibits (Locked)</button>
+            <button class="cat-btn" onclick="switchSection('sponsors')">02. Sponsors & Partners</button>
+            <button class="cat-btn" onclick="switchSection('leaderboard')">03. Leaderboard</button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- =============================================================
+         SECTION 1: EXHIBITS (DIRECTION 1 LOCKED IN)
+         ============================================================= -->
+    <section id="section-exhibits" class="mockup-section active">
+        <div class="section-masthead">
+            <span class="section-tag">LOCKED ARCHITECTURE // DIRECTION 1</span>
+            <h1 class="section-title">The Editorial Split Dossier</h1>
+            <p class="section-desc">Cardless master-detail rail. Clicking an exhibit instantly loads its problem brief, accent quote, and action pills on the right canvas with zero scroll jump.</p>
+        </div>
+
+        <div class="editorial-split-dossier">
+            <!-- Left Rail -->
+            <div class="dossier-stream-rail">
+                <div class="stream-row active" onclick="switchExhibit(1, this)">
+                    <div class="stream-row-header">
+                        <span class="stream-row-idx">EXHIBIT // 01</span>
+                        <div class="stream-row-beacon" style="color:var(--accent-green)">
+                            <span class="dot live"></span> Live
+                        </div>
+                    </div>
+                    <div class="stream-row-title">High-Frequency Volatility Modeling</div>
+                </div>
+
+                <div class="stream-row" onclick="switchExhibit(2, this)">
+                    <div class="stream-row-header">
+                        <span class="stream-row-idx">EXHIBIT // 02</span>
+                        <div class="stream-row-beacon" style="color:var(--accent-amber)">
+                            <span class="dot locked"></span> Dec 16
+                        </div>
+                    </div>
+                    <div class="stream-row-title">Cross-Border Counterparty Settlement</div>
+                </div>
+
+                <div class="stream-row" onclick="switchExhibit(3, this)">
+                    <div class="stream-row-header">
+                        <span class="stream-row-idx">EXHIBIT // 03</span>
+                        <div class="stream-row-beacon" style="color:var(--text-dim)">
+                            <span class="dot" style="background:var(--text-dim)"></span> Day 3
+                        </div>
+                    </div>
+                    <div class="stream-row-title">Sovereign Debt Swaps & Bilateral Rebalancing</div>
+                </div>
+            </div>
+
+            <!-- Right Detail Canvas -->
+            <div class="dossier-canvas" id="dossier-canvas">
+                <span class="canvas-tag">QUANTITATIVE FINANCE & ARBITRAGE</span>
+                <h2 class="canvas-title">High-Frequency Volatility Modeling</h2>
+                <p class="canvas-text">Model multi-market price slippage across NSE and LSE trading windows. Stress test dynamic portfolio hedge reweighting under extreme 2.5% intraday index fluctuations.</p>
+                <div class="canvas-meta-strip">
+                    <span class="meta-strip-item"><strong>Submission Deadline:</strong> Dec 16, 23:59 IST</span>
+                    <span class="meta-countdown-tag">T-minus 14h 22m</span>
+                </div>
+                <div class="canvas-actions">
+                    <a href="#" class="btn-pill btn-cyan">Submit Solution →</a>
+                    <a href="#" class="btn-pill btn-ghost">Read Full Brief ↗</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 2: SPONSORS & PARTNERS (ONLY AUTHENTIC ORIGINAL TEXT)
+         ============================================================= -->
+    <section id="section-sponsors" class="mockup-section">
+        <div class="section-masthead">
+            <span class="section-tag">CARDLESS EVOLUTION // EXACT AUTHENTIC TEXT ONLY</span>
+            <h1 class="section-title">Corporate Partnership Redesigns</h1>
+            <p class="section-desc">All fabricated marketing copy has been eliminated. The designs use 100% authentic website copy with the site's native <strong>Space Grotesk</strong> and <strong>Plus Jakarta Sans</strong> typography, framed directly on the canvas without generic card boxes.</p>
+        </div>
+
+        <!-- -------------------------------------------------------------
+             PAGE 1: HOMEPAGE (index.html)
+             Original Text:
+             "Backed by Visionary Industry Leaders"
+             "Over the years, Cognito has partnered with top organisations, dynamic startups, and leading brands who share our vision for youth leadership."
+             Button: "Partner With Us"
+             ------------------------------------------------------------- -->
+
+        <!-- Option S-1 for Homepage -->
+        <div class="option-banner">
+            <div>
+                <span class="option-badge">HOMEPAGE OPTION S-1</span>
+                <div class="option-name">The Editorial Monograph Spread (About Pattern)</div>
+            </div>
+            <span class="option-meta">Direct translation of the About .editorial-row language</span>
+        </div>
+
+        <div class="editorial-partner-spread">
+            <div class="partner-spread-inner">
+                <div class="partner-spread-narrative">
+                    <span class="partner-spread-tag">// CORPORATE PATRONAGE</span>
+                    <h2 class="partner-spread-title">Backed by Visionary Industry Leaders</h2>
+                    <p class="partner-spread-desc">Over the years, Cognito has partnered with top organisations, dynamic startups, and leading brands who share our vision for youth leadership.</p>
+                </div>
+                <div class="partner-spread-actions">
+                    <a href="sponsors.html" class="btn-pill btn-cyan">
+                        Partner With Us
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option S-2 for Homepage -->
+        <div class="option-banner">
+            <div>
+                <span class="option-badge">HOMEPAGE OPTION S-2</span>
+                <div class="option-name">The Asymmetric Editorial Split (Contact Pattern)</div>
+            </div>
+            <span class="option-meta">2-column architectural split separated by a subtle vertical hairline</span>
+        </div>
+
+        <div class="asymmetric-partner-split">
+            <div class="split-col-left">
+                <span class="split-num-idx">SECTION // 04</span>
+                <h2 class="split-title">Backed by Visionary Industry Leaders</h2>
+            </div>
+            <div class="split-col-right">
+                <p class="split-desc">Over the years, Cognito has partnered with top organisations, dynamic startups, and leading brands who share our vision for youth leadership.</p>
+                <div class="split-actions">
+                    <a href="sponsors.html" class="btn-pill btn-cyan">
+                        Partner With Us
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option S-3 for Homepage -->
+        <div class="option-banner">
+            <div>
+                <span class="option-badge">HOMEPAGE OPTION S-3</span>
+                <div class="option-name">The Open Typographic Horizon (Minimalist Float)</div>
+            </div>
+            <span class="option-meta">Pure floating typography over ambient glow, zero bounding boxes</span>
+        </div>
+
+        <div class="horizon-partner-center">
+            <span class="horizon-center-tag">// CORPORATE ALLIANCE</span>
+            <h2 class="horizon-center-title">Backed by Visionary Industry Leaders</h2>
+            <p class="horizon-center-desc">Over the years, Cognito has partnered with top organisations, dynamic startups, and leading brands who share our vision for youth leadership.</p>
+            <div class="horizon-center-actions">
+                <a href="sponsors.html" class="btn-pill btn-cyan">
+                    Partner With Us
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+        </div>
+
+
+        <!-- -------------------------------------------------------------
+             PAGE 2: SPONSORS PAGE (sponsors.html)
+             Original Text:
+             "Partner with Cognito 2026"
+             "Engage with 30,000+ ambitious minds, gain visibility across top commerce institutions internationally, and discover elite student talent."
+             Buttons: "Partner With Us" (mailto) & "Contact Team"
+             ------------------------------------------------------------- -->
+
+        <div style="margin-top:70px;padding-top:20px;border-top:1px dashed var(--edge-dim);">
+            <div class="section-masthead">
+                <span class="section-tag">SPONSORS.HTML PARTNER CTA</span>
+                <h2 class="section-title">Sponsors Page CTA Variations</h2>
+                <p class="section-desc">Using the authentic Sponsors page copy with two action buttons (mailto + contact page).</p>
+            </div>
+        </div>
+
+        <!-- Option SP-1 for Sponsors Page -->
+        <div class="option-banner">
+            <div>
+                <span class="option-badge">SPONSORS PAGE OPTION SP-1</span>
+                <div class="option-name">The Editorial Monograph Spread</div>
+            </div>
+            <span class="option-meta">Horizontal spread with vertical accent quote and dual actions</span>
+        </div>
+
+        <div class="editorial-partner-spread">
+            <div class="partner-spread-inner">
+                <div class="partner-spread-narrative">
+                    <span class="partner-spread-tag">// INSTITUTIONAL PROSPECTUS</span>
+                    <h2 class="partner-spread-title">Partner with Cognito 2026</h2>
+                    <p class="partner-spread-desc">Engage with 30,000+ ambitious minds, gain visibility across top commerce institutions internationally, and discover elite student talent.</p>
+                </div>
+                <div class="partner-spread-actions">
+                    <a href="mailto:cognitodps@fest.christuniversity.in?subject=Sponsorship%20Inquiry%20-%20Cognito%202026" class="btn-pill btn-cyan">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Partner With Us
+                    </a>
+                    <a href="contact.html" class="btn-pill btn-ghost">Contact Team</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option SP-2 for Sponsors Page -->
+        <div class="option-banner">
+            <div>
+                <span class="option-badge">SPONSORS PAGE OPTION SP-2</span>
+                <div class="option-name">The Asymmetric Architectural Split</div>
+            </div>
+            <span class="option-meta">Title column + narrative column divided by vertical hairline</span>
+        </div>
+
+        <div class="asymmetric-partner-split">
+            <div class="split-col-left">
+                <span class="split-num-idx">PARTNERSHIP // 2026</span>
+                <h2 class="split-title">Partner with Cognito 2026</h2>
+            </div>
+            <div class="split-col-right">
+                <p class="split-desc">Engage with 30,000+ ambitious minds, gain visibility across top commerce institutions internationally, and discover elite student talent.</p>
+                <div class="split-actions">
+                    <a href="mailto:cognitodps@fest.christuniversity.in?subject=Sponsorship%20Inquiry%20-%20Cognito%202026" class="btn-pill btn-cyan">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Partner With Us
+                    </a>
+                    <a href="contact.html" class="btn-pill btn-ghost">Contact Team</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 3: LEADERBOARD (STRICTLY NO NUMERIC SCORES)
+         ============================================================= -->
+    <section id="section-leaderboard" class="mockup-section">
+        <div class="section-masthead">
+            <span class="section-tag">CARDLESS RELATIVE STANDINGS // STRICT SECRECY GUARD</span>
+            <h1 class="section-title">Contingent Leaderboard Redesigns</h1>
+            <p class="section-desc">Strictly adheres to festival scoring secrecy: <strong>zero numeric scores or point totals are shown</strong>. Participants only see visual representations of relative values (proportional horizon gauges showing relative lead/gap) alongside permanent rank, team name, and college.</p>
+        </div>
+
+        <!-- Option L-1 -->
+        <div class="option-banner">
+            <div>
+                <span class="option-badge">LEADERBOARD OPTION L-1 (RECOMMENDED)</span>
+                <div class="option-name">The Relative Horizon Rails (Cardless Ledger)</div>
+            </div>
+            <span class="option-meta">Open monograph rows • Proportional gauge rails • Zero numeric leakage</span>
+        </div>
+
+        <div class="relative-horizon-ledger">
+            <div class="horizon-ledger-header">
+                <div>Rank</div>
+                <div>Contingent / Institution</div>
+                <div>Relative Standings Spectrum</div>
+            </div>
+
+            <!-- Rank 1 -->
+            <div class="horizon-ledger-row">
+                <div class="horizon-rank-num rank-gold">01</div>
+                <div class="horizon-team-block">
+                    <div class="horizon-team-name">The Alpha Syndicate</div>
+                    <div class="horizon-team-college">St. Joseph's University, Bengaluru</div>
+                </div>
+                <div class="horizon-relative-track">
+                    <div class="relative-gauge-groove">
+                        <div class="relative-gauge-fill rank-gold-fill" style="width: 100%;"></div>
+                    </div>
+                    <span class="relative-spectrum-tag tag-lead">Leader // Pace</span>
+                </div>
+            </div>
+
+            <!-- Rank 2 -->
+            <div class="horizon-ledger-row">
+                <div class="horizon-rank-num rank-silver">02</div>
+                <div class="horizon-team-block">
+                    <div class="horizon-team-name">Vanguard Collective</div>
+                    <div class="horizon-team-college">Loyola College, Chennai</div>
+                </div>
+                <div class="horizon-relative-track">
+                    <div class="relative-gauge-groove">
+                        <div class="relative-gauge-fill rank-silver-fill" style="width: 93%;"></div>
+                    </div>
+                    <span class="relative-spectrum-tag">Contender</span>
+                </div>
+            </div>
+
+            <!-- Rank 3 -->
+            <div class="horizon-ledger-row">
+                <div class="horizon-rank-num rank-bronze">03</div>
+                <div class="horizon-team-block">
+                    <div class="horizon-team-name">Apex Capital Reserves</div>
+                    <div class="horizon-team-college">Shri Ram College of Commerce, Delhi</div>
+                </div>
+                <div class="horizon-relative-track">
+                    <div class="relative-gauge-groove">
+                        <div class="relative-gauge-fill rank-bronze-fill" style="width: 86%;"></div>
+                    </div>
+                    <span class="relative-spectrum-tag">Contender</span>
+                </div>
+            </div>
+
+            <!-- Rank 4 -->
+            <div class="horizon-ledger-row">
+                <div class="horizon-rank-num rank-general">04</div>
+                <div class="horizon-team-block">
+                    <div class="horizon-team-name">Nexus Analytics</div>
+                    <div class="horizon-team-college">Narsee Monjee Institute, Mumbai</div>
+                </div>
+                <div class="horizon-relative-track">
+                    <div class="relative-gauge-groove">
+                        <div class="relative-gauge-fill" style="width: 76%;"></div>
+                    </div>
+                    <span class="relative-spectrum-tag">Qualified</span>
+                </div>
+            </div>
+
+            <!-- Rank 5 -->
+            <div class="horizon-ledger-row">
+                <div class="horizon-rank-num rank-general">05</div>
+                <div class="horizon-team-block">
+                    <div class="horizon-team-name">Equinox Asset Group</div>
+                    <div class="horizon-team-college">Christ University, Delhi NCR</div>
+                </div>
+                <div class="horizon-relative-track">
+                    <div class="relative-gauge-groove">
+                        <div class="relative-gauge-fill" style="width: 68%;"></div>
+                    </div>
+                    <span class="relative-spectrum-tag">Qualified</span>
+                </div>
+            </div>
+
+            <!-- Rank 6 -->
+            <div class="horizon-ledger-row">
+                <div class="horizon-rank-num rank-general">06</div>
+                <div class="horizon-team-block">
+                    <div class="horizon-team-name">Horizon Quant</div>
+                    <div class="horizon-team-college">Symbiosis Centre for Management, Pune</div>
+                </div>
+                <div class="horizon-relative-track">
+                    <div class="relative-gauge-groove">
+                        <div class="relative-gauge-fill" style="width: 59%;"></div>
+                    </div>
+                    <span class="relative-spectrum-tag">In Contention</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option L-2 -->
+        <div class="option-banner" style="margin-top:70px;">
+            <div>
+                <span class="option-badge">LEADERBOARD OPTION L-2</span>
+                <div class="option-name">The Dual-Tier Visual Spectrum (Podium Masthead + Relative Ledger)</div>
+            </div>
+            <span class="option-meta">3-column podium masthead divided by vertical hairlines • No numeric points</span>
+        </div>
+
+        <!-- Top 3 Podium Masthead -->
+        <div class="podium-masthead-spread">
+            <div class="podium-masthead-col col-2">
+                <div class="podium-giant-rank">02</div>
+                <div class="podium-team-title">Vanguard Collective</div>
+                <div class="podium-team-sub">Loyola College, Chennai</div>
+                <div class="podium-relative-beacon">
+                    <div class="relative-gauge-groove" style="width:100px;">
+                        <div class="relative-gauge-fill rank-silver-fill" style="width:93%;"></div>
+                    </div>
+                    <span style="color:var(--accent-silver)">Challenger</span>
+                </div>
+            </div>
+
+            <div class="podium-masthead-col col-1">
+                <div class="podium-giant-rank">01</div>
+                <div class="podium-team-title">The Alpha Syndicate</div>
+                <div class="podium-team-sub">St. Joseph's University, Bengaluru</div>
+                <div class="podium-relative-beacon">
+                    <div class="relative-gauge-groove" style="width:120px;">
+                        <div class="relative-gauge-fill rank-gold-fill" style="width:100%;"></div>
+                    </div>
+                    <span style="color:var(--accent-gold);font-weight:600;">Leader</span>
+                </div>
+            </div>
+
+            <div class="podium-masthead-col col-3">
+                <div class="podium-giant-rank">03</div>
+                <div class="podium-team-title">Apex Capital Reserves</div>
+                <div class="podium-team-sub">Shri Ram College of Commerce, Delhi</div>
+                <div class="podium-relative-beacon">
+                    <div class="relative-gauge-groove" style="width:90px;">
+                        <div class="relative-gauge-fill rank-bronze-fill" style="width:86%;"></div>
+                    </div>
+                    <span style="color:var(--accent-bronze)">Contender</span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+</div>
+
+<script>
+    function switchSection(secId) {
+        document.querySelectorAll('.mockup-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        
+        const target = document.getElementById('section-' + secId);
+        if (target) target.classList.add('active');
+        
+        event.currentTarget.classList.add('active');
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+    }
+
+    const exhibitsData = {
+        1: {
+            tag: "QUANTITATIVE FINANCE & ARBITRAGE",
+            title: "High-Frequency Volatility Modeling",
+            text: "Model multi-market price slippage across NSE and LSE trading windows. Stress test dynamic portfolio hedge reweighting under extreme 2.5% intraday index fluctuations.",
+            deadline: "Dec 16, 23:59 IST",
+            countdown: "T-minus 14h 22m",
+            btnLabel: "Submit Solution →"
+        },
+        2: {
+            tag: "SYSTEMIC RISK & LIQUIDITY MANAGEMENT",
+            title: "Cross-Border Counterparty Settlement",
+            text: "Emergency liquidity rebalancing protocol amidst sudden emerging market currency devaluation. Teams must structure interest rate swaps and mitigate immediate vendor settlement default risks.",
+            deadline: "Dec 16, 09:00 IST",
+            countdown: "Unlocks in 1d 08h",
+            btnLabel: "Locked until Release"
+        },
+        3: {
+            tag: "SOVEREIGN POLICY & RESTRUCTURING",
+            title: "Sovereign Debt Swaps & Bilateral Rebalancing",
+            text: "Evaluate an insolvent conglomerate facing liquidation under the Insolvency & Bankruptcy Code. Structure a comprehensive debt-equity resolution proposal preserving operating working capital.",
+            deadline: "Dec 17, 10:00 IST",
+            countdown: "Staged for Day 3",
+            btnLabel: "Scheduled"
+        }
+    };
+
+    function switchExhibit(id, el) {
+        document.querySelectorAll('.stream-row').forEach(r => r.classList.remove('active'));
+        el.classList.add('active');
+
+        const d = exhibitsData[id];
+        if (!d) return;
+
+        const canvas = document.getElementById('dossier-canvas');
+        canvas.innerHTML = `
+            <span class="canvas-tag">${d.tag}</span>
+            <h2 class="canvas-title">${d.title}</h2>
+            <p class="canvas-text">${d.text}</p>
+            <div class="canvas-meta-strip">
+                <span class="meta-strip-item"><strong>Submission Deadline:</strong> ${d.deadline}</span>
+                <span class="meta-countdown-tag">${d.countdown}</span>
+            </div>
+            <div class="canvas-actions">
+                <a href="#" class="btn-pill btn-cyan">${d.btnLabel}</a>
+                <a href="#" class="btn-pill btn-ghost">Read Full Brief ↗</a>
+            </div>
+        `;
+    }
+</script>
+</body>
+</html>
