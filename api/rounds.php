@@ -21,7 +21,7 @@ if ($secFetchDest === 'document' || $secFetchMode === 'navigate' || strpos($acce
     exit;
 }
 
-$sheetUrl = getenv('ROUNDS_CSV_URL') ?: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=1586686373&single=true&output=csv";
+$sheetUrl = getenv('ROUNDS_CSV_URL') ?: "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Rounds";
 
 // 2. 30-second local temp cache
 $cacheFile = sys_get_temp_dir() . '/cognito_rounds_cache.csv';
@@ -36,7 +36,8 @@ if (!$rawCsv) {
     $ctx = stream_context_create([
         'http' => [
             'timeout' => 8,
-            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) CognitoPHPProxy/2.0\r\n"
+            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) CognitoPHPProxy/2.0\r\n",
+            'follow_location' => 1
         ]
     ]);
     $fetched = @file_get_contents($sheetUrl, false, $ctx);
@@ -52,6 +53,16 @@ if (!$rawCsv) {
     http_response_code(502);
     header("Content-Type: text/plain; charset=utf-8");
     echo "Rounds data temporarily unavailable.";
+    exit;
+}
+
+$trimmed = trim($rawCsv);
+if (strpos($trimmed, '[') === 0 || strpos($trimmed, '{') === 0) {
+    header("Content-Type: application/json; charset=utf-8");
+    header("Cache-Control: public, max-age=30");
+    header("Access-Control-Allow-Origin: *");
+    header("X-Content-Type-Options: nosniff");
+    echo $rawCsv;
     exit;
 }
 

@@ -15,9 +15,9 @@ const path = require('path');
 const url = require('url');
 
 const PORT = process.env.PORT || 3000;
-const SCORES_SHEET_URL = process.env.SCORES_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=0&single=true&output=csv";
-const ROUNDS_SHEET_URL = process.env.ROUNDS_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=1586686373&single=true&output=csv";
-const TRAILER_SHEET_URL = process.env.TRAILER_CSV_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=265950681&single=true&output=csv";
+const SCORES_SHEET_URL = process.env.SCORES_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Scores";
+const ROUNDS_SHEET_URL = process.env.ROUNDS_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Rounds";
+const TRAILER_SHEET_URL = process.env.TRAILER_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Trailer";
 
 // In-memory 30s edge cache
 let scoresCache = { data: '', timestamp: 0 };
@@ -115,6 +115,19 @@ async function handleScores(req, res) {
             scoresCache = { data: rawCsv, timestamp: now };
         }
 
+        const trimmed = rawCsv.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cache-Control': 'public, max-age=30',
+                'Access-Control-Allow-Origin': '*',
+                'X-Content-Type-Options': 'nosniff',
+                'Content-Disposition': 'inline'
+            });
+            res.end(rawCsv);
+            return;
+        }
+
         const rows = parseCSVRecords(rawCsv);
         if (rows.length <= 1) {
             res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
@@ -186,6 +199,19 @@ async function handleRounds(req, res) {
             roundsCache = { data: rawCsv, timestamp: now };
         }
 
+        const trimmed = rawCsv.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cache-Control': 'public, max-age=30',
+                'Access-Control-Allow-Origin': '*',
+                'X-Content-Type-Options': 'nosniff',
+                'Content-Disposition': 'inline'
+            });
+            res.end(rawCsv);
+            return;
+        }
+
         const rows = parseCSVRecords(rawCsv);
         if (rows.length <= 1) {
             res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
@@ -247,8 +273,11 @@ async function handleTrailer(req, res) {
             trailerCache = { data: rawCsv, timestamp: now };
         }
 
+        const trimmed = rawCsv.trim();
+        const contentType = (trimmed.startsWith('[') || trimmed.startsWith('{')) ? 'application/json; charset=utf-8' : 'text/csv; charset=utf-8';
+
         res.writeHead(200, {
-            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Type': contentType,
             'Cache-Control': 'public, max-age=30',
             'Access-Control-Allow-Origin': '*',
             'X-Content-Type-Options': 'nosniff',

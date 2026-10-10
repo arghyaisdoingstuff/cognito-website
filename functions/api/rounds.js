@@ -9,7 +9,7 @@
  * 3. 30-second edge cache preventing Google Sheets rate-limiting.
  */
 
-const DEFAULT_ROUNDS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=1586686373&single=true&output=csv";
+const DEFAULT_ROUNDS_URL = "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Rounds";
 
 export async function onRequest(context) {
     // If someone pastes the URL directly into their browser, redirect to the webpage
@@ -41,7 +41,23 @@ export async function onRequest(context) {
             });
         }
 
-        const rawCsv = await response.text();
+        const rawText = await response.text();
+        const trimmed = rawText.trim();
+
+        // If upstream returns JSON (from Google Apps Script), forward directly with edge cache
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            return new Response(rawText, {
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Cache-Control": "public, max-age=30, s-maxage=30",
+                    "Access-Control-Allow-Origin": "*",
+                    "X-Content-Type-Options": "nosniff",
+                    "Content-Disposition": "inline"
+                }
+            });
+        }
+
+        const rawCsv = rawText;
         const rows = parseCSVRecords(rawCsv);
         
         if (rows.length <= 1) {

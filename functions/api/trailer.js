@@ -5,7 +5,7 @@
  * Dynamically releases the trailer video only when configured in the Google Sheet.
  */
 
-const DEFAULT_TRAILER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5JNcbtsUK-d8kVAxvy1pHwtWv45xxNeypV1mE9c-Ogp_dUMSKswaKucty3i5ZrM7WTKowW3jaKIrz/pub?gid=265950681&single=true&output=csv";
+const DEFAULT_TRAILER_URL = "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Trailer";
 
 export async function onRequest(context) {
     // 1. Direct browser navigation in address bar -> redirect to homepage
@@ -51,10 +51,13 @@ export async function onRequest(context) {
             });
         }
 
-        const rawCsv = await response.text();
-        return new Response(rawCsv, {
+        const rawText = await response.text();
+        const trimmed = rawText.trim();
+        const isJson = trimmed.startsWith('[') || trimmed.startsWith('{');
+
+        return new Response(rawText, {
             headers: {
-                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Type": isJson ? "application/json; charset=utf-8" : "text/csv; charset=utf-8",
                 "Cache-Control": "public, max-age=30, s-maxage=30",
                 "Access-Control-Allow-Origin": "*",
                 "X-Content-Type-Options": "nosniff",
