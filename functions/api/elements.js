@@ -1,11 +1,11 @@
 /**
- * Cloudflare Pages Function: /api/trailer
- * Secure server-side proxy for Cognito 2026 Trailer Release.
+ * Cloudflare Pages Function: /api/elements
+ * Secure server-side proxy for Cognito 2026 Dynamic Elements (Trailer, Brochure, etc.).
  * 
- * Dynamically releases the trailer video only when configured in the Google Sheet.
+ * Dynamically serves element configurations from Google Sheet Elements tab.
  */
 
-const DEFAULT_TRAILER_URL = "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Elements";
+const DEFAULT_ELEMENTS_URL = "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Elements";
 
 export async function onRequest(context) {
     // 1. Direct browser navigation in address bar -> redirect to homepage
@@ -16,12 +16,12 @@ export async function onRequest(context) {
         return Response.redirect(new URL("/index.html", context.request.url).toString(), 302);
     }
 
-    const targetUrl = (context.env && context.env.TRAILER_CSV_URL) ? context.env.TRAILER_CSV_URL : DEFAULT_TRAILER_URL;
+    const targetUrl = (context.env && context.env.ELEMENTS_CSV_URL) ? context.env.ELEMENTS_CSV_URL : DEFAULT_ELEMENTS_URL;
 
     if (!targetUrl) {
-        return new Response("URL,Show\n,", {
+        return new Response("[]", {
             headers: {
-                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Type": "application/json; charset=utf-8",
                 "Cache-Control": "public, max-age=30, s-maxage=30",
                 "Access-Control-Allow-Origin": "*",
                 "Content-Disposition": "inline"
@@ -42,7 +42,7 @@ export async function onRequest(context) {
         });
 
         if (!response.ok) {
-            return new Response("Trailer data temporarily unavailable.", {
+            return new Response("Dynamic elements data temporarily unavailable.", {
                 status: response.status,
                 headers: {
                     "Content-Type": "text/plain; charset=utf-8",
@@ -65,7 +65,7 @@ export async function onRequest(context) {
             }
         });
     } catch (err) {
-        return new Response("Service unavailable", {
+        return new Response("Dynamic elements service temporarily unreachable.", {
             status: 502,
             headers: {
                 "Content-Type": "text/plain; charset=utf-8",

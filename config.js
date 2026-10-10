@@ -19,26 +19,32 @@ const CONFIG = {
     // OPTION B: Local Edge / Proxy Endpoints (used if APPS_SCRIPT_URL is empty)
     SCORES_URL: "api/scores",
     ROUNDS_URL: "api/rounds",
+    ELEMENTS_URL: "api/elements",
     TRAILER_URL: "api/trailer",
 
     // Backwards-compatible aliases:
     SCORES_CSV_URL: "api/scores",
     ROUNDS_CSV_URL: "api/rounds",
+    ELEMENTS_CSV_URL: "api/elements",
     TRAILER_CSV_URL: "api/trailer",
 
     // Cloudflare Edge Fallback (automatically used if local endpoints are not available on college host):
     FALLBACK_SCORES_URL: "https://cognito-website-1nx.pages.dev/api/scores",
     FALLBACK_ROUNDS_URL: "https://cognito-website-1nx.pages.dev/api/rounds",
+    FALLBACK_ELEMENTS_URL: "https://cognito-website-1nx.pages.dev/api/elements",
     FALLBACK_TRAILER_URL: "https://cognito-website-1nx.pages.dev/api/trailer",
     FALLBACK_SCORES_CSV_URL: "https://cognito-website-1nx.pages.dev/api/scores",
     FALLBACK_ROUNDS_CSV_URL: "https://cognito-website-1nx.pages.dev/api/rounds",
+    FALLBACK_ELEMENTS_CSV_URL: "https://cognito-website-1nx.pages.dev/api/elements",
     FALLBACK_TRAILER_CSV_URL: "https://cognito-website-1nx.pages.dev/api/trailer",
 
     // -------------------------------------------------------------
-    // 2. Official Registration Links
+    // 2. Official Registration & Brochure Links
     // -------------------------------------------------------------
     CASE_COMPETITION_LINK: "https://unstop.com/p/cognito-2026-case-competition-christ-deemed-to-be-university-1757438",
     CONTINGENT_QUIZ_LINK: "https://docs.google.com/forms/d/e/1FAIpQLScdrJHC2m3-GRZ4mqBJjEbPL1-E8HSMN19ZREwnKSVFGCMjZw/viewform",
+    // Default brochure URL (dynamically updated via Google Sheet Elements tab)
+    BROCHURE_URL: "https://drive.google.com/file/d/1lHxOWFDXlhQKVnYQ_hXjGkXNtyj1ofUB/view",
 
     // -------------------------------------------------------------
     // 3. Event Dates & Deadlines (IST)

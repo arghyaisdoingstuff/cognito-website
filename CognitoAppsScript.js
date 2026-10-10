@@ -46,11 +46,12 @@ function getSpreadsheet() {
 /**
  * Main Web App Request Handler
  * Accepts:
- *   ?sheet=Scores   -> Returns contingent leaderboard data with score scrubbing
- *   ?sheet=Rounds   -> Returns timed round cases (only Show === 'Yes')
- *   ?sheet=Trailer  -> Returns trailer embed information
- *   ?sheet=All      -> Returns { scores: [...], rounds: [...], trailer: [...] }
- *   ?nocache=1      -> Bypasses memory cache for instant diagnostic read
+ *   ?sheet=Scores    -> Returns contingent leaderboard data with score scrubbing
+ *   ?sheet=Rounds    -> Returns timed round cases (only Show === 'Yes')
+ *   ?sheet=Elements  -> Returns dynamic site elements (Trailer, Brochure, etc.)
+ *   ?sheet=Trailer   -> Backwards-compatible alias for Elements
+ *   ?sheet=All       -> Returns { scores: [...], rounds: [...], elements: [...], trailer: [...] }
+ *   ?nocache=1       -> Bypasses memory cache for instant diagnostic read
  */
 function doGet(e) {
   try {
@@ -69,20 +70,25 @@ function doGet(e) {
 
     const ss = getSpreadsheet();
     let resultData;
+    const lowerParam = sheetParam.toLowerCase();
 
-    if (sheetParam.toLowerCase() === 'all') {
+    if (lowerParam === 'all') {
+      const elementsSheet = ss.getSheetByName('Elements') || ss.getSheetByName('elements') || ss.getSheetByName('Trailer') || ss.getSheetByName('trailer');
+      const elementsData = processElements(elementsSheet);
       resultData = {
-        scores: processScores(ss.getSheetByName('Scores')),
-        rounds: processRounds(ss.getSheetByName('Rounds')),
-        trailer: processTrailer(ss.getSheetByName('Trailer'))
+        scores: processScores(ss.getSheetByName('Scores') || ss.getSheetByName('scores')),
+        rounds: processRounds(ss.getSheetByName('Rounds') || ss.getSheetByName('rounds')),
+        elements: elementsData,
+        trailer: elementsData
       };
-    } else if (sheetParam.toLowerCase() === 'rounds') {
-      resultData = processRounds(ss.getSheetByName('Rounds'));
-    } else if (sheetParam.toLowerCase() === 'trailer') {
-      resultData = processTrailer(ss.getSheetByName('Trailer'));
+    } else if (lowerParam === 'rounds') {
+      resultData = processRounds(ss.getSheetByName('Rounds') || ss.getSheetByName('rounds'));
+    } else if (lowerParam === 'elements' || lowerParam === 'trailer') {
+      const elementsSheet = ss.getSheetByName('Elements') || ss.getSheetByName('elements') || ss.getSheetByName('Trailer') || ss.getSheetByName('trailer');
+      resultData = processElements(elementsSheet);
     } else {
       // Default to Scores
-      resultData = processScores(ss.getSheetByName('Scores'));
+      resultData = processScores(ss.getSheetByName('Scores') || ss.getSheetByName('scores'));
     }
 
     const jsonStr = JSON.stringify(resultData);
@@ -108,7 +114,7 @@ function doGet(e) {
 function onEdit(e) {
   try {
     const cache = CacheService.getScriptCache();
-    cache.removeAll(['cognito_cache_scores', 'cognito_cache_rounds', 'cognito_cache_trailer', 'cognito_cache_all']);
+    cache.removeAll(['cognito_cache_scores', 'cognito_cache_rounds', 'cognito_cache_trailer', 'cognito_cache_elements', 'cognito_cache_all']);
   } catch (_) {}
 }
 
@@ -235,10 +241,15 @@ function isRoundLocked(row) {
 }
 
 /**
- * Process Trailer Tab
+ * Process Elements / Trailer Tab
+ * Reads dynamic site elements (Trailer, Brochure, etc.)
  */
-function processTrailer(sheet) {
+function processElements(sheet) {
   return getSheetRows(sheet);
+}
+
+function processTrailer(sheet) {
+  return processElements(sheet);
 }
 
 /**

@@ -521,6 +521,7 @@ function initFilterGlider() {
 
 let resolvedRoundsUrl = null;
 let resolvedScoresUrl = null;
+let resolvedElementsUrl = null;
 let resolvedTrailerUrl = null;
 
 /**
@@ -536,7 +537,8 @@ function getEndpointUrl(type) {
     }
     if (type === 'Scores') return CONFIG.SCORES_URL || CONFIG.SCORES_CSV_URL;
     if (type === 'Rounds') return CONFIG.ROUNDS_URL || CONFIG.ROUNDS_CSV_URL;
-    if (type === 'Trailer') return CONFIG.TRAILER_URL || CONFIG.TRAILER_CSV_URL;
+    if (type === 'Elements') return CONFIG.ELEMENTS_URL || CONFIG.TRAILER_URL || CONFIG.ELEMENTS_CSV_URL || CONFIG.TRAILER_CSV_URL;
+    if (type === 'Trailer') return CONFIG.ELEMENTS_URL || CONFIG.TRAILER_URL || CONFIG.ELEMENTS_CSV_URL || CONFIG.TRAILER_CSV_URL;
     return '';
 }
 
@@ -546,7 +548,8 @@ function getEndpointUrl(type) {
 function getFallbackEndpointUrl(type) {
     if (type === 'Scores') return CONFIG.FALLBACK_SCORES_URL || CONFIG.FALLBACK_SCORES_CSV_URL;
     if (type === 'Rounds') return CONFIG.FALLBACK_ROUNDS_URL || CONFIG.FALLBACK_ROUNDS_CSV_URL;
-    if (type === 'Trailer') return CONFIG.FALLBACK_TRAILER_URL || CONFIG.FALLBACK_TRAILER_CSV_URL;
+    if (type === 'Elements') return CONFIG.FALLBACK_ELEMENTS_URL || CONFIG.FALLBACK_TRAILER_URL || CONFIG.FALLBACK_ELEMENTS_CSV_URL || CONFIG.FALLBACK_TRAILER_CSV_URL;
+    if (type === 'Trailer') return CONFIG.FALLBACK_ELEMENTS_URL || CONFIG.FALLBACK_TRAILER_URL || CONFIG.FALLBACK_ELEMENTS_CSV_URL || CONFIG.FALLBACK_TRAILER_CSV_URL;
     return '';
 }
 
@@ -1596,6 +1599,10 @@ document.addEventListener('DOMContentLoaded', () => {
         el.href = sanitizeUrl(CONFIG.CASE_COMPETITION_LINK);
         el.setAttribute('rel', 'noopener noreferrer');
     });
+    document.querySelectorAll('.link-brochure').forEach(el => {
+        el.href = sanitizeUrl(CONFIG.BROCHURE_URL || 'https://drive.google.com/file/d/1lHxOWFDXlhQKVnYQ_hXjGkXNtyj1ofUB/view');
+        el.setAttribute('rel', 'noopener noreferrer');
+    });
     document.querySelectorAll('.link-quiz').forEach(el => {
         el.href = sanitizeUrl(CONFIG.CONTINGENT_QUIZ_LINK);
         el.setAttribute('rel', 'noopener noreferrer');
@@ -1616,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Engines
     initRounds();
     initScores();
-    initTrailer();
+    initDynamicElements();
     initScrollReveal();
 });
 
@@ -1629,8 +1636,8 @@ function checkRegistrationDeadline() {
         : "2026-12-10T23:59:59+05:30";
     const cutoff = new Date(cutoffStr);
     if (!isNaN(cutoff.getTime()) && new Date() > cutoff) {
-        const heroActions = document.querySelector('.hero-actions');
-        if (heroActions) heroActions.style.display = 'none';
+        const regBtns = document.querySelectorAll('.hero-actions .link-case, .hero-actions .link-quiz');
+        regBtns.forEach(el => el.style.display = 'none');
     }
 }
 checkRegistrationDeadline();
@@ -1672,90 +1679,135 @@ function getYouTubeEmbedUrl(url) {
     return null;
 }
 
-async function initTrailer() {
+async function initDynamicElements() {
     const section = document.getElementById('trailer-section');
     const iframe = document.getElementById('trailer-iframe');
-    if (!section || !iframe) return;
-
-    if (!CONFIG.APPS_SCRIPT_URL && !CONFIG.TRAILER_URL && !CONFIG.TRAILER_CSV_URL && !CONFIG.FALLBACK_TRAILER_URL && !CONFIG.FALLBACK_TRAILER_CSV_URL) {
-        section.style.display = 'none';
-        return;
-    }
+    const brochureBtns = document.querySelectorAll('.link-brochure');
 
     // 1. Instant optimistic restore from session cache so page reload never drops or flickers
-    let wasCached = false;
+    let wasTrailerCached = false;
     try {
-        const cachedUrl = sessionStorage.getItem('cognito_trailer_embed');
-        if (cachedUrl) {
-            const cachedEmbed = getYouTubeEmbedUrl(cachedUrl);
+        const cachedTrailer = sessionStorage.getItem('cognito_trailer_embed');
+        if (cachedTrailer && section && iframe) {
+            const cachedEmbed = getYouTubeEmbedUrl(cachedTrailer);
             if (cachedEmbed) {
                 iframe.src = cachedEmbed;
                 section.style.display = '';
                 section.querySelectorAll('.reveal, .reveal-scale').forEach(el => el.classList.add('visible'));
-                wasCached = true;
+                wasTrailerCached = true;
             }
         }
-    } catch (e) {}
+    } catch (_) {}
 
-    // 2. Fetch latest live sheet status in background
     try {
-        const primaryUrl = resolvedTrailerUrl || getEndpointUrl('Trailer');
-        const fallbackUrl = getFallbackEndpointUrl('Trailer');
-        const res = await fetchDataWithFallback(primaryUrl, fallbackUrl);
+        const cachedBrochure = sessionStorage.getItem('cognito_brochure_url') || (typeof CONFIG !== 'undefined' && CONFIG.BROCHURE_URL);
+        if (cachedBrochure && brochureBtns.length > 0) {
+            brochureBtns.forEach(btn => {
+                btn.href = sanitizeUrl(cachedBrochure);
+                btn.setAttribute('rel', 'noopener noreferrer');
+            });
+        }
+    } catch (_) {}
+
+    if (!CONFIG.APPS_SCRIPT_URL && !CONFIG.ELEMENTS_URL && !CONFIG.TRAILER_URL && !CONFIG.FALLBACK_ELEMENTS_URL && !CONFIG.FALLBACK_TRAILER_URL) {
+        if (!wasTrailerCached && section) section.style.display = 'none';
+        return;
+    }
+
+    // 2. Fetch latest live elements status in background
+    try {
+        const primaryUrl = resolvedElementsUrl || getEndpointUrl('Elements');
+        const fallbackUrl = getFallbackEndpointUrl('Elements');
+        let res = await fetchDataWithFallback(primaryUrl, fallbackUrl);
+
+        // Fallback to Trailer endpoint if Elements returned empty
+        if ((!res.ok || !res.text || res.text === '[]') && (typeof CONFIG !== 'undefined' && CONFIG.APPS_SCRIPT_URL)) {
+            const trailerPrimary = resolvedTrailerUrl || getEndpointUrl('Trailer');
+            const trailerFallback = getFallbackEndpointUrl('Trailer');
+            const trailerRes = await fetchDataWithFallback(trailerPrimary, trailerFallback);
+            if (trailerRes.ok && trailerRes.text && trailerRes.text !== '[]') {
+                res = trailerRes;
+            }
+        }
 
         if (res.ok && res.text) {
-            resolvedTrailerUrl = res.url;
+            resolvedElementsUrl = res.url;
             const rows = parseData(res.text);
 
-            if (rows.length > 0) {
-                const firstRow = rows[0];
-                const keys = Object.keys(firstRow);
+            if (Array.isArray(rows) && rows.length > 0) {
+                let foundTrailer = false;
+                let foundBrochure = false;
 
-                // Find URL column and Show column
-                const urlKey = keys.find(k => /url|link|video|youtube|embed/i.test(k));
-                const showKey = keys.find(k => /show|active|confirm|release|publish|status/i.test(k));
+                rows.forEach(row => {
+                    const keys = Object.keys(row);
+                    const elementKey = keys.find(k => /element|name|item|type|title/i.test(k));
+                    const urlKey = keys.find(k => /url|link|video|embed|href/i.test(k));
+                    const showKey = keys.find(k => /show|active|confirm|release|publish|status/i.test(k));
 
-                let videoUrl = '';
-                let shouldShow = false;
+                    const elementName = elementKey ? String(row[elementKey] || '').trim().toLowerCase() : '';
+                    let itemUrl = urlKey ? String(row[urlKey] || '').trim() : '';
+                    let showVal = showKey ? String(row[showKey] || '').trim().toLowerCase() : '';
 
-                if (urlKey && showKey) {
-                    videoUrl = (firstRow[urlKey] || '').trim();
-                    const showVal = (firstRow[showKey] || '').trim().toLowerCase();
-                    shouldShow = (showVal === 'yes' || showVal === 'y' || showVal === 'true');
-                } else if (keys.length >= 2) {
-                    videoUrl = (firstRow[keys[0]] || '').trim();
-                    const showVal = (firstRow[keys[1]] || '').trim().toLowerCase();
-                    shouldShow = (showVal === 'yes' || showVal === 'y' || showVal === 'true');
-                }
+                    // Fallback to position-based if only 2 columns (e.g. legacy URL, Show)
+                    if (!urlKey && keys.length >= 1) itemUrl = String(row[keys[0]] || '').trim();
+                    if (!showKey && keys.length >= 2) showVal = String(row[keys[1]] || '').trim().toLowerCase();
 
-                if (shouldShow && videoUrl) {
-                    const embedUrl = getYouTubeEmbedUrl(videoUrl);
-                    if (embedUrl) {
-                        try { sessionStorage.setItem('cognito_trailer_embed', videoUrl); } catch (e) {}
-                        if (iframe.src !== embedUrl) {
-                            iframe.src = embedUrl;
+                    const shouldShow = (showVal === 'yes' || showVal === 'y' || showVal === 'true');
+
+                    // ─── Trailer handling ───
+                    if (elementName === 'trailer' || (!elementName && (itemUrl.includes('youtube') || itemUrl.includes('youtu.be')))) {
+                        foundTrailer = true;
+                        if (shouldShow && itemUrl && section && iframe) {
+                            const embedUrl = getYouTubeEmbedUrl(itemUrl);
+                            if (embedUrl) {
+                                try { sessionStorage.setItem('cognito_trailer_embed', itemUrl); } catch (_) {}
+                                if (iframe.src !== embedUrl) {
+                                    iframe.src = embedUrl;
+                                }
+                                section.style.display = '';
+                                section.querySelectorAll('.reveal, .reveal-scale').forEach(el => el.classList.add('visible'));
+                                initScrollReveal();
+                            }
+                        } else if (section) {
+                            try { sessionStorage.removeItem('cognito_trailer_embed'); } catch (_) {}
+                            section.style.display = 'none';
+                            if (iframe) iframe.src = '';
                         }
-                        section.style.display = '';
-                        section.querySelectorAll('.reveal, .reveal-scale').forEach(el => el.classList.add('visible'));
-                        initScrollReveal();
-                        return;
                     }
-                } else {
-                    // Explicitly unconfirmed or blank in the Google Sheet
-                    try { sessionStorage.removeItem('cognito_trailer_embed'); } catch (e) {}
+
+                    // ─── Brochure handling ───
+                    if (elementName === 'brochure' || (!elementName && itemUrl.includes('drive.google.com'))) {
+                        foundBrochure = true;
+                        if (shouldShow && itemUrl && brochureBtns.length > 0) {
+                            try { sessionStorage.setItem('cognito_brochure_url', itemUrl); } catch (_) {}
+                            brochureBtns.forEach(btn => {
+                                btn.href = sanitizeUrl(itemUrl);
+                                btn.style.display = '';
+                            });
+                        } else if (!shouldShow && brochureBtns.length > 0) {
+                            try { sessionStorage.removeItem('cognito_brochure_url'); } catch (_) {}
+                            brochureBtns.forEach(btn => {
+                                btn.style.display = 'none';
+                            });
+                        }
+                    }
+                });
+
+                if (!foundTrailer && !wasTrailerCached && section) {
                     section.style.display = 'none';
-                    iframe.src = '';
-                    return;
                 }
+                return;
             }
         }
-    } catch (e) {}
+    } catch (_) {}
 
     // If there was no valid cache and fetch failed or returned empty
-    if (!wasCached) {
+    if (!wasTrailerCached && section) {
         section.style.display = 'none';
     }
 }
+
+const initTrailer = initDynamicElements;
 
 // ──────────────────────────────────────────────────────────────
 // 6. INTERACTIVE BACKGROUND NODES

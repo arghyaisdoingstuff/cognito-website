@@ -17,12 +17,14 @@ const url = require('url');
 const PORT = process.env.PORT || 3000;
 const SCORES_SHEET_URL = process.env.SCORES_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Scores";
 const ROUNDS_SHEET_URL = process.env.ROUNDS_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Rounds";
-const TRAILER_SHEET_URL = process.env.TRAILER_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Trailer";
+const ELEMENTS_SHEET_URL = process.env.ELEMENTS_CSV_URL || "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Elements";
+const TRAILER_SHEET_URL = ELEMENTS_SHEET_URL;
 
 // In-memory 30s edge cache
 let scoresCache = { data: '', timestamp: 0 };
 let roundsCache = { data: '', timestamp: 0 };
-let trailerCache = { data: '', timestamp: 0 };
+let elementsCache = { data: '', timestamp: 0 };
+let trailerCache = elementsCache;
 const CACHE_TTL_MS = 30000;
 
 function fetchUrl(targetUrl) {
@@ -324,7 +326,7 @@ const server = http.createServer((req, res) => {
     if (pathname === '/api/rounds') {
         return handleRounds(req, res);
     }
-    if (pathname === '/api/trailer') {
+    if (pathname === '/api/trailer' || pathname === '/api/elements') {
         return handleTrailer(req, res);
     }
 

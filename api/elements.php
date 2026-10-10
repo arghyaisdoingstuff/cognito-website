@@ -1,6 +1,6 @@
 <?php
 /**
- * Cognito 2026 - PHP API Proxy for Trailer Release
+ * Cognito 2026 - PHP API Proxy for Dynamic Elements (Trailer, Brochure, etc.)
  * Deployment target: College servers running Apache/Nginx/cPanel/XAMPP with PHP.
  */
 
@@ -13,27 +13,27 @@ if ($secFetchDest === 'document' || $secFetchMode === 'navigate') {
     exit;
 }
 
-$sheetUrl = getenv('TRAILER_CSV_URL') ?: "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Elements";
+$sheetUrl = getenv('ELEMENTS_CSV_URL') ?: "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec?sheet=Elements";
 
 if (empty($sheetUrl)) {
-    header("Content-Type: text/csv; charset=utf-8");
+    header("Content-Type: application/json; charset=utf-8");
     header("Cache-Control: public, max-age=30");
     header("Access-Control-Allow-Origin: *");
     header("Content-Disposition: inline");
-    echo "URL,Show\n,";
+    echo "[]";
     exit;
 }
 
 // 2. 30-second local temp cache
-$cacheFile = sys_get_temp_dir() . '/cognito_trailer_cache.csv';
+$cacheFile = sys_get_temp_dir() . '/cognito_elements_cache.json';
 $cacheDuration = 30; // seconds
 
-$rawCsv = '';
+$rawResponse = '';
 if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < $cacheDuration)) {
-    $rawCsv = @file_get_contents($cacheFile);
+    $rawResponse = @file_get_contents($cacheFile);
 }
 
-if (!$rawCsv) {
+if (!$rawResponse) {
     $ctx = stream_context_create([
         'http' => [
             'timeout' => 8,
@@ -41,31 +41,25 @@ if (!$rawCsv) {
             'follow_location' => 1
         ]
     ]);
-    $fetched = @file_get_contents($sheetUrl, false, $ctx);
-    if ($fetched !== false && strlen(trim($fetched)) > 0) {
-        $rawCsv = $fetched;
-        @file_put_contents($cacheFile, $rawCsv, LOCK_EX);
-    } elseif (file_exists($cacheFile)) {
-        $rawCsv = @file_get_contents($cacheFile);
+    $rawResponse = @file_get_contents($sheetUrl, false, $ctx);
+    if ($rawResponse !== false && !empty(trim($rawResponse))) {
+        @file_put_contents($cacheFile, $rawResponse);
     }
 }
 
-if (!$rawCsv) {
+if ($rawResponse === false || empty(trim($rawResponse))) {
     http_response_code(502);
     header("Content-Type: text/plain; charset=utf-8");
-    header("Cache-Control: no-cache, no-store");
-    echo "Trailer data temporarily unavailable.";
+    echo "Elements service temporarily unavailable.";
     exit;
 }
 
-$trimmed = trim($rawCsv);
-$isJson = (strpos($trimmed, '[') === 0 || strpos($trimmed, '{') === 0);
+$trimmed = trim($rawResponse);
+$isJson = ($trimmed[0] === '[' || $trimmed[0] === '{');
 
-header("Content-Type: " . ($isJson ? "application/json; charset=utf-8" : "text/csv; charset=utf-8"));
+header($isJson ? "Content-Type: application/json; charset=utf-8" : "Content-Type: text/csv; charset=utf-8");
 header("Cache-Control: public, max-age=30");
 header("Access-Control-Allow-Origin: *");
 header("X-Content-Type-Options: nosniff");
 header("Content-Disposition: inline");
-
-echo $rawCsv;
-exit;
+echo $rawResponse;
