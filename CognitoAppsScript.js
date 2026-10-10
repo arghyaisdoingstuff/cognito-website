@@ -173,19 +173,65 @@ function processScores(sheet) {
 
 /**
  * Process Rounds Tab
- * Confidentiality Guard:
- * - Only returns rounds where Show === 'Yes'
- * - Draft rounds are completely filtered out on Google's servers
+ * Confidentiality Guards:
+ * 1. DRAFT FILTER: Completely eliminates rows where Show !== 'Yes'.
+ * 2. LINK LOCKDOWN: If an exhibit has not reached its release time yet,
+ *    its BriefLink and SubmitLink are stripped on the server so participants
+ *    cannot sniff Google Drive case brief links in browser DevTools!
  */
 function processRounds(sheet) {
   const rows = getSheetRows(sheet);
   if (!rows.length) return [];
 
-  return rows.filter(function(r) {
+  const visible = rows.filter(function(r) {
     const showKey = Object.keys(r).find(function(k) { return /^show$/i.test(k); });
     const val = showKey ? (r[showKey] || '').toLowerCase() : '';
     return val === 'yes' || val === 'y' || val === 'true';
   });
+
+  return visible.map(function(r) {
+    // If release time is in the future, redact case brief and submission links
+    if (isRoundLocked(r)) {
+      if (r.BriefLink) r.BriefLink = '';
+      if (r.SubmitLink) r.SubmitLink = '';
+    }
+    return r;
+  });
+}
+
+/**
+ * Checks whether an exhibit's release time is currently in the future (IST).
+ */
+function isRoundLocked(row) {
+  const relDateKey = Object.keys(row).find(function(k) { return /release.*date|date.*release/i.test(k); });
+  const relTimeKey = Object.keys(row).find(function(k) { return /release.*time|time.*release/i.test(k); });
+  const dateStr = relDateKey ? String(row[relDateKey] || '').trim() : '';
+  const timeStr = relTimeKey ? String(row[relTimeKey] || '').trim() : '';
+  if (!dateStr) return false;
+
+  const parts = dateStr.split(/[\/\-\.]/);
+  if (parts.length < 3) return false;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const year = parseInt(parts[2], 10);
+
+  let hours = 0, minutes = 0;
+  if (timeStr) {
+    const timeParts = timeStr.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+    if (timeParts) {
+      hours = parseInt(timeParts[1], 10);
+      minutes = parseInt(timeParts[2], 10);
+      const ampm = timeParts[3] ? timeParts[3].toLowerCase() : null;
+      if (ampm === 'pm' && hours < 12) hours += 12;
+      if (ampm === 'am' && hours === 12) hours = 0;
+    }
+  }
+
+  // Anchor to Indian Standard Time (IST / UTC+05:30)
+  const IST_OFFSET_MS = 19800000;
+  const targetUtcMs = Date.UTC(year, month - 1, day, hours, minutes, 0) - IST_OFFSET_MS;
+  const nowMs = Date.now();
+  return nowMs < targetUtcMs;
 }
 
 /**
