@@ -282,6 +282,7 @@ img { max-width: 100%; height: auto; display: block; }
     height: 24px;
     width: auto;
     object-fit: contain;
+    transform: translateY(1.5px);
 }
 .nav-links { display:flex; align-items:center; gap:4px; list-style:none; position:relative; }
 .nav-links a {
