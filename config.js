@@ -14,7 +14,7 @@ const CONFIG = {
     // Paste your deployed Apps Script URL here for instant, real-time updates:
     // e.g. "https://script.google.com/macros/s/AKfycb.../exec"
     // (See CognitoAppsScript.js for 30-second setup instructions)
-    APPS_SCRIPT_URL: "",
+    APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec",
 
     // OPTION B: Local Edge / Proxy Endpoints (used if APPS_SCRIPT_URL is empty)
     SCORES_URL: "/api/scores",
