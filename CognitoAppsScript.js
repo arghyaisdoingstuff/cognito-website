@@ -23,6 +23,26 @@
  * ============================================================================
  */
 
+// OPTIONAL: If using a standalone script created at script.google.com,
+// paste your Google Sheet ID here (the long code between /d/ and /edit in the URL).
+// If you opened Apps Script directly from Extensions > Apps Script, leave this empty ("").
+const SPREADSHEET_ID = "";
+
+/**
+ * Resolves the Google Sheet object, supporting both container-bound
+ * (Extensions > Apps Script) and standalone (script.google.com) projects.
+ */
+function getSpreadsheet() {
+  if (SPREADSHEET_ID && SPREADSHEET_ID.trim()) {
+    return SpreadsheetApp.openById(SPREADSHEET_ID.trim());
+  }
+  try {
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch (_) {}
+  throw new Error("Spreadsheet not found. If this is a standalone Apps Script, paste your Google Sheet ID into SPREADSHEET_ID at the top of the script.");
+}
+
 /**
  * Main Web App Request Handler
  * Accepts:
@@ -47,7 +67,7 @@ function doGet(e) {
       }
     }
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSpreadsheet();
     let resultData;
 
     if (sheetParam.toLowerCase() === 'all') {
