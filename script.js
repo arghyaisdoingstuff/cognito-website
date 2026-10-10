@@ -523,14 +523,66 @@ let resolvedRoundsUrl = null;
 let resolvedScoresUrl = null;
 let resolvedTrailerUrl = null;
 
-async function fetchCsvWithFallback(primaryUrl, fallbackUrl) {
-    const fetchHeaders = { 'Accept': 'text/csv, text/plain; q=0.9, */*; q=0.8' };
+/**
+ * Resolves the target API endpoint URL for a given resource.
+ * If CONFIG.APPS_SCRIPT_URL is provided, routes directly to the instant Google Apps Script web app.
+ * Otherwise, falls back to the local edge/proxy endpoint.
+ */
+function getEndpointUrl(type) {
+    if (CONFIG.APPS_SCRIPT_URL && String(CONFIG.APPS_SCRIPT_URL).trim()) {
+        const base = String(CONFIG.APPS_SCRIPT_URL).trim();
+        const sep = base.includes('?') ? '&' : '?';
+        return `${base}${sep}sheet=${encodeURIComponent(type)}`;
+    }
+    if (type === 'Scores') return CONFIG.SCORES_URL || CONFIG.SCORES_CSV_URL;
+    if (type === 'Rounds') return CONFIG.ROUNDS_URL || CONFIG.ROUNDS_CSV_URL;
+    if (type === 'Trailer') return CONFIG.TRAILER_URL || CONFIG.TRAILER_CSV_URL;
+    return '';
+}
+
+/**
+ * Resolves the backup fallback endpoint if the primary host is unreachable.
+ */
+function getFallbackEndpointUrl(type) {
+    if (type === 'Scores') return CONFIG.FALLBACK_SCORES_URL || CONFIG.FALLBACK_SCORES_CSV_URL;
+    if (type === 'Rounds') return CONFIG.FALLBACK_ROUNDS_URL || CONFIG.FALLBACK_ROUNDS_CSV_URL;
+    if (type === 'Trailer') return CONFIG.FALLBACK_TRAILER_URL || CONFIG.FALLBACK_TRAILER_CSV_URL;
+    return '';
+}
+
+/**
+ * Unified data parser: Automatically detects whether data is returned as
+ * structured JSON (from Google Apps Script) or RFC-4180 CSV (from published sheets or proxies).
+ */
+function parseData(text) {
+    if (!text || !text.trim()) return [];
+    const trimmed = text.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) return parsed;
+            if (parsed && Array.isArray(parsed.data)) return parsed.data;
+            if (parsed && Array.isArray(parsed.rows)) return parsed.rows;
+            if (parsed && Array.isArray(parsed.scores)) return parsed.scores;
+            if (parsed && Array.isArray(parsed.rounds)) return parsed.rounds;
+            if (parsed && typeof parsed === 'object') return [parsed];
+        } catch (_) {}
+    }
+    return parseCSV(text);
+}
+
+/**
+ * Dual-tier HTTP fetcher with failover and content verification.
+ * Accepts both application/json and text/csv.
+ */
+async function fetchDataWithFallback(primaryUrl, fallbackUrl) {
+    const fetchHeaders = { 'Accept': 'application/json, text/csv, text/plain; q=0.9, */*; q=0.8' };
     if (primaryUrl) {
         try {
             const res = await fetch(primaryUrl, { headers: fetchHeaders });
             if (res.ok) {
                 const text = await res.text();
-                // Ensure response is valid CSV and not an HTML error page
+                // Ensure response is valid JSON or CSV and not an HTML error or captcha page
                 if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
                     return { ok: true, text, url: primaryUrl };
                 }
@@ -553,6 +605,9 @@ async function fetchCsvWithFallback(primaryUrl, fallbackUrl) {
     return { ok: false, text: '', url: null };
 }
 
+// Backwards-compatible alias for existing callers
+const fetchCsvWithFallback = fetchDataWithFallback;
+
 async function initRounds() {
     const container = document.getElementById('rounds-container');
     if (!container) return;
@@ -560,14 +615,14 @@ async function initRounds() {
     let roundsData = [];
     let isLive = false;
 
-    const res = await fetchCsvWithFallback(
-        resolvedRoundsUrl || CONFIG.ROUNDS_CSV_URL,
-        CONFIG.FALLBACK_ROUNDS_CSV_URL
-    );
+    const primaryUrl = resolvedRoundsUrl || getEndpointUrl('Rounds');
+    const fallbackUrl = getFallbackEndpointUrl('Rounds');
+
+    const res = await fetchDataWithFallback(primaryUrl, fallbackUrl);
 
     if (res.ok) {
         resolvedRoundsUrl = res.url;
-        roundsData = parseCSV(res.text);
+        roundsData = parseData(res.text);
         isLive = roundsData.length > 0;
     }
 
@@ -1075,14 +1130,14 @@ async function initScores() {
     if (!container) return;
 
     let isLive = false;
-    const res = await fetchCsvWithFallback(
-        resolvedScoresUrl || CONFIG.SCORES_CSV_URL,
-        CONFIG.FALLBACK_SCORES_CSV_URL
-    );
+    const primaryUrl = resolvedScoresUrl || getEndpointUrl('Scores');
+    const fallbackUrl = getFallbackEndpointUrl('Scores');
+
+    const res = await fetchDataWithFallback(primaryUrl, fallbackUrl);
 
     if (res.ok) {
         resolvedScoresUrl = res.url;
-        allScoresData = parseCSV(res.text);
+        allScoresData = parseData(res.text);
         isLive = allScoresData.length > 0;
     } else {
         allScoresData = [];
@@ -1105,12 +1160,12 @@ async function initScores() {
     if (isLive && CONFIG.AUTO_REFRESH_INTERVAL) {
         setInterval(async () => {
             try {
-                const refreshRes = await fetchCsvWithFallback(
-                    resolvedScoresUrl || CONFIG.SCORES_CSV_URL,
-                    CONFIG.FALLBACK_SCORES_CSV_URL
+                const refreshRes = await fetchDataWithFallback(
+                    resolvedScoresUrl || getEndpointUrl('Scores'),
+                    getFallbackEndpointUrl('Scores')
                 );
                 if (refreshRes.ok) {
-                    const fresh = parseCSV(refreshRes.text);
+                    const fresh = parseData(refreshRes.text);
                     if (fresh.length > 0) allScoresData = fresh;
                     renderBarChart(true);
                 }
@@ -1125,16 +1180,21 @@ function renderBarChart(isLive) {
 
     // Filter to Contingent only
     let contingentRows = allScoresData.filter(row => {
-        const ev = (row.Event || '').toLowerCase();
+        const ev = (row.Event || row.event || '').toLowerCase();
         return ev.includes('contingent');
     });
 
+    const getScoreVal = (r) => {
+        const val = r.Score ?? r.score ?? r.ScorePercentage ?? r.scorePercentage ?? r.Points ?? r.points ?? r.Total ?? r.total ?? 0;
+        return parseFloat(val) || 0;
+    };
+
     // Sort to determine true ranking
-    contingentRows.sort((a, b) => (parseFloat(b.Score) || 0) - (parseFloat(a.Score) || 0));
+    contingentRows.sort((a, b) => getScoreVal(b) - getScoreVal(a));
     
     // Assign permanent ranks based on full contingent list (handling ties)
     contingentRows.forEach((row, i) => {
-        if (i > 0 && (parseFloat(row.Score) || 0) === (parseFloat(contingentRows[i-1].Score) || 0)) {
+        if (i > 0 && getScoreVal(row) === getScoreVal(contingentRows[i-1])) {
             row._rank = contingentRows[i-1]._rank;
         } else {
             row._rank = i + 1;
@@ -1158,8 +1218,8 @@ function renderBarChart(isLive) {
     let filtered = contingentRows;
     if (searchQuery) {
         filtered = contingentRows.filter(row =>
-            (row.Team || '').toLowerCase().includes(searchQuery) ||
-            (row.College || '').toLowerCase().includes(searchQuery)
+            (row.Team || row.team || '').toLowerCase().includes(searchQuery) ||
+            (row.College || row.college || '').toLowerCase().includes(searchQuery)
         );
     }
 
@@ -1183,15 +1243,14 @@ function renderBarChart(isLive) {
     }
 
     // Compute max score for bar width proportions (use overall max, not just filtered max)
-    const rawMax = Math.max(0, ...contingentRows.map(r => parseFloat(r.Score) || 0));
+    const rawMax = Math.max(0, ...contingentRows.map(r => getScoreVal(r)));
     const maxScore = isFinite(rawMax) && rawMax > 0 ? rawMax : 0;
 
     const rows = filtered.map((row) => {
         const rank = row._rank;
-        const rawScore = parseFloat(row.Score);
-        const score = isNaN(rawScore) ? 0 : rawScore;
+        const score = getScoreVal(row);
         const pct = maxScore > 0 ? Math.max(0, Math.min(100, (score / maxScore * 100))).toFixed(1) : "0.0";
-        const teamKey = escapeHtml((row.Team || 'team_' + rank).replace(/\s+/g, '_'));
+        const teamKey = escapeHtml((row.Team || row.team || 'team_' + rank).replace(/\s+/g, '_'));
 
         let rankClass = 'rank-general';
         let fillClass = '';
@@ -1618,7 +1677,7 @@ async function initTrailer() {
     const iframe = document.getElementById('trailer-iframe');
     if (!section || !iframe) return;
 
-    if (!CONFIG.TRAILER_CSV_URL && !CONFIG.FALLBACK_TRAILER_CSV_URL) {
+    if (!CONFIG.APPS_SCRIPT_URL && !CONFIG.TRAILER_URL && !CONFIG.TRAILER_CSV_URL && !CONFIG.FALLBACK_TRAILER_URL && !CONFIG.FALLBACK_TRAILER_CSV_URL) {
         section.style.display = 'none';
         return;
     }
@@ -1640,14 +1699,13 @@ async function initTrailer() {
 
     // 2. Fetch latest live sheet status in background
     try {
-        const res = await fetchCsvWithFallback(
-            resolvedTrailerUrl || CONFIG.TRAILER_CSV_URL,
-            CONFIG.FALLBACK_TRAILER_CSV_URL
-        );
+        const primaryUrl = resolvedTrailerUrl || getEndpointUrl('Trailer');
+        const fallbackUrl = getFallbackEndpointUrl('Trailer');
+        const res = await fetchDataWithFallback(primaryUrl, fallbackUrl);
 
         if (res.ok && res.text) {
             resolvedTrailerUrl = res.url;
-            const rows = parseCSV(res.text);
+            const rows = parseData(res.text);
 
             if (rows.length > 0) {
                 const firstRow = rows[0];

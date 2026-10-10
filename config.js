@@ -8,14 +8,28 @@
 
 const CONFIG = {
     // -------------------------------------------------------------
-    // 1. Google Sheets Integration (Local Edge/PHP/Node + Cloudflare Fallback)
+    // 1. Google Sheets Integration (Instant Apps Script + Edge Fallbacks)
     // -------------------------------------------------------------
-    // Primary local endpoint (works on Cloudflare Pages, Apache+PHP, and Node.js):
+    // OPTION A (RECOMMENDED): Instant Google Apps Script Web App (0-Second Sync)
+    // Paste your deployed Apps Script URL here for instant, real-time updates:
+    // e.g. "https://script.google.com/macros/s/AKfycb.../exec"
+    // (See CognitoAppsScript.js for 30-second setup instructions)
+    APPS_SCRIPT_URL: "",
+
+    // OPTION B: Local Edge / Proxy Endpoints (used if APPS_SCRIPT_URL is empty)
+    SCORES_URL: "/api/scores",
+    ROUNDS_URL: "/api/rounds",
+    TRAILER_URL: "/api/trailer",
+
+    // Backwards-compatible aliases:
     SCORES_CSV_URL: "/api/scores",
     ROUNDS_CSV_URL: "/api/rounds",
     TRAILER_CSV_URL: "/api/trailer",
 
-    // Cloudflare Edge Fallback (automatically used if hosted on a static college server):
+    // Cloudflare Edge Fallback (automatically used if local endpoints are not available on college host):
+    FALLBACK_SCORES_URL: "https://cognito-website-1nx.pages.dev/api/scores",
+    FALLBACK_ROUNDS_URL: "https://cognito-website-1nx.pages.dev/api/rounds",
+    FALLBACK_TRAILER_URL: "https://cognito-website-1nx.pages.dev/api/trailer",
     FALLBACK_SCORES_CSV_URL: "https://cognito-website-1nx.pages.dev/api/scores",
     FALLBACK_ROUNDS_CSV_URL: "https://cognito-website-1nx.pages.dev/api/rounds",
     FALLBACK_TRAILER_CSV_URL: "https://cognito-website-1nx.pages.dev/api/trailer",

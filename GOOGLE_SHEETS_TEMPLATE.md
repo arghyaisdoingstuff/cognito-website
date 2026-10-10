@@ -78,7 +78,35 @@ The engine extracts the video ID and embeds it into the homepage hero section.
 
 ---
 
-## Step 5: Publish Tabs as CSV
+## Step 5: Connecting to the Website (Choose Method 1 or 2)
+
+### 🥇 METHOD 1 (RECOMMENDED): Instant Google Apps Script (0-Second Delay)
+*Use this method for event day! It bypasses Google's 1–5 minute publishing delay, works on ANY server when handed off to the college, and scrubs secret scores on the server.*
+
+1. In your Google Sheet, click **Extensions** > **Apps Script**.
+2. Delete any existing code in the editor.
+3. Open [`CognitoAppsScript.js`](CognitoAppsScript.js) from the website repository, copy its entire contents, and paste it into the editor.
+4. Click the blue **Deploy** button (top right) > **New deployment**.
+5. Click the gear icon ⚙️ beside *Select type* > Choose **Web app**.
+6. Set the configuration:
+   - **Description**: `Cognito 2026 Live API`
+   - **Execute as**: `Me` (your fest Google account)
+   - **Who has access**: `Anyone` *(Crucial: allows visitors to read scores without logging in)*
+7. Click **Deploy** > **Authorize access** (select your account > click *Advanced* > *Go to Cognito API (unsafe)* > *Allow*).
+8. Copy the generated **Web app URL** (looks like `https://script.google.com/macros/s/AKfycb.../exec`).
+9. Open `config.js` in your website folder and paste it into `APPS_SCRIPT_URL`:
+   ```javascript
+   const CONFIG = {
+       APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycb.../exec",
+       ...
+   };
+   ```
+10. **That's it!** You're live with instant updates. When you edit any cell in Google Sheets, the live website sees it in real time!
+
+---
+
+### 🥈 METHOD 2 (FALLBACK): Classic "Publish to Web" as CSV
+*Note: Google takes 1 to 5 minutes to push changes through this method due to CDN caching.*
 
 1. In Google Sheets, click **File** > **Share** > **Publish to web**.
 2. Select **Link**:
@@ -86,25 +114,23 @@ The engine extracts the video ID and embeds it into the homepage hero section.
    - Change "Web page" to **Comma-separated values (.csv)**.
    - Expand **Published content & settings** and verify that **"Automatically republish when changes are made"** is checked.
    - Click **Publish** and copy the generated link.
-3. Repeat the exact same step for the **Rounds** tab (and **Trailer** tab if used):
+3. Repeat the exact same step for the **Rounds** tab:
    - Choose the **Rounds** tab > **Comma-separated values (.csv)** > Publish > Copy link.
+4. Paste the URLs into `config.js`:
+   ```javascript
+   const CONFIG = {
+       SCORES_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv",
+       ROUNDS_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=1586686373&single=true&output=csv",
+       ...
+   };
+   ```
 
 ---
 
-## Step 6: Connect to Website (`config.js`)
+## 🔒 College Handoff Guarantee
 
-Open `config.js` in the website repository and paste the published CSV URLs:
+When you hand the website files over to the college IT department:
+* You do **not** need server access, FTP, or PHP permissions to update scores.
+* College IT can host the static files anywhere (cPanel, Apache, Windows IIS, or Cloudflare).
+* You manage everything directly from your Google Sheet using **Method 1**. Any score or round change made in the spreadsheet reflects on the live college website instantly!
 
-```javascript
-const CONFIG = {
-    SCORES_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv",
-    ROUNDS_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=1586686373&single=true&output=csv",
-    TRAILER_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=265950681&single=true&output=csv",
-    
-    // Auto-refresh interval (milliseconds)
-    AUTO_REFRESH_INTERVAL: 60000, // 60 seconds
-    ...
-};
-```
-
-Commit and push `config.js` to GitHub. The live website is now connected to your Google Sheet!

@@ -83,6 +83,7 @@ cognito-website/
 │   └── trailer.php             # Trailer endpoint with 30s cache
 │
 ├── server.js                   # Zero-dependency Node.js local development & staging server
+├── CognitoAppsScript.js        # Instant Google Apps Script backend engine (0s sync delay)
 ├── .htaccess                   # Apache production rules (CSP, nosniff, API URL rewrites)
 ├── .gitignore                  # Git hygiene rules (Dependencies, caches, OS files)
 ├── sample-rounds.csv           # Reference CSV schema matching Google Sheets staging

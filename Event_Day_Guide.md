@@ -6,7 +6,7 @@ This manual is for the organizing committee and control desk managing the Cognit
 ---
 
 ## ⚡ 3 Golden Rules for Event Day
-1. **Be Patient (1–3 Minute Sync Delay)**: When you edit a score or round in Google Sheets, Google's public publishing pipeline takes roughly 60 to 180 seconds to push changes to the world. Do not panic if a change doesn't show up in 5 seconds.
+1. **Instant Updates with Google Apps Script (0-Second Delay)**: When using Google Apps Script (see `CognitoAppsScript.js`), edits appear on the website immediately! If using legacy "Publish to Web" CSV, allow 1–3 minutes for Google's CDN to push changes.
 2. **Column Order Does NOT Matter**: You can rearrange the columns in any order you want in your Google Sheet. The website searches for the exact column header names automatically.
 3. **All Times are Indian Standard Time (IST / UTC+05:30)**: Even if someone is viewing the site on a phone set to another timezone, all countdowns unlock strictly according to IST.
 
