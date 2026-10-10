@@ -17,14 +17,14 @@ const CONFIG = {
     APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbytxjAtEUdT7MJzevKsb4Qm1a3LTQP23rbHTau1LA4am-2XfK-nZK5MlMrZNv__1Yu5/exec",
 
     // OPTION B: Local Edge / Proxy Endpoints (used if APPS_SCRIPT_URL is empty)
-    SCORES_URL: "/api/scores",
-    ROUNDS_URL: "/api/rounds",
-    TRAILER_URL: "/api/trailer",
+    SCORES_URL: "api/scores",
+    ROUNDS_URL: "api/rounds",
+    TRAILER_URL: "api/trailer",
 
     // Backwards-compatible aliases:
-    SCORES_CSV_URL: "/api/scores",
-    ROUNDS_CSV_URL: "/api/rounds",
-    TRAILER_CSV_URL: "/api/trailer",
+    SCORES_CSV_URL: "api/scores",
+    ROUNDS_CSV_URL: "api/rounds",
+    TRAILER_CSV_URL: "api/trailer",
 
     // Cloudflare Edge Fallback (automatically used if local endpoints are not available on college host):
     FALLBACK_SCORES_URL: "https://cognito-website-1nx.pages.dev/api/scores",
