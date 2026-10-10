@@ -223,14 +223,64 @@ async function handleRounds(req, res) {
 
         const headers = rows[0];
         const showIndex = headers.findIndex(h => h.trim().toLowerCase() === 'show');
+        const briefIndices = headers.map((h, idx) => /brief|problem|case.*link|drive/i.test(h) ? idx : -1).filter(idx => idx !== -1);
+        const submitIndices = headers.map((h, idx) => /submit/i.test(h) ? idx : -1).filter(idx => idx !== -1);
+        const relDateIdx = headers.findIndex(h => /release.*date|date.*release/i.test(h));
+        const relTimeIdx = headers.findIndex(h => /release.*time|time.*release/i.test(h));
+        const genDateIdx = headers.findIndex(h => /date/i.test(h) && !/deadline/i.test(h));
 
         const sanitizedRows = [headers];
+        const IST_OFFSET_MS = 19800000;
+        const nowMs = Date.now();
+
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             if (showIndex !== -1) {
                 const showVal = (row[showIndex] || '').trim().toLowerCase();
                 if (showVal !== 'yes' && showVal !== 'y') continue;
             }
+
+            // Link Lockdown for future rounds
+            const dateStr = (relDateIdx !== -1 && row[relDateIdx]) ? row[relDateIdx].trim() : ((genDateIdx !== -1 && row[genDateIdx]) ? row[genDateIdx].trim() : '');
+            const timeStr = (relTimeIdx !== -1 && row[relTimeIdx]) ? row[relTimeIdx].trim() : '';
+
+            if (dateStr) {
+                let y = 0, m = 0, d = 0;
+                const isoMatch = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                if (isoMatch) {
+                    y = parseInt(isoMatch[1], 10);
+                    m = parseInt(isoMatch[2], 10);
+                    d = parseInt(isoMatch[3], 10);
+                } else {
+                    const parts = dateStr.split(/[\/\-\.]/);
+                    if (parts.length >= 3) {
+                        d = parseInt(parts[0], 10);
+                        m = parseInt(parts[1], 10);
+                        y = parseInt(parts[2], 10);
+                        if (d > 31 && y <= 31) { const t = d; d = y; y = t; }
+                    }
+                }
+
+                if (y && m && d) {
+                    let hrs = 0, mins = 0;
+                    if (timeStr) {
+                        const tp = timeStr.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+                        if (tp) {
+                            hrs = parseInt(tp[1], 10);
+                            mins = parseInt(tp[2], 10);
+                            const ap = tp[3] ? tp[3].toLowerCase() : null;
+                            if (ap === 'pm' && hrs < 12) hrs += 12;
+                            if (ap === 'am' && hrs === 12) hrs = 0;
+                        }
+                    }
+                    const targetUtc = Date.UTC(y, m - 1, d, hrs, mins, 0) - IST_OFFSET_MS;
+                    if (nowMs < targetUtc) {
+                        briefIndices.forEach(idx => { if (row[idx]) row[idx] = ''; });
+                        submitIndices.forEach(idx => { if (row[idx]) row[idx] = ''; });
+                    }
+                }
+            }
+
             sanitizedRows.push(row);
         }
 

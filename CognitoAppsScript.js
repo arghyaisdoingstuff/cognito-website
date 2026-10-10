@@ -173,6 +173,14 @@ function processScores(sheet) {
     // Set normalized values
     r[scoreKey] = pct;
     r['ScorePercentage'] = pct;
+
+    // Redact internal judge/scoring columns so they never leak in JSON
+    Object.keys(r).forEach(function(k) {
+      if (/^(raw|judge|eval|internal|mark|point)/i.test(k) && k !== scoreKey && k !== 'ScorePercentage') {
+        delete r[k];
+      }
+    });
+
     return r;
   });
 }
@@ -181,9 +189,9 @@ function processScores(sheet) {
  * Process Rounds Tab
  * Confidentiality Guards:
  * 1. DRAFT FILTER: Completely eliminates rows where Show !== 'Yes'.
- * 2. LINK LOCKDOWN: If an exhibit has not reached its release time yet,
- *    its BriefLink and SubmitLink are stripped on the server so participants
- *    cannot sniff Google Drive case brief links in browser DevTools!
+ * 2. SERVER-SIDE LINK LOCKDOWN: If an exhibit has not reached its release time yet,
+ *    all brief and submission links are stripped across any column casing on the server
+ *    so participants cannot sniff Google Drive case brief links in browser DevTools!
  */
 function processRounds(sheet) {
   const rows = getSheetRows(sheet);
@@ -196,10 +204,15 @@ function processRounds(sheet) {
   });
 
   return visible.map(function(r) {
-    // If release time is in the future, redact case brief and submission links
+    // If release time is in the future, redact case brief and submission links dynamically
     if (isRoundLocked(r)) {
-      if (r.BriefLink) r.BriefLink = '';
-      if (r.SubmitLink) r.SubmitLink = '';
+      Object.keys(r).forEach(function(k) {
+        if (/brief|submit|drive|problem|case.*link|doc.*link/i.test(k)) {
+          r[k] = '';
+        }
+      });
+      r.BriefLink = '';
+      r.SubmitLink = '';
     }
     return r;
   });
@@ -207,19 +220,64 @@ function processRounds(sheet) {
 
 /**
  * Checks whether an exhibit's release time is currently in the future (IST).
+ * Robust parser handles:
+ * - DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+ * - YYYY-MM-DD or YYYY/MM/DD
+ * - Textual month names ("15 Dec 2026", "15 December 2026")
+ * - 12-hour (AM/PM) and 24-hour time formats
+ * - Anchors strictly to Indian Standard Time (IST / UTC+05:30)
  */
 function isRoundLocked(row) {
   const relDateKey = Object.keys(row).find(function(k) { return /release.*date|date.*release/i.test(k); });
   const relTimeKey = Object.keys(row).find(function(k) { return /release.*time|time.*release/i.test(k); });
-  const dateStr = relDateKey ? String(row[relDateKey] || '').trim() : '';
+  let dateStr = relDateKey ? String(row[relDateKey] || '').trim() : '';
   const timeStr = relTimeKey ? String(row[relTimeKey] || '').trim() : '';
+
+  // If no release date, check generic Date / EventDate / RoundDate
+  if (!dateStr) {
+    const genericDateKey = Object.keys(row).find(function(k) { return /date/i.test(k) && !/deadline/i.test(k); });
+    if (genericDateKey) dateStr = String(row[genericDateKey] || '').trim();
+  }
   if (!dateStr) return false;
 
-  const parts = dateStr.split(/[\/\-\.]/);
-  if (parts.length < 3) return false;
-  const day = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const year = parseInt(parts[2], 10);
+  let year = 0, month = 0, day = 0;
+
+  // Case A: ISO format YYYY-MM-DD or YYYY/MM/DD
+  const isoMatch = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (isoMatch) {
+    year = parseInt(isoMatch[1], 10);
+    month = parseInt(isoMatch[2], 10);
+    day = parseInt(isoMatch[3], 10);
+  } else {
+    // Case B: Textual month (e.g. "15 Dec 2026", "15 December 2026")
+    const textMatch = dateStr.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+    if (textMatch) {
+      day = parseInt(textMatch[1], 10);
+      const mStr = textMatch[2].toLowerCase().slice(0, 3);
+      year = parseInt(textMatch[3], 10);
+      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const mIdx = months.indexOf(mStr);
+      month = mIdx !== -1 ? mIdx + 1 : 1;
+    } else {
+      // Case C: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+      const parts = dateStr.split(/[\/\-\.]/);
+      if (parts.length >= 3) {
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        year = parseInt(parts[2], 10);
+        // Correct inverted year if YYYY was first but missed
+        if (day > 31 && year <= 31) {
+          const temp = day;
+          day = year;
+          year = temp;
+        }
+      } else {
+        return false;
+      }
+    }
+  }
+
+  if (!year || !month || !day) return false;
 
   let hours = 0, minutes = 0;
   if (timeStr) {
@@ -233,7 +291,7 @@ function isRoundLocked(row) {
     }
   }
 
-  // Anchor to Indian Standard Time (IST / UTC+05:30)
+  // Anchor strictly to Indian Standard Time (IST / UTC+05:30)
   const IST_OFFSET_MS = 19800000;
   const targetUtcMs = Date.UTC(year, month - 1, day, hours, minutes, 0) - IST_OFFSET_MS;
   const nowMs = Date.now();
@@ -245,7 +303,15 @@ function isRoundLocked(row) {
  * Reads dynamic site elements (Trailer, Brochure, etc.)
  */
 function processElements(sheet) {
-  return getSheetRows(sheet);
+  const rows = getSheetRows(sheet);
+  if (!rows.length) return [];
+  return rows.map(function(r) {
+    const showKey = Object.keys(r).find(function(k) { return /^show$/i.test(k); });
+    if (showKey && !r.Show) {
+      r.Show = r[showKey];
+    }
+    return r;
+  });
 }
 
 function processTrailer(sheet) {

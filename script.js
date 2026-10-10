@@ -68,12 +68,19 @@ function initCarousel() {
         obs.observe(wrapper);
     }
 
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && isCarouselVisible) {
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(animate);
+        }
+    });
+
     const animate = () => {
-        if (isCarouselVisible && !isHovered && !isButtonScrolling && !isDragging && Math.abs(dragVelocity) < 0.1) {
+        if (isCarouselVisible && !document.hidden && !isHovered && !isButtonScrolling && !isDragging && Math.abs(dragVelocity) < 0.1) {
             carousel.scrollLeft += speed;
             wrapScroll();
         }
-        if (isCarouselVisible) {
+        if (isCarouselVisible && !document.hidden) {
             rafId = requestAnimationFrame(animate);
         }
     };
@@ -563,12 +570,18 @@ function parseData(text) {
     if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
         try {
             const parsed = JSON.parse(trimmed);
+            if (parsed && parsed.error) {
+                console.warn('Cognito API Notice:', parsed.error);
+                return [];
+            }
             if (Array.isArray(parsed)) return parsed;
             if (parsed && Array.isArray(parsed.data)) return parsed.data;
             if (parsed && Array.isArray(parsed.rows)) return parsed.rows;
             if (parsed && Array.isArray(parsed.scores)) return parsed.scores;
             if (parsed && Array.isArray(parsed.rounds)) return parsed.rounds;
-            if (parsed && typeof parsed === 'object') return [parsed];
+            if (parsed && Array.isArray(parsed.elements)) return parsed.elements;
+            if (parsed && Array.isArray(parsed.trailer)) return parsed.trailer;
+            if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) return [parsed];
         } catch (_) {}
     }
     return parseCSV(text);
@@ -577,16 +590,19 @@ function parseData(text) {
 /**
  * Dual-tier HTTP fetcher with failover and content verification.
  * Accepts both application/json and text/csv.
+ * Strictly verifies that responses are not HTML error or captcha pages before caching.
  */
 async function fetchDataWithFallback(primaryUrl, fallbackUrl) {
     const fetchHeaders = { 'Accept': 'application/json, text/csv, text/plain; q=0.9, */*; q=0.8' };
+    const isHtmlResponse = (text) => /^\s*<(?:!doctype|html|head|body|\?xml|!--)/i.test(text);
+
     if (primaryUrl) {
         try {
             const res = await fetch(primaryUrl, { headers: fetchHeaders });
             if (res.ok) {
                 const text = await res.text();
                 // Ensure response is valid JSON or CSV and not an HTML error or captcha page
-                if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
+                if (text && !isHtmlResponse(text)) {
                     return { ok: true, text, url: primaryUrl };
                 }
             }
@@ -598,7 +614,7 @@ async function fetchDataWithFallback(primaryUrl, fallbackUrl) {
             const res = await fetch(fallbackUrl, { headers: fetchHeaders });
             if (res.ok) {
                 const text = await res.text();
-                if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html') && !text.trim().startsWith('<?xml')) {
+                if (text && !isHtmlResponse(text)) {
                     return { ok: true, text, url: fallbackUrl };
                 }
             }
@@ -647,19 +663,37 @@ function escapeHtml(str) {
 /**
  * Strict URL and protocol sanitizer.
  * Guarantees that only safe protocols (http, https, mailto, tel, or anchor/relative paths)
- * can be rendered into href attributes, preventing javascript: or data: XSS injections.
+ * can be rendered into href attributes, preventing javascript:, data:, or protocol-relative XSS injections.
  */
 function sanitizeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
-    const trimmed = url.trim();
-    if (!trimmed) return '#';
-    // Allow relative anchor hashes or relative paths
-    if (trimmed.startsWith('#') || trimmed.startsWith('/') || trimmed.startsWith('./')) {
-        return escapeHtml(trimmed);
+    // Strip control characters (ASCII 0-31, 127) and trim
+    const cleaned = url.replace(/[\x00-\x1F\x7F]/g, '').trim();
+    if (!cleaned) return '#';
+
+    // Disallow protocol-relative URLs (e.g. //attacker.com or /\attacker.com or \attacker.com)
+    if (cleaned.startsWith('//') || cleaned.startsWith('/\\') || cleaned.startsWith('\\')) {
+        return '#';
     }
+
+    // Allow relative anchor hashes or relative paths (strictly single leading slash)
+    if (cleaned.startsWith('#') || (cleaned.startsWith('/') && !cleaned.startsWith('//')) || cleaned.startsWith('./')) {
+        return escapeHtml(cleaned);
+    }
+
     // Strict protocol verification
-    if (/^(https?|mailto|tel):/i.test(trimmed)) {
-        return escapeHtml(trimmed);
+    if (/^(https?|mailto|tel):/i.test(cleaned)) {
+        try {
+            const parsed = new URL(cleaned);
+            const proto = parsed.protocol.toLowerCase();
+            if (proto === 'http:' || proto === 'https:' || proto === 'mailto:' || proto === 'tel:') {
+                return escapeHtml(cleaned);
+            }
+        } catch (_) {
+            if (/^(mailto|tel):[a-zA-Z0-9@._+-]+/i.test(cleaned)) {
+                return escapeHtml(cleaned);
+            }
+        }
     }
     return '#';
 }
@@ -834,9 +868,9 @@ function extractRowDateTime(row, targetType, contextItems = []) {
         return parseFlexibleDate(directVal);
     }
 
-    // If separate Date and Time are provided
-    if (dateVal && (timeVal || directVal)) {
-        return parseFlexibleDate(dateVal, timeVal || directVal);
+    // If separate Date and optional Time are provided
+    if (dateVal) {
+        return parseFlexibleDate(dateVal, timeVal || directVal || '');
     }
 
     if (directVal) {
@@ -904,7 +938,7 @@ function renderRounds(data, isLive) {
     let globalIndex = 0;
     let roundIndex = 0;
 
-    window.roundsDossierRegistry = window.roundsDossierRegistry || {};
+    window.roundsDossierRegistry = {};
 
     // Group all exhibits strictly according to the Round column
     const grouped = {};
@@ -1187,6 +1221,11 @@ function renderBarChart(isLive) {
         return ev.includes('contingent');
     });
 
+    // Resilient Fallback: If sheet does not have an Event column but has team/score data, display all rows
+    if (contingentRows.length === 0 && allScoresData.length > 0 && !allScoresData.some(r => r.Event || r.event)) {
+        contingentRows = allScoresData;
+    }
+
     const getScoreVal = (r) => {
         const val = r.Score ?? r.score ?? r.ScorePercentage ?? r.scorePercentage ?? r.Points ?? r.points ?? r.Total ?? r.total ?? 0;
         return parseFloat(val) || 0;
@@ -1271,14 +1310,14 @@ function renderBarChart(isLive) {
         const rankDisplay = String(rank).padStart(2, '0');
 
         return `
-        <div class="horizon-ledger-row" data-team="${teamKey}" data-pct="${pct}">
-            <div class="horizon-rank-num ${rankClass}">${rankDisplay}</div>
-            <div class="horizon-team-block">
+        <div class="horizon-ledger-row" role="row" data-team="${teamKey}" data-pct="${pct}">
+            <div class="horizon-rank-num ${rankClass}" role="cell" aria-label="Rank ${rank}">${rankDisplay}</div>
+            <div class="horizon-team-block" role="cell">
                 <div class="horizon-team-name">${escapeHtml(row.Team || 'Team ' + rank)}</div>
                 <div class="horizon-team-college">${escapeHtml(row.College || '')}</div>
             </div>
-            <div class="horizon-relative-track">
-                <div class="relative-gauge-groove">
+            <div class="horizon-relative-track" role="cell">
+                <div class="relative-gauge-groove" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Relative Performance Index: ${pct}%">
                     <div class="relative-gauge-fill ${fillClass}" style="width:0%"></div>
                 </div>
             </div>
@@ -1286,11 +1325,11 @@ function renderBarChart(isLive) {
     }).join('');
 
     container.innerHTML = `
-    <div class="relative-horizon-ledger">
-        <div class="horizon-ledger-header">
-            <div>Rank</div>
-            <div>Contingent</div>
-            <div></div>
+    <div class="relative-horizon-ledger" role="table" aria-label="Contingent Leaderboard">
+        <div class="horizon-ledger-header" role="row">
+            <div role="columnheader">Rank</div>
+            <div role="columnheader">Contingent</div>
+            <div role="columnheader" aria-label="Performance Gauge">Relative Index</div>
         </div>
         ${rows}
     </div>`;
@@ -1658,11 +1697,11 @@ function getYouTubeEmbedUrl(url) {
         let videoId = null;
         if (host === 'youtu.be') {
             videoId = parsed.pathname.slice(1).split(/[?#&/]/)[0];
-        } else if (host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+        } else if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
             if (parsed.searchParams.has('v')) {
                 videoId = parsed.searchParams.get('v');
             } else {
-                const match = parsed.pathname.match(/\/(?:embed|shorts|v)\/([a-zA-Z0-9_-]{11})/i);
+                const match = parsed.pathname.match(/\/(?:embed|shorts|v|live)\/([a-zA-Z0-9_-]{11})/i);
                 if (match) videoId = match[1];
             }
         }
@@ -1670,7 +1709,7 @@ function getYouTubeEmbedUrl(url) {
             return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&rel=0`;
         }
     } catch (_) {
-        const regExp = /(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+        const regExp = /(?:(?:www\.|m\.)?(?:youtube\.com|youtube-nocookie\.com)\/(?:watch\?.*v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
         const match = cleanUrl.match(regExp);
         if (match && match[1] && /^[a-zA-Z0-9_-]{11}$/.test(match[1])) {
             return `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=0&rel=0`;
@@ -2015,11 +2054,16 @@ initNodes();
 // 7. MAGNETIC BUTTONS
 // ──────────────────────────────────────────────────────────────
 function initMagneticButtons() {
+    // Only enable magnetic pull on desktop devices with hover and fine pointer capability
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
     // Select buttons and the hero logo wrapper for magnetic effect (excluding slider tabs)
     const magneticElements = document.querySelectorAll('.btn, .hero-logo-wrap');
     
     magneticElements.forEach(btn => {
         let rect = null;
+        let rafId = null;
+        let targetX = 0, targetY = 0;
 
         btn.addEventListener('mouseenter', () => {
             rect = btn.getBoundingClientRect();
@@ -2029,15 +2073,23 @@ function initMagneticButtons() {
             if (!rect) rect = btn.getBoundingClientRect();
             const h = rect.width / 2;
             const v = rect.height / 2;
-            const x = e.clientX - rect.left - h;
-            const y = e.clientY - rect.top - v;
+            targetX = (e.clientX - rect.left - h) * 0.15;
+            targetY = (e.clientY - rect.top - v) * 0.15;
             
-            // The pull factor (gentle, subtle effect with translate3d)
-            btn.style.transform = `translate3d(${x * 0.15}px, ${y * 0.15}px, 0)`;
-            btn.style.transition = 'transform 0.1s ease-out';
+            if (!rafId) {
+                rafId = requestAnimationFrame(() => {
+                    btn.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
+                    btn.style.transition = 'transform 0.1s ease-out';
+                    rafId = null;
+                });
+            }
         });
 
         btn.addEventListener('mouseleave', () => {
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
             rect = null;
             btn.style.transform = '';
             btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // snappy bounce back

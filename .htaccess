@@ -9,6 +9,9 @@ RewriteRule ^api/rounds/?$ api/rounds.php [L,QSA]
 
 # Route /api/trailer to PHP proxy
 RewriteRule ^api/trailer/?$ api/trailer.php [L,QSA]
+
+# Route /api/elements to PHP proxy
+RewriteRule ^api/elements/?$ api/elements.php [L,QSA]
 </IfModule>
 
 # ----------------------------------------------------------------------

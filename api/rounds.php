@@ -90,14 +90,23 @@ if (count($rows) <= 1) {
 
 $headers = $rows[0];
 $showIndex = -1;
+$briefIndices = [];
+$submitIndices = [];
+$relDateIdx = -1;
+$relTimeIdx = -1;
+$genDateIdx = -1;
 
 foreach ($headers as $idx => $hdr) {
-    if (strtolower(trim($hdr)) === 'show') {
-        $showIndex = $idx;
-        break;
-    }
+    $cleanHdr = strtolower(trim($hdr));
+    if ($cleanHdr === 'show') $showIndex = $idx;
+    if (preg_match('/brief|problem|case.*link|drive/i', $cleanHdr)) $briefIndices[] = $idx;
+    if (preg_match('/submit/i', $cleanHdr)) $submitIndices[] = $idx;
+    if (preg_match('/release.*date|date.*release/i', $cleanHdr)) $relDateIdx = $idx;
+    if (preg_match('/release.*time|time.*release/i', $cleanHdr)) $relTimeIdx = $idx;
+    if (preg_match('/date/i', $cleanHdr) && !preg_match('/deadline/i', $cleanHdr) && $genDateIdx === -1) $genDateIdx = $idx;
 }
 
+$nowUtc = time();
 $filteredRows = [$headers];
 for ($i = 1; $i < count($rows); $i++) {
     $row = $rows[$i];
@@ -107,6 +116,30 @@ for ($i = 1; $i < count($rows); $i++) {
         // If not explicitly "yes" or "y", drop it completely on the server!
         if ($val !== 'yes' && $val !== 'y') continue;
     }
+
+    // Link Lockdown for future rounds
+    $dateStr = ($relDateIdx !== -1 && !empty($row[$relDateIdx])) ? trim($row[$relDateIdx]) : (($genDateIdx !== -1 && !empty($row[$genDateIdx])) ? trim($row[$genDateIdx]) : '');
+    $timeStr = ($relTimeIdx !== -1 && !empty($row[$relTimeIdx])) ? trim($row[$relTimeIdx]) : '';
+
+    if (!empty($dateStr)) {
+        $targetUtc = false;
+        // Parse date in IST
+        $dtObj = DateTime::createFromFormat('d/m/Y H:i', "$dateStr " . (!empty($timeStr) ? $timeStr : '00:00'), new DateTimeZone('Asia/Kolkata'));
+        if (!$dtObj) {
+            $dtObj = DateTime::createFromFormat('Y-m-d H:i', "$dateStr " . (!empty($timeStr) ? $timeStr : '00:00'), new DateTimeZone('Asia/Kolkata'));
+        }
+        if (!$dtObj) {
+            $dtObj = DateTime::createFromFormat('d-m-Y H:i', "$dateStr " . (!empty($timeStr) ? $timeStr : '00:00'), new DateTimeZone('Asia/Kolkata'));
+        }
+        if ($dtObj) {
+            $targetUtc = $dtObj->getTimestamp();
+            if ($nowUtc < $targetUtc) {
+                foreach ($briefIndices as $bIdx) { if (isset($row[$bIdx])) $row[$bIdx] = ''; }
+                foreach ($submitIndices as $sIdx) { if (isset($row[$sIdx])) $row[$sIdx] = ''; }
+            }
+        }
+    }
+
     $filteredRows[] = $row;
 }
 

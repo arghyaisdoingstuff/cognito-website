@@ -338,6 +338,9 @@ img { max-width: 100%; height: auto; display: block; }
     position: relative;
     overflow: hidden;
     user-select: none;
+    max-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease;
 }
 .btn:active {
@@ -2773,4 +2776,11 @@ footer { background:rgba(1,4,9,0.92); border-top:1px solid var(--edge-dim); padd
     .filter-tabs .tab-btn { flex: 1; padding: 9px 8px; font-size: 0.82rem; white-space: nowrap; }
     .filter-tabs-sub { max-width: 290px; }
     .filter-tabs-sub .tab-btn { min-width: 66px; padding: 7px 8px; font-size: 0.78rem; }
+}
+
+@media (max-width: 480px) {
+    .hero-actions .btn {
+        width: 100%;
+        max-width: 320px;
+    }
 }
