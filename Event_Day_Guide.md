@@ -1,56 +1,77 @@
-# Cognito 2026 – Event Day Guide
-**Live Scores & Rounds Management**
+# Cognito 2026 — Event Day Operations Guide
+**Live Scores & Timed Rounds Management**
 
-This guide explains how to update the Cognito 2026 website during the event. The website is connected directly to a Google Sheet. **You do not need to touch any code to update the website.**
-
----
-
-## 1. How it Works
-The website reads data directly from your Google Sheet using a "Published CSV" link. 
-* **Auto-Refresh:** The Live Scores page automatically refreshes every 60 seconds.
-* **Sync Delay:** When you type a new score or round into Google Sheets, it takes Google about **1 to 5 minutes** to push that change to the public website. *Be patient after typing a score!*
+This manual is for the organizing committee and control desk managing the Cognito 2026 website during fest days. The entire platform synchronizes directly with your Google Sheet. **You never need to edit code to update the website on event days.**
 
 ---
 
-## 2. Managing Live Scores
-To update the leaderboard, open the **Scores** tab in your Google Sheet.
+## ⚡ 3 Golden Rules for Event Day
+1. **Be Patient (1–3 Minute Sync Delay)**: When you edit a score or round in Google Sheets, Google's public publishing pipeline takes roughly 60 to 180 seconds to push changes to the world. Do not panic if a change doesn't show up in 5 seconds.
+2. **Column Order Does NOT Matter**: You can rearrange the columns in any order you want in your Google Sheet. The website searches for the exact column header names automatically.
+3. **All Times are Indian Standard Time (IST / UTC+05:30)**: Even if someone is viewing the site on a phone set to another timezone, all countdowns unlock strictly according to IST.
 
-### Required Columns (Row 1):
-You must have these exact column names in Row 1:
+---
+
+## 📊 1. Managing Live Scores (`Scores` Tab)
+
+Open the **`Scores`** tab in the Google Sheet.
+
+### Required Column Headers (Row 1):
 `Event` | `Round` | `Team` | `College` | `Score`
 
-### How to add/edit teams:
-1. **Event:** Must be exactly `Contingent`. (If you misspell it, the team won't show up).
-2. **Round:** (e.g., `Overall` or `Round 1`).
-3. **Team:** The name of the team (e.g., `Apex Capital`).
-4. **College:** The college name (e.g., `SRCC, New Delhi`).
-5. **Score:** Just type the number (e.g., `284`).
+### How to enter scores:
+* **`Event`**: Must match the event track exactly. Use `Contingent` for the overall fest championship, or `Case Competition` / `Business Quiz` for standalone events.
+* **`Round`**: e.g., `Overall`, `Round 1`, `Round 2`, `Semi-Finals`, `Finals`.
+* **`Team`**: Full team name (e.g., `Apex Capital`).
+* **`College`**: College affiliation (e.g., `SRCC, New Delhi`).
+* **`Score`**: Enter the numeric score (e.g., `284` or `96.5`).
 
-**How the website handles it:**
-As soon as you type the score, the website calculates the max score, ranks the teams automatically (1st, 2nd, 3rd get special gold/silver/bronze badges), and animates the progress bars based on their score percentage.
+### What the website does automatically:
+* Ranks all teams dynamically from highest score to lowest.
+* Awards Gold 🥇, Silver 🥈, and Bronze 🥉 podium badges to the top 3 teams.
+* Smoothly animates rank position shifts on screen without page reloads using FLIP physics.
+* Normalizes progress bars so the highest-scoring team fills the bar width, with relative percentages rendered smoothly.
+* **Security Scrubber Active**: Raw numerical marks are kept confidential at the server proxy layer so competitors cannot sniff unpublished scores via browser DevTools.
 
 ---
 
-## 3. Managing Event Rounds
-To unlock cases and update countdowns, open the **Rounds** tab in your Google Sheet.
+## ⏱️ 2. Managing Timed Rounds (`Rounds` Tab)
 
-### Required Columns (Row 1):
+Open the **`Rounds`** tab in the Google Sheet.
+
+### Required Column Headers (Row 1):
 `Event` | `Day` | `ReleaseDate` | `Round` | `DeadlineDate` | `DeadlineTime` | `SubmitLink` | `Title` | `Description` | `ReleaseTime` | `BriefLink` | `Show`
 
-### How to add/edit rounds:
-* **Event:** `Case Competition` or `Contingent`.
-* **Day:** `1`, `2`, or `3` (for Contingent events).
-* **ReleaseDate:** The release date in standard `DD/MM/YYYY` format (e.g. `15/12/2026`). Also acts as deadline date if `DeadlineDate` is omitted.
-* **Round:** Round name (e.g. `Round 1 - The Qualifier`). Multiple exhibits under the same round name are grouped together.
-* **DeadlineDate & DeadlineTime:** Submission deadline for the round (e.g. `15/12/2026` and `15:30` or `3:30 PM`). Common to all exhibits in the round.
-* **ReleaseTime:** Time when this specific exhibit unseals (e.g. `09:30` or `09:30 AM`).
-* **SubmitLink:** Google Form link for participants to collect their submissions.
-* **BriefLink:** A Google Drive link to the case brief PDF.
-* **Show:** Type `Yes` to display it on the website. Type `No` to hide.
+### Column Field Guide:
+* **`Event`**: Set to `Contingent` or `Case Competition`.
+* **`Day`**: For Contingent rounds, enter `1`, `2`, or `3`. This places the exhibit under the **Day 1**, **Day 2**, or **Day 3** tab on `rounds.html`. For Case Competition, leave this blank.
+* **`ReleaseDate`**: The unseal date in `DD/MM/YYYY` format (e.g. `15/12/2026`). If `DeadlineDate` is left blank, the deadline automatically adopts this date.
+* **`Round`**: The round name (e.g., `Round 1 - The Qualifier`). All exhibits sharing the exact same `Round` title are bundled into one clean accordion.
+* **`DeadlineDate` & `DeadlineTime`**: The submission deadline for the entire round (e.g. `15/12/2026` and `15:30` or `3:30 PM`).
+* **`ReleaseTime`**: When this specific exhibit unlocks (e.g. `09:30` or `9:30 AM`).
+* **`SubmitLink`**: Google Form link for collecting participant submissions. Displayed in the round header when live.
+* **`Title`**: The exhibit's name on its clickable chip (e.g. `Corporate Genesis`).
+* **`Description`**: Optional briefing text. If empty, the dossier body shows the clean card without placeholder text.
+* **`BriefLink`**: Google Drive shareable link to the problem brief PDF (*"Anyone with the link can view"*).
+* **`Show`**: Put `Yes` to display the round or `No` to hide it. If `No`, the server completely omits the row from participant browsers.
+
+### State Transitions (Automated):
+* **LOCKED 🔒**: Current time is before `ReleaseDate` + `ReleaseTime`. Countdown shows remaining time to release. Brief link is disabled.
+* **UNSEALED 🟢**: Release time has passed, but deadline is in the future. Brief download button unlocks with audio alert, and submission button activates. Countdown displays remaining submission time.
+* **CLOSED ⏳**: Deadline has passed. Submission buttons display as closed.
 
 ---
 
-## 4. Troubleshooting
-* **A team is missing from the leaderboard:** Ensure their `Event` column says exactly `Contingent` and their `Score` is a valid number.
-* **Rounds buttons are stuck on "Locked":** Check your `Date` and `ReleaseTime` column formatting. Use `DD/MM/YYYY` for date (e.g. `15/12/2026`) and `HH:MM` for time (e.g. `09:30`).
-* **Changes aren't showing up:** Wait 1 to 3 minutes and refresh the page. Google Sheets CSV publishing is not instant.
+## 🚨 3. Event-Day Troubleshooting Checklist
+
+| Issue | Quick Fix |
+| :--- | :--- |
+| **A team isn't appearing on the leaderboard** | Verify that their `Event` column says exactly `Contingent` (case-sensitive) and `Score` is a valid number without text letters. |
+| **A round button says "Locked" when it should be open** | Check your `ReleaseDate` format (`DD/MM/YYYY`) and `ReleaseTime` (`HH:mm` or `hh:mm AM/PM`). Ensure the date is today's date. |
+| **A round is completely missing from the website** | Check the `Show` column. It must be set to `Yes`. If it is `No` or blank, the edge server hides it. |
+| **Changes aren't showing up on the website** | Wait 2 minutes and hard-refresh (`Ctrl + Shift + R` or `Cmd + Shift + R`). Google Sheets publishes in cycles of 1–3 minutes. |
+| **Brief link says "Access Denied" for teams** | In Google Drive, open the file's share settings and set **General Access** to **"Anyone with the link can view"**. |
+
+---
+
+*Need immediate technical support? Contact the DPS Web Tech Team.*

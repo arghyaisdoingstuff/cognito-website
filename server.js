@@ -310,9 +310,9 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Block hidden files, server scripts, and sensitive files
+    // Block hidden files, server scripts, markdown docs, and sensitive files
     const baseName = path.basename(filePath);
-    if (baseName.startsWith('.') || baseName === 'server.js' || filePath.endsWith('.php')) {
+    if (baseName.startsWith('.') || baseName === 'server.js' || filePath.endsWith('.php') || filePath.endsWith('.md')) {
         res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
         res.end('403 Forbidden');
         return;

@@ -3,6 +3,20 @@ assets/*.pdf
 assets/*.pptx
 assets/*.docx
 
-# OS files
+# Environment & credentials
+.env
+.env.local
+*.log
+
+# Dependencies & build caches
+node_modules/
+.npm/
+
+# OS & Editor files
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.bak
+
