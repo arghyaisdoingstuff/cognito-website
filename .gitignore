@@ -17,6 +17,8 @@ node_modules/
 Thumbs.db
 .vscode/
 .idea/
-*.swp
+# Archives
+*.zip
+*.tar.gz
 *.bak
 
