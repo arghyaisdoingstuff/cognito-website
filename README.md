@@ -73,11 +73,13 @@ cognito-website/
 ├── styles.css                  # Production design system (~85KB, cardless editorial theme)
 │
 ├── functions/api/              # Cloudflare Pages Functions (Edge Serverless Proxies)
+│   ├── elements.js             # Dynamic Elements (Trailer & Brochure) endpoint
 │   ├── rounds.js               # Confidential round filter + RFC-4180 parser
 │   ├── scores.js               # Server-side score scrubber + percentage calculator
 │   └── trailer.js              # YouTube trailer ID resolver & 60s edge cache
 │
 ├── api/                        # PHP 8.x Fallback Proxies (For Apache / cPanel / Shared Hosting)
+│   ├── elements.php            # Dynamic Elements fallback proxy
 │   ├── rounds.php              # Multi-line fgetcsv stream parser
 │   ├── scores.php              # Score scrubbing & relative ratio calculator
 │   └── trailer.php             # Trailer endpoint with 30s cache
@@ -86,7 +88,6 @@ cognito-website/
 ├── CognitoAppsScript.js        # Instant Google Apps Script backend engine (0s sync delay)
 ├── .htaccess                   # Apache production rules (CSP, nosniff, API URL rewrites)
 ├── .gitignore                  # Git hygiene rules (Dependencies, caches, OS files)
-├── sample-rounds.csv           # Reference CSV schema matching Google Sheets staging
 │
 ├── Event_Day_Guide.md          # Fest-day operations manual for the student organizing committee
 ├── GOOGLE_SHEETS_TEMPLATE.md   # Setup guide for the Google Sheets Control Panel
