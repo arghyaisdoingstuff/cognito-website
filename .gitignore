@@ -22,3 +22,5 @@ Thumbs.db
 *.tar.gz
 *.bak
 
+# Temporary Audit Briefs
+ARGON_AUDIT_BRIEF.md
