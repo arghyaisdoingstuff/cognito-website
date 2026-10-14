@@ -2585,39 +2585,48 @@ body.zen-fullscreen-mode .hero-actions,
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.3;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+}
+.editorial-rep-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    line-height: 1;
 }
 .editorial-rep-phone {
     font-family: var(--font-mono);
     font-size: 0.88rem;
     color: var(--text-secondary);
     text-decoration: none;
-    display: block;
-    margin-bottom: 12px;
+    line-height: 1;
+    display: inline-block;
     transition: color 0.2s;
 }
 .editorial-rep-phone:hover {
     color: var(--primary);
 }
 .editorial-rep-wa {
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: var(--accent-green);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    padding: 6px 14px;
-    border-radius: 6px;
-    text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    justify-content: center;
+    color: var(--accent-green);
+    text-decoration: none;
     line-height: 1;
-    transition: all 0.2s;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    transition: color 0.2s, transform 0.2s;
+    position: relative;
+    top: -0.5px;
+}
+.editorial-rep-wa svg {
+    display: block;
+    width: 17px;
+    height: 17px;
 }
 .editorial-rep-wa:hover {
-    background: rgba(16, 185, 129, 0.14);
-    border-color: var(--accent-green);
     color: #34d399;
-    transform: translateY(-1px);
+    transform: scale(1.18);
 }
 
 /* Fallback contact cards */
