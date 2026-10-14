@@ -6,7 +6,7 @@
 
 // 1. Intercept direct browser address bar navigations and redirect to homepage
 $secFetchDest = $_SERVER['HTTP_SEC_FETCH_DEST'] ?? '';
-$secFetchMode = $_SERVER['HTTP_SEC_MODE'] ?? '';
+$secFetchMode = $_SERVER['HTTP_SEC_FETCH_MODE'] ?? $_SERVER['HTTP_SEC_MODE'] ?? '';
 
 if ($secFetchDest === 'document' || $secFetchMode === 'navigate') {
     header('Location: ../index.html', true, 302);

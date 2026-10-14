@@ -627,6 +627,108 @@ async function fetchDataWithFallback(primaryUrl, fallbackUrl) {
 // Backwards-compatible alias for existing callers
 const fetchCsvWithFallback = fetchDataWithFallback;
 
+let roundsTickerId = null;
+let lastUnsealedPollTime = 0;
+
+function formatCountdownDiff(diffMs) {
+    if (diffMs <= 0) return '';
+    const d = Math.floor(diffMs / 864e5);
+    const h = Math.floor((diffMs / 36e5) % 24);
+    const m = Math.floor((diffMs / 6e4) % 60);
+    const s = Math.floor((diffMs / 1000) % 60);
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
+}
+
+function startRoundsTicker() {
+    if (roundsTickerId) return;
+    const container = document.getElementById('rounds-container');
+    if (!container) return;
+
+    roundsTickerId = setInterval(() => {
+        if (!roundsDataCache || !roundsDataCache.length) return;
+        const nowMs = Date.now();
+
+        // 1. Check if any locked exhibit has now reached its release time
+        let hasStateTransition = false;
+        const beacons = document.querySelectorAll('.stream-row-beacon[data-release-ms]');
+        beacons.forEach(b => {
+            const relMs = parseInt(b.getAttribute('data-release-ms'), 10);
+            if (relMs && !isNaN(relMs)) {
+                const wasLocked = b.querySelector('.dot.locked') !== null;
+                if (wasLocked && nowMs >= relMs) {
+                    hasStateTransition = true;
+                }
+            }
+        });
+
+        // If an exhibit just unlocked, or if 30s have elapsed while tab is visible, poll upstream
+        const timeSincePoll = Date.now() - lastUnsealedPollTime;
+        if (hasStateTransition || (document.visibilityState === 'visible' && timeSincePoll > 30000)) {
+            lastUnsealedPollTime = Date.now();
+            initRounds();
+            return;
+        }
+
+        // 2. Live countdown DOM updates without recreating the container DOM
+        // A. Round masthead deadlines
+        document.querySelectorAll('.round-deadline-tag[data-round-deadline]').forEach(tag => {
+            const dlMs = parseInt(tag.getAttribute('data-round-deadline'), 10);
+            if (dlMs && !isNaN(dlMs)) {
+                const textSpan = tag.querySelector('.round-deadline-text');
+                const dot = tag.querySelector('.dot');
+                if (nowMs > dlMs) {
+                    tag.classList.add('closed-tag');
+                    if (dot) dot.className = 'dot closed';
+                    if (textSpan) textSpan.textContent = 'Concluded';
+                } else {
+                    tag.classList.remove('closed-tag');
+                    if (dot) dot.className = 'dot live';
+                    if (textSpan) {
+                        const countdownStr = formatCountdownDiff(dlMs - nowMs);
+                        textSpan.textContent = `Deadline in ${countdownStr}`;
+                    }
+                }
+            }
+        });
+
+        // B. Stream row beacons
+        beacons.forEach(b => {
+            const relMs = parseInt(b.getAttribute('data-release-ms'), 10);
+            const dlMs = parseInt(b.getAttribute('data-round-deadline-ms'), 10);
+            const dot = b.querySelector('.dot');
+            const beaconText = b.querySelector('.beacon-text');
+
+            if (relMs && nowMs < relMs) {
+                const countdownStr = formatCountdownDiff(relMs - nowMs);
+                if (beaconText) beaconText.textContent = `Unlocks in ${countdownStr}`;
+                if (dot) dot.className = 'dot locked';
+                b.style.color = 'var(--accent-amber)';
+            } else if (dlMs && nowMs > dlMs) {
+                if (beaconText) beaconText.textContent = 'Concluded';
+                if (dot) dot.className = 'dot closed';
+                b.style.color = 'var(--text-dim)';
+            } else {
+                if (beaconText) beaconText.textContent = 'Live';
+                if (dot) dot.className = 'dot live';
+                b.style.color = 'var(--accent-green)';
+            }
+        });
+
+        // C. Canvas countdown tags
+        document.querySelectorAll('.meta-countdown-tag[data-release-ms]').forEach(ct => {
+            const relMs = parseInt(ct.getAttribute('data-release-ms'), 10);
+            if (relMs && nowMs < relMs) {
+                const countdownStr = formatCountdownDiff(relMs - nowMs);
+                ct.textContent = `T-minus ${countdownStr}`;
+            } else {
+                ct.style.display = 'none';
+            }
+        });
+    }, 1000);
+}
+
 async function initRounds() {
     const container = document.getElementById('rounds-container');
     if (!container) return;
@@ -648,6 +750,7 @@ async function initRounds() {
     roundsDataCache = roundsData;
     isRoundsLiveCache = isLive;
     renderRounds(roundsData, isLive);
+    startRoundsTicker();
 }
 
 function escapeHtml(str) {
@@ -884,6 +987,21 @@ function renderRounds(data, isLive) {
     const container = document.getElementById('rounds-container');
     if (!container) return;
 
+    // Capture currently open accordions and active exhibits before re-rendering
+    const openGroups = new Set();
+    const activeExhibits = {};
+    container.querySelectorAll('.round-accordion-group.open').forEach(g => {
+        const name = g.getAttribute('data-round-group');
+        if (name) openGroups.add(name);
+    });
+    container.querySelectorAll('.stream-row.active').forEach(r => {
+        const roundIdx = r.getAttribute('data-round-idx');
+        const exIdx = parseInt(r.getAttribute('data-ex-idx'), 10);
+        if (roundIdx && !isNaN(exIdx)) {
+            activeExhibits[roundIdx] = exIdx;
+        }
+    });
+
     const isContingent = activeRoundFilter.toLowerCase().includes('contingent');
 
     const filtered = data.filter(r => {
@@ -983,9 +1101,9 @@ function renderRounds(data, isLive) {
                 const diff = roundDeadline - now;
                 const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
                 const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
-                roundCountdownTag = `<span class="round-deadline-tag" title="Submission Deadline: ${deadlineFormatted}"><span class="dot live"></span> Deadline in ${countdownStr}</span>`;
+                roundCountdownTag = `<span class="round-deadline-tag" data-round-deadline="${roundDeadline.getTime()}" title="Submission Deadline: ${deadlineFormatted}"><span class="dot live"></span> <span class="round-deadline-text">Deadline in ${countdownStr}</span></span>`;
             } else {
-                roundCountdownTag = `<span class="round-deadline-tag closed-tag" title="Concluded: ${deadlineFormatted}"><span class="dot closed"></span> Concluded</span>`;
+                roundCountdownTag = `<span class="round-deadline-tag closed-tag" data-round-deadline="${roundDeadline.getTime()}" title="Concluded: ${deadlineFormatted}"><span class="dot closed"></span> <span class="round-deadline-text">Concluded</span></span>`;
             }
         }
 
@@ -1017,7 +1135,7 @@ function renderRounds(data, isLive) {
                 const d = Math.floor(diff / 864e5), h = Math.floor((diff / 36e5) % 24), m = Math.floor((diff / 6e4) % 60);
                 const countdownStr = (d > 0 ? d + 'd ' : '') + (h > 0 ? h + 'h ' : '') + m + 'm';
 
-                timeInfo = `<span class="meta-strip-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="meta-countdown-tag">T-minus ${countdownStr}</span>`;
+                timeInfo = `<span class="meta-strip-item"><strong>Unlocks:</strong> ${releaseFormatted}</span> <span class="meta-countdown-tag" data-release-ms="${release.getTime()}">T-minus ${countdownStr}</span>`;
                 actions = `<button class="btn-action-secondary" disabled style="opacity:0.4;cursor:not-allowed">Locked until Release</button>`;
                 statusLabel = 'Unlocks in ' + countdownStr;
                 dotClass = 'locked';
@@ -1048,31 +1166,37 @@ function renderRounds(data, isLive) {
                 statusLabel: statusLabel,
                 dotClass: dotClass,
                 timeInfo: timeInfo,
-                actions: actions
+                actions: actions,
+                releaseMs: hasValidRelease ? release.getTime() : 0,
+                deadlineMs: hasValidRoundDeadline ? roundDeadline.getTime() : 0
             };
         });
 
         window.roundsDossierRegistry[currentRoundIdx] = preparedItems;
 
+        const selectedExIdx = (activeExhibits[currentRoundIdx] !== undefined && preparedItems[activeExhibits[currentRoundIdx]])
+            ? activeExhibits[currentRoundIdx]
+            : 0;
+
         const streamRowsHtml = preparedItems.map((item, i) => `
-            <div class="stream-row ${i === 0 ? 'active' : ''}" 
+            <div class="stream-row ${i === selectedExIdx ? 'active' : ''}" 
                  data-round-idx="${currentRoundIdx}" 
                  data-ex-idx="${i}" 
                  tabindex="0"
                  role="button"
-                 aria-selected="${i === 0 ? 'true' : 'false'}"
+                 aria-selected="${i === selectedExIdx ? 'true' : 'false'}"
                  onclick="switchRoundExhibit(${currentRoundIdx}, ${i}, this)"
                  onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchRoundExhibit(${currentRoundIdx}, ${i}, this);}">
                 <div class="stream-row-header">
                     <h3 class="stream-row-title">${item.title}</h3>
-                    <div class="stream-row-beacon" style="${item.dotClass === 'live' ? 'color:var(--accent-green)' : item.dotClass === 'locked' ? 'color:var(--accent-amber)' : 'color:var(--text-dim)'}">
-                        <span class="dot ${item.dotClass}"></span> ${item.statusLabel}
+                    <div class="stream-row-beacon" data-release-ms="${item.releaseMs || ''}" data-round-deadline-ms="${item.deadlineMs || ''}" style="${item.dotClass === 'live' ? 'color:var(--accent-green)' : item.dotClass === 'locked' ? 'color:var(--accent-amber)' : 'color:var(--text-dim)'}">
+                        <span class="dot ${item.dotClass}"></span> <span class="beacon-text">${item.statusLabel}</span>
                     </div>
                 </div>
             </div>
         `).join('');
 
-        const initialItem = preparedItems[0];
+        const initialItem = preparedItems[selectedExIdx] || preparedItems[0];
         const canvasHtml = `
             <div class="dossier-canvas" id="dossier-canvas-${currentRoundIdx}">
                 <span class="canvas-tag">${initialItem.roundTag}</span>
@@ -1085,10 +1209,11 @@ function renderRounds(data, isLive) {
 
         const safeRound = escapeHtml(roundName);
         const countText = `${items.length} Exhibit${items.length === 1 ? '' : 's'}`;
+        const isOpen = openGroups.has(safeRound);
 
         html += `
-        <div class="round-accordion-group reveal" data-round-group="${safeRound}">
-            <div class="round-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleRoundAccordion(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRoundAccordion(this);}">
+        <div class="round-accordion-group reveal ${isOpen ? 'open' : ''}" data-round-group="${safeRound}">
+            <div class="round-accordion-header" tabindex="0" role="button" aria-expanded="${isOpen ? 'true' : 'false'}" onclick="toggleRoundAccordion(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRoundAccordion(this);}">
                 <div class="round-header-left">
                     <h2 class="round-header-title">${safeRound}</h2>
                     <span class="round-header-badge">${countText}</span>
@@ -1670,13 +1795,40 @@ document.addEventListener('DOMContentLoaded', () => {
 // 5A. REGISTRATION DEADLINE ENGINE
 // ──────────────────────────────────────────────────────────────
 function checkRegistrationDeadline() {
-    const cutoffStr = (typeof CONFIG !== 'undefined' && CONFIG.REGISTRATION_CUTOFF_DATE)
-        ? CONFIG.REGISTRATION_CUTOFF_DATE
+    const now = new Date();
+
+    // 1. Case Competition Cutoff (23 November 2026 23:59:59 IST)
+    const caseCutoffStr = (typeof CONFIG !== 'undefined' && CONFIG.REGISTRATION_CUTOFF_CASE)
+        ? CONFIG.REGISTRATION_CUTOFF_CASE
+        : "2026-11-23T23:59:59+05:30";
+    const caseCutoff = new Date(caseCutoffStr);
+    if (!isNaN(caseCutoff.getTime()) && now > caseCutoff) {
+        document.querySelectorAll('.link-case').forEach(el => {
+            if (el.closest('.hero-actions')) {
+                el.style.display = 'none';
+            } else if (el.closest('li')) {
+                el.closest('li').style.display = 'none';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    // 2. Contingent & Business Quiz Cutoff (10 December 2026 23:59:59 IST)
+    const contCutoffStr = (typeof CONFIG !== 'undefined' && (CONFIG.REGISTRATION_CUTOFF_CONTINGENT || CONFIG.REGISTRATION_CUTOFF_DATE))
+        ? (CONFIG.REGISTRATION_CUTOFF_CONTINGENT || CONFIG.REGISTRATION_CUTOFF_DATE)
         : "2026-12-10T23:59:59+05:30";
-    const cutoff = new Date(cutoffStr);
-    if (!isNaN(cutoff.getTime()) && new Date() > cutoff) {
-        const regBtns = document.querySelectorAll('.hero-actions .link-case, .hero-actions .link-quiz');
-        regBtns.forEach(el => el.style.display = 'none');
+    const contCutoff = new Date(contCutoffStr);
+    if (!isNaN(contCutoff.getTime()) && now > contCutoff) {
+        document.querySelectorAll('.link-quiz').forEach(el => {
+            if (el.closest('.hero-actions')) {
+                el.style.display = 'none';
+            } else if (el.closest('li')) {
+                el.closest('li').style.display = 'none';
+            } else {
+                el.style.display = 'none';
+            }
+        });
     }
 }
 checkRegistrationDeadline();

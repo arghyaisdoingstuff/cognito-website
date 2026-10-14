@@ -13,7 +13,7 @@
 
 // 1. Intercept direct browser address bar navigations and redirect to webpage
 $secFetchDest = $_SERVER['HTTP_SEC_FETCH_DEST'] ?? '';
-$secFetchMode = $_SERVER['HTTP_SEC_MODE'] ?? '';
+$secFetchMode = $_SERVER['HTTP_SEC_FETCH_MODE'] ?? $_SERVER['HTTP_SEC_MODE'] ?? '';
 $acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
 
 if ($secFetchDest === 'document' || $secFetchMode === 'navigate' || strpos($acceptHeader, 'text/html') !== false) {
@@ -58,6 +58,86 @@ if (!$rawCsv) {
 
 $trimmed = trim($rawCsv);
 if (strpos($trimmed, '[') === 0 || strpos($trimmed, '{') === 0) {
+    $decoded = json_decode($rawCsv, true);
+    if ($decoded !== null) {
+        $isAssoc = isset($decoded['data']) || isset($decoded['rounds']);
+        $items = $isAssoc ? ($decoded['data'] ?? $decoded['rounds']) : $decoded;
+        if (is_array($items)) {
+            $tz = new DateTimeZone('Asia/Kolkata');
+            $nowUtc = time();
+            $sanitized = [];
+            foreach ($items as $r) {
+                if (!is_array($r)) continue;
+                $showVal = 'yes';
+                foreach ($r as $k => $v) {
+                    if (strcasecmp($k, 'show') === 0) {
+                        $showVal = strtolower(trim((string)$v));
+                        break;
+                    }
+                }
+                if ($showVal !== 'yes' && $showVal !== 'y' && $showVal !== 'true') continue;
+
+                $dateStr = '';
+                $timeStr = '';
+                foreach ($r as $k => $v) {
+                    if (preg_match('/release.*date|date.*release/i', $k)) $dateStr = trim((string)$v);
+                    if (preg_match('/release.*time|time.*release/i', $k)) $timeStr = trim((string)$v);
+                }
+                if (empty($dateStr)) {
+                    foreach ($r as $k => $v) {
+                        if (preg_match('/date/i', $k) && !preg_match('/deadline/i', $k)) {
+                            $dateStr = trim((string)$v);
+                            break;
+                        }
+                    }
+                }
+
+                if (!empty($dateStr)) {
+                    $targetUtc = false;
+                    $combined = trim("$dateStr " . (!empty($timeStr) ? $timeStr : ''));
+                    $formats = [
+                        'd/m/Y H:i', 'd/m/Y h:i A', 'd/m/Y g:i A', 'd/m/Y',
+                        'Y-m-d H:i', 'Y-m-d h:i A', 'Y-m-d g:i A', 'Y-m-d',
+                        'd-m-Y H:i', 'd-m-Y h:i A', 'd-m-Y g:i A', 'd-m-Y',
+                        'd M Y H:i', 'd M Y h:i A', 'd M Y',
+                        'd F Y H:i', 'd F Y h:i A', 'd F Y'
+                    ];
+                    foreach ($formats as $fmt) {
+                        $parsed = DateTime::createFromFormat($fmt, $combined, $tz);
+                        if ($parsed !== false) {
+                            $targetUtc = $parsed->getTimestamp();
+                            break;
+                        }
+                    }
+                    if ($targetUtc === false) {
+                        try {
+                            $parsed = new DateTime($combined, $tz);
+                            $targetUtc = $parsed->getTimestamp();
+                        } catch (Exception $e) {
+                            $targetUtc = $nowUtc + 86400;
+                        }
+                    }
+                    if ($nowUtc < $targetUtc) {
+                        foreach (array_keys($r) as $k) {
+                            if (preg_match('/brief|submit|drive|problem|case.*link|doc.*link/i', $k)) {
+                                $r[$k] = '';
+                            }
+                        }
+                        $r['BriefLink'] = '';
+                        $r['SubmitLink'] = '';
+                    }
+                }
+                $sanitized[] = $r;
+            }
+            if ($isAssoc) {
+                if (isset($decoded['data'])) $decoded['data'] = $sanitized;
+                if (isset($decoded['rounds'])) $decoded['rounds'] = $sanitized;
+                $rawCsv = json_encode($decoded);
+            } else {
+                $rawCsv = json_encode($sanitized);
+            }
+        }
+    }
     header("Content-Type: application/json; charset=utf-8");
     header("Cache-Control: public, max-age=30");
     header("Access-Control-Allow-Origin: *");
@@ -123,20 +203,36 @@ for ($i = 1; $i < count($rows); $i++) {
 
     if (!empty($dateStr)) {
         $targetUtc = false;
-        // Parse date in IST
-        $dtObj = DateTime::createFromFormat('d/m/Y H:i', "$dateStr " . (!empty($timeStr) ? $timeStr : '00:00'), new DateTimeZone('Asia/Kolkata'));
-        if (!$dtObj) {
-            $dtObj = DateTime::createFromFormat('Y-m-d H:i', "$dateStr " . (!empty($timeStr) ? $timeStr : '00:00'), new DateTimeZone('Asia/Kolkata'));
-        }
-        if (!$dtObj) {
-            $dtObj = DateTime::createFromFormat('d-m-Y H:i', "$dateStr " . (!empty($timeStr) ? $timeStr : '00:00'), new DateTimeZone('Asia/Kolkata'));
-        }
-        if ($dtObj) {
-            $targetUtc = $dtObj->getTimestamp();
-            if ($nowUtc < $targetUtc) {
-                foreach ($briefIndices as $bIdx) { if (isset($row[$bIdx])) $row[$bIdx] = ''; }
-                foreach ($submitIndices as $sIdx) { if (isset($row[$sIdx])) $row[$sIdx] = ''; }
+        $combined = trim("$dateStr " . (!empty($timeStr) ? $timeStr : ''));
+        $formats = [
+            'd/m/Y H:i', 'd/m/Y h:i A', 'd/m/Y g:i A', 'd/m/Y H:i:s', 'd/m/Y',
+            'Y-m-d H:i', 'Y-m-d h:i A', 'Y-m-d g:i A', 'Y-m-d H:i:s', 'Y-m-d',
+            'd-m-Y H:i', 'd-m-Y h:i A', 'd-m-Y g:i A', 'd-m-Y H:i:s', 'd-m-Y',
+            'd M Y H:i', 'd M Y h:i A', 'd M Y g:i A', 'd M Y',
+            'd F Y H:i', 'd F Y h:i A', 'd F Y g:i A', 'd F Y',
+            'j M Y H:i', 'j M Y h:i A', 'j F Y H:i', 'j F Y h:i A'
+        ];
+        $tz = new DateTimeZone('Asia/Kolkata');
+        foreach ($formats as $fmt) {
+            $parsed = DateTime::createFromFormat($fmt, $combined, $tz);
+            if ($parsed !== false) {
+                $targetUtc = $parsed->getTimestamp();
+                break;
             }
+        }
+        if ($targetUtc === false) {
+            try {
+                $parsed = new DateTime($combined, $tz);
+                $targetUtc = $parsed->getTimestamp();
+            } catch (Exception $e) {
+                // If date is provided but cannot be parsed, fail-closed: assume locked for security
+                $targetUtc = $nowUtc + 86400;
+            }
+        }
+
+        if ($nowUtc < $targetUtc) {
+            foreach ($briefIndices as $bIdx) { if (isset($row[$bIdx])) $row[$bIdx] = ''; }
+            foreach ($submitIndices as $sIdx) { if (isset($row[$sIdx])) $row[$sIdx] = ''; }
         }
     }
 

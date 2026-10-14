@@ -203,6 +203,83 @@ async function handleRounds(req, res) {
 
         const trimmed = rawCsv.trim();
         if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+                let parsedJson = JSON.parse(trimmed);
+                let items = Array.isArray(parsedJson) ? parsedJson : (parsedJson.data || parsedJson.rounds || null);
+                if (Array.isArray(items)) {
+                    const nowMs = Date.now();
+                    const IST_OFFSET_MS = 19800000;
+                    items = items.filter(r => {
+                        const showKey = Object.keys(r).find(k => /^show$/i.test(k));
+                        if (!showKey) return true;
+                        const v = String(r[showKey] || '').toLowerCase().trim();
+                        return v === 'yes' || v === 'y' || v === 'true';
+                    }).map(r => {
+                        const relDateKey = Object.keys(r).find(k => /release.*date|date.*release/i.test(k));
+                        const relTimeKey = Object.keys(r).find(k => /release.*time|time.*release/i.test(k));
+                        let dateStr = relDateKey ? String(r[relDateKey] || '').trim() : '';
+                        const timeStr = relTimeKey ? String(r[relTimeKey] || '').trim() : '';
+                        if (!dateStr) {
+                            const genDateKey = Object.keys(r).find(k => /date/i.test(k) && !/deadline/i.test(k));
+                            if (genDateKey) dateStr = String(r[genDateKey] || '').trim();
+                        }
+                        if (dateStr) {
+                            let y = 0, m = 0, d = 0;
+                            const isoMatch = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                            if (isoMatch) {
+                                y = parseInt(isoMatch[1], 10);
+                                m = parseInt(isoMatch[2], 10);
+                                d = parseInt(isoMatch[3], 10);
+                            } else {
+                                const textMatch = dateStr.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+                                if (textMatch) {
+                                    d = parseInt(textMatch[1], 10);
+                                    const mStr = textMatch[2].toLowerCase().slice(0, 3);
+                                    y = parseInt(textMatch[3], 10);
+                                    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                                    const mIdx = months.indexOf(mStr);
+                                    m = mIdx !== -1 ? mIdx + 1 : 1;
+                                } else {
+                                    const parts = dateStr.split(/[\/\-\.]/);
+                                    if (parts.length >= 3) {
+                                        d = parseInt(parts[0], 10);
+                                        m = parseInt(parts[1], 10);
+                                        y = parseInt(parts[2], 10);
+                                        if (d > 31 && y <= 31) { const t = d; d = y; y = t; }
+                                    }
+                                }
+                            }
+                            let targetUtc = 0;
+                            if (y && m && d) {
+                                let hrs = 0, mins = 0;
+                                if (timeStr) {
+                                    const tp = timeStr.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+                                    if (tp) {
+                                        hrs = parseInt(tp[1], 10);
+                                        mins = parseInt(tp[2], 10);
+                                        const ap = tp[3] ? tp[3].toLowerCase() : null;
+                                        if (ap === 'pm' && hrs < 12) hrs += 12;
+                                        if (ap === 'am' && hrs === 12) hrs = 0;
+                                    }
+                                }
+                                targetUtc = Date.UTC(y, m - 1, d, hrs, mins, 0) - IST_OFFSET_MS;
+                            } else {
+                                targetUtc = nowMs + 86400000;
+                            }
+                            if (nowMs < targetUtc) {
+                                Object.keys(r).forEach(k => {
+                                    if (/brief|submit|drive|problem|case.*link|doc.*link/i.test(k)) r[k] = '';
+                                });
+                                r.BriefLink = '';
+                                r.SubmitLink = '';
+                            }
+                        }
+                        return r;
+                    });
+                    const cleanedJson = Array.isArray(parsedJson) ? items : { ...parsedJson, data: items };
+                    rawCsv = JSON.stringify(cleanedJson);
+                }
+            } catch (_) {}
             res.writeHead(200, {
                 'Content-Type': 'application/json; charset=utf-8',
                 'Cache-Control': 'public, max-age=30',
@@ -252,15 +329,26 @@ async function handleRounds(req, res) {
                     m = parseInt(isoMatch[2], 10);
                     d = parseInt(isoMatch[3], 10);
                 } else {
-                    const parts = dateStr.split(/[\/\-\.]/);
-                    if (parts.length >= 3) {
-                        d = parseInt(parts[0], 10);
-                        m = parseInt(parts[1], 10);
-                        y = parseInt(parts[2], 10);
-                        if (d > 31 && y <= 31) { const t = d; d = y; y = t; }
+                    const textMatch = dateStr.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+                    if (textMatch) {
+                        d = parseInt(textMatch[1], 10);
+                        const mStr = textMatch[2].toLowerCase().slice(0, 3);
+                        y = parseInt(textMatch[3], 10);
+                        const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                        const mIdx = months.indexOf(mStr);
+                        m = mIdx !== -1 ? mIdx + 1 : 1;
+                    } else {
+                        const parts = dateStr.split(/[\/\-\.]/);
+                        if (parts.length >= 3) {
+                            d = parseInt(parts[0], 10);
+                            m = parseInt(parts[1], 10);
+                            y = parseInt(parts[2], 10);
+                            if (d > 31 && y <= 31) { const t = d; d = y; y = t; }
+                        }
                     }
                 }
 
+                let targetUtc = 0;
                 if (y && m && d) {
                     let hrs = 0, mins = 0;
                     if (timeStr) {
@@ -273,11 +361,14 @@ async function handleRounds(req, res) {
                             if (ap === 'am' && hrs === 12) hrs = 0;
                         }
                     }
-                    const targetUtc = Date.UTC(y, m - 1, d, hrs, mins, 0) - IST_OFFSET_MS;
-                    if (nowMs < targetUtc) {
-                        briefIndices.forEach(idx => { if (row[idx]) row[idx] = ''; });
-                        submitIndices.forEach(idx => { if (row[idx]) row[idx] = ''; });
-                    }
+                    targetUtc = Date.UTC(y, m - 1, d, hrs, mins, 0) - IST_OFFSET_MS;
+                } else {
+                    targetUtc = nowMs + 86400000;
+                }
+
+                if (nowMs < targetUtc) {
+                    briefIndices.forEach(idx => { if (row[idx]) row[idx] = ''; });
+                    submitIndices.forEach(idx => { if (row[idx]) row[idx] = ''; });
                 }
             }
 
@@ -381,19 +472,25 @@ const server = http.createServer((req, res) => {
     }
 
     // Static file serving with directory traversal protection
-    const normalizedPath = path.normalize(pathname === '/' ? '/index.html' : pathname);
+    let decodedPath = pathname;
+    try {
+        decodedPath = decodeURIComponent(pathname);
+    } catch (_) {}
+    const normalizedPath = path.normalize(decodedPath === '/' ? '/index.html' : decodedPath);
     let filePath = path.resolve(__dirname, '.' + normalizedPath);
     
     // Directory traversal guard: must stay inside workspace root
-    if (!filePath.startsWith(__dirname)) {
+    if (!filePath.startsWith(__dirname + path.sep) && filePath !== __dirname) {
         res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
         res.end('403 Forbidden');
         return;
     }
 
-    // Block hidden files, server scripts, markdown docs, and sensitive files
+    // Block hidden files, dot directories (like .git), server scripts, markdown docs, and sensitive files
+    const segments = normalizedPath.split(/[\\/]/);
+    const hasDotSegment = segments.some(seg => seg.startsWith('.'));
     const baseName = path.basename(filePath);
-    if (baseName.startsWith('.') || baseName === 'server.js' || filePath.endsWith('.php') || filePath.endsWith('.md')) {
+    if (hasDotSegment || baseName === 'server.js' || baseName === 'CognitoAppsScript.js' || filePath.endsWith('.php') || filePath.endsWith('.md')) {
         res.writeHead(403, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
         res.end('403 Forbidden');
         return;

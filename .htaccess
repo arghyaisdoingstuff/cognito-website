@@ -26,8 +26,13 @@ RewriteRule ^api/elements/?$ api/elements.php [L,QSA]
 </IfModule>
 
 # ----------------------------------------------------------------------
-# Block Sensitive & Hidden Files (.git, .env, .htaccess, markdown docs)
+# Block Sensitive & Hidden Files and Directories (.git, .env, .htaccess, markdown docs)
 # ----------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^(CognitoAppsScript\.js|server\.js)$ - [F,L]
+</IfModule>
+
 <FilesMatch "^\.|\.(env|git|log|bak|config|md)$">
     <IfModule mod_authz_core.c>
         Require all denied

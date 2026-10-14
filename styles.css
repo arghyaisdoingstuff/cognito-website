@@ -3,8 +3,6 @@
    Theme: Particle Mesh BG, Edge-Lit Glass, Cinematic Scroll Reveals
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 :root {
     --bg-void: #010409;
     --bg-deep: #030B1A;
@@ -21,6 +19,8 @@
 
     --accent-green: #10B981;
     --accent-rose: #F43F5E;
+    --accent-amber: #F59E0B;
+    --accent-amber-glow: rgba(245, 158, 11, 0.25);
     --accent-gold: #FFC41F;
     --accent-silver: #CBD5E1;
     --accent-bronze: #CD7F32;
